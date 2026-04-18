@@ -243,7 +243,7 @@
     const KPI = getKpi();
 
     const hero = h('section', { class: 'hero' }, [
-      h('div', { class: 'kicker' }, ['Ho Won University · RISE Program']),
+      h('div', { class: 'kicker' }, ['HOWON UNIVERSITY · RISE PROGRAM']),
       h('h1', {}, [META.title]),
       h('p', { class: 'lead' }, [`목표 — ${META.goal}`]),
       h('p', { class: 'lead', style: 'margin-top:-14px' }, [`비전 — ${META.vision}`]),
