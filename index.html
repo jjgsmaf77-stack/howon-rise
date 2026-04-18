@@ -45,6 +45,9 @@
 
     <main class="main">
       <header class="topbar">
+        <button id="nav-toggle" class="nav-toggle" aria-label="메뉴 열기">
+          <span></span><span></span><span></span>
+        </button>
         <div id="crumb" class="crumb">호원RISE · <strong>개요</strong> · 성과 종합</div>
         <div class="spacer"></div>
         <span id="save-indicator" class="save-indicator saved">저장됨</span>
@@ -56,6 +59,7 @@
         <span class="pill">2차년도 운영</span>
         <span class="date" id="today"></span>
       </header>
+      <div id="nav-backdrop" class="nav-backdrop" aria-hidden="true"></div>
 
       <div class="page">
         <section id="view-overview" class="view"></section>

@@ -199,8 +199,72 @@
     { id: 'formula',    label: '산식·정의',         desc: '지표 방법론' }
   ];
 
+  // ---------- password-protected views ----------
+  const PROTECTED_VIEWS = new Set(['formula']);
+  const PW_HASH = 'a069a4137161ad159f43df3bb9342d0637eeebcafefbe01a64b9d69ac338eb25';
+  const LOCK_KEY = 'rise.unlocked.v1';
+
+  async function sha256Hex(text) {
+    const buf = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  function isUnlocked(viewId) {
+    if (!PROTECTED_VIEWS.has(viewId)) return true;
+    try { return sessionStorage.getItem(LOCK_KEY) === '1'; } catch { return false; }
+  }
+  function promptPassword() {
+    return new Promise((resolve) => {
+      const modal = h('div', { class: 'pw-modal', role: 'dialog', 'aria-modal': 'true' }, [
+        h('div', { class: 'pw-card' }, [
+          h('div', { class: 'pw-icon' }),
+          h('h3', {}, ['접근 제한']),
+          h('p', {}, ['산식·정의 영역은 인증된 관리자만 열람할 수 있습니다. 비밀번호를 입력하세요.']),
+          h('input', { type: 'password', class: 'pw-input', placeholder: '비밀번호', autocomplete: 'off' }),
+          h('div', { class: 'pw-err', 'aria-live': 'polite' }, ['']),
+          h('div', { class: 'pw-actions' }, [
+            h('button', { class: 'tb-btn', 'data-role': 'cancel' }, ['취소']),
+            h('button', { class: 'tb-btn primary', 'data-role': 'ok' }, ['확인'])
+          ])
+        ])
+      ]);
+      document.body.appendChild(modal);
+      const input = modal.querySelector('.pw-input');
+      const err = modal.querySelector('.pw-err');
+      const close = (ok) => { modal.remove(); resolve(ok); };
+      const submit = async () => {
+        err.textContent = '';
+        const v = input.value;
+        if (!v) { err.textContent = '비밀번호를 입력해 주세요.'; input.focus(); return; }
+        const hash = await sha256Hex(v);
+        if (hash === PW_HASH) {
+          try { sessionStorage.setItem(LOCK_KEY, '1'); } catch {}
+          close(true);
+        } else {
+          err.textContent = '비밀번호가 일치하지 않습니다.';
+          input.value = ''; input.focus();
+          modal.querySelector('.pw-card').classList.remove('shake');
+          // reflow then re-add
+          void modal.offsetWidth;
+          modal.querySelector('.pw-card').classList.add('shake');
+        }
+      };
+      modal.querySelector('[data-role="ok"]').addEventListener('click', submit);
+      modal.querySelector('[data-role="cancel"]').addEventListener('click', () => close(false));
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); submit(); }
+        if (e.key === 'Escape') close(false);
+      });
+      setTimeout(() => input.focus(), 30);
+    });
+  }
+
   let _currentView = 'overview';
-  function setView(id) {
+  async function setView(id) {
+    if (!isUnlocked(id)) {
+      const ok = await promptPassword();
+      if (!ok) return; // stay on current view
+    }
     _currentView = id;
     $$('.view').forEach(v => v.classList.toggle('active', v.id === `view-${id}`));
     $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
@@ -232,6 +296,10 @@
         counts[v.id] !== '' ? h('span', { class: 'count' }, [String(counts[v.id])]) : null
       ]);
       if (v.id === _currentView) btn.classList.add('active');
+      if (PROTECTED_VIEWS.has(v.id)) {
+        btn.classList.add('protected');
+        if (isUnlocked(v.id)) btn.classList.add('unlocked');
+      }
       nav.appendChild(btn);
     });
   }
@@ -421,7 +489,7 @@
 
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('과제 × 지표 매트릭스 · 직접 입력', '셀을 클릭해 값을 입력하면 자동 저장되고 차트·KPI가 갱신됩니다.'),
-      h('div', { class: 'card' }, [matrixEditGrid()])
+      h('div', { class: 'card matrix-card' }, [h('div', { class: 'matrix-scroll' }, [matrixEditGrid()])])
     ]));
 
     el.appendChild(h('section', { class: 'section' }, [
@@ -880,6 +948,20 @@
     $('#btn-export').addEventListener('click', onExport);
     $('#btn-import').addEventListener('click', onImport);
     $('#btn-reset') .addEventListener('click', onReset);
+
+    // Mobile nav drawer
+    const toggle = $('#nav-toggle');
+    const backdrop = $('#nav-backdrop');
+    const openNav  = () => document.body.classList.add('nav-open');
+    const closeNav = () => document.body.classList.remove('nav-open');
+    toggle?.addEventListener('click', () => {
+      document.body.classList.contains('nav-open') ? closeNav() : openNav();
+    });
+    backdrop?.addEventListener('click', closeNav);
+    $$('.nav button').forEach(b => b.addEventListener('click', () => {
+      if (window.matchMedia('(max-width: 880px)').matches) closeNav();
+    }));
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeNav(); });
 
     setView('overview');
     pingSaveIndicator();
