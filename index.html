@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>호원RISE사업 성과관리 플랫폼 | 호원대학교</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="호원대학교 RISE사업 8개 과제 · 5대 자체지수 · 24개 세부지표 통합 성과관리 플랫폼. 공통지표, 과제별 사업성과, 거버넌스·인프라 구축 실적을 한 곳에서 관리합니다." />
+  <meta name="author" content="호원대학교 RISE사업단" />
+  <meta name="theme-color" content="#104c39" />
+  <link rel="canonical" href="https://www.howonrise.co.kr/" />
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.howonrise.co.kr/" />
+  <meta property="og:site_name" content="호원RISE 성과관리 플랫폼" />
+  <meta property="og:title" content="호원RISE사업 성과관리 플랫폼" />
+  <meta property="og:description" content="전북 RISE체계와 동행하는 호원성취 POWER UP+ 혁신 플랫폼. 8개 과제 성과를 실시간으로 관리합니다." />
+  <meta property="og:image" content="https://www.howonrise.co.kr/logo.png" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="호원RISE사업 성과관리 플랫폼" />
+  <meta name="twitter:description" content="호원대학교 RISE사업 통합 성과관리 플랫폼" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-row">
+          <img src="logo.png" alt="호원대학교 HOWON UNIVERSITY" class="logo-img" onerror="this.style.display='none'" />
+        </div>
+        <span class="tag">Ho Won · RISE Platform</span>
+        <div class="mark">호원RISE 성과관리</div>
+        <div class="sub">POWER UP+ 혁신 플랫폼</div>
+      </div>
+
+      <div>
+        <div class="nav-section-label">Dashboard</div>
+        <nav id="nav" class="nav"></nav>
+      </div>
+
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div id="crumb" class="crumb">호원RISE · <strong>개요</strong> · 성과 종합</div>
+        <div class="spacer"></div>
+        <span id="save-indicator" class="save-indicator saved">저장됨</span>
+        <div class="toolbar">
+          <button id="btn-import" class="tb-btn" title="JSON 불러오기">불러오기</button>
+          <button id="btn-export" class="tb-btn" title="JSON 내보내기">내보내기</button>
+          <button id="btn-reset"  class="tb-btn danger" title="입력값 초기화">초기화</button>
+        </div>
+        <span class="pill">2차년도 운영</span>
+        <span class="date" id="today"></span>
+      </header>
+
+      <div class="page">
+        <section id="view-overview" class="view"></section>
+        <section id="view-common"   class="view"></section>
+        <section id="view-self"     class="view"></section>
+        <section id="view-project"  class="view"></section>
+        <section id="view-infra"    class="view"></section>
+        <section id="view-formula"  class="view"></section>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
