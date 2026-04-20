@@ -431,7 +431,7 @@
       wrap.appendChild(h('div', { class: 'bar-row' }, [
         h('div', { class: 'lbl' }, [p.short]),
         h('div', { class: 'bar' }, [
-          h('i', { style: `width:${(pa+pb).toFixed(1)}%; background:#165338;` })
+          h('i', { style: `width:${(pa+pb).toFixed(1)}%; background:#184a37;` })
         ]),
         h('div', { class: `val ${!hasAny ? 'na' : ''}` }, [!hasAny ? '—' : fmtN(tot)])
       ]));
@@ -449,12 +449,12 @@
       const d = indData(m);
       return Math.max(...Object.values(d).filter(v => v != null), 1);
     });
-    // Coherent emerald family (no random hues)
+    // Editorial forest · brass palette
     const palette = [
-      'rgba(15,58,40,0.15)',   'rgba(22,74,51,0.15)',  'rgba(31,93,65,0.15)',  'rgba(47,117,83,0.15)',
-      'rgba(70,143,106,0.18)', 'rgba(107,168,136,0.20)','rgba(156,196,171,0.22)','rgba(199,223,207,0.28)'
+      'rgba(15,61,44,0.16)',   'rgba(24,74,55,0.16)',  'rgba(33,90,58,0.16)',  'rgba(47,106,72,0.18)',
+      'rgba(78,135,97,0.20)',  'rgba(184,144,92,0.18)','rgba(212,178,129,0.22)','rgba(158,122,69,0.20)'
     ];
-    const borders = ['#0f3a28','#164a33','#1f5d41','#2f7553','#468f6a','#6ba888','#9cc4ab','#047857'];
+    const borders = ['#0f3d2c','#184a37','#215a3a','#2f6a48','#4e8761','#b8905c','#d4b281','#9e7a45'];
     const datasets = PROJECTS.map((p, i) => ({
       label: p.short,
       data: metrics.map((m, idx) => { const v = indData(m)[p.key]; return v == null ? 0 : (v / maxes[idx]) * 100; }),
@@ -584,7 +584,7 @@
     let labels, datasets;
     const makeGradient = (ctx) => {
       const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 280);
-      g.addColorStop(0, 'rgba(31,93,65,0.95)'); g.addColorStop(1, 'rgba(156,196,171,0.55)');
+      g.addColorStop(0, 'rgba(15,61,44,0.95)'); g.addColorStop(1, 'rgba(184,144,92,0.55)');
       return g;
     };
     if (_commonProject === 'all') {
@@ -592,7 +592,7 @@
       datasets = countInds.map((ind, idx) => ({
         label: ind.name,
         data: PROJECTS.map(p => ind.data[p.key] || 0),
-        backgroundColor: ['#0f3a28','#1f5d41','#2f7553','#468f6a','#6ba888'][idx],
+        backgroundColor: ['#0f3d2c','#184a37','#2f6a48','#b8905c','#d4b281'][idx],
         borderRadius: 6, barThickness: 16
       }));
     } else {
@@ -694,7 +694,7 @@
         label: '세부 지표 수', data,
         backgroundColor: (ctx) => {
           const g = ctx.chart.ctx.createLinearGradient(0,0,ctx.chart.width,0);
-          g.addColorStop(0,'#164a33'); g.addColorStop(0.55,'#2f7553'); g.addColorStop(1,'#6ba888');
+          g.addColorStop(0,'#0f3d2c'); g.addColorStop(0.6,'#184a37'); g.addColorStop(1,'#b8905c');
           return g;
         },
         borderRadius: 10, barThickness: 36
