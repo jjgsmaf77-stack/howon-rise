@@ -431,7 +431,7 @@
       wrap.appendChild(h('div', { class: 'bar-row' }, [
         h('div', { class: 'lbl' }, [p.short]),
         h('div', { class: 'bar' }, [
-          h('i', { style: `width:${(pa+pb).toFixed(1)}%; background:linear-gradient(90deg,#1f5d41 0 ${pa/(pa+pb||1)*100}%, #9cc4ab ${pa/(pa+pb||1)*100}% 100%);` })
+          h('i', { style: `width:${(pa+pb).toFixed(1)}%; background:#165338;` })
         ]),
         h('div', { class: `val ${!hasAny ? 'na' : ''}` }, [!hasAny ? '—' : fmtN(tot)])
       ]));
