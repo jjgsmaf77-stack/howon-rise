@@ -357,6 +357,7 @@
     const el = $('#view-overview');
     el.innerHTML = '';
     el.appendChild(h('div', { class: 'view-anchor' }, ['개요 · 성과 종합']));
+    el.appendChild(renderTicker(overviewTickerItems(), 'LIVE FEED'));
     const KPI = getKpi();
 
     const hero = h('section', { class: 'hero' }, [
@@ -530,6 +531,7 @@
     const el = $('#view-common');
     el.innerHTML = '';
     el.appendChild(h('div', { class: 'view-anchor' }, ['공통지표 · 교육부 공통지표']));
+    el.appendChild(renderTicker(commonTickerItems(), 'LIVE FEED'));
 
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('공통지표 현황', '교육부 공통지표 및 지자체 자율지표를 제외한 대학자체 공통 지표. 값을 직접 입력할 수 있습니다.',
@@ -665,6 +667,7 @@
     const el = $('#view-self');
     el.innerHTML = '';
     el.appendChild(h('div', { class: 'view-anchor' }, ['대학자체지표 · 5대 지수 체계']));
+    el.appendChild(renderTicker(selfTickerItems(), 'LIVE FEED'));
 
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('대학자체지표 · 5대 지수 체계',
@@ -756,6 +759,7 @@
     const el = $('#view-project');
     el.innerHTML = '';
     el.appendChild(h('div', { class: 'view-anchor' }, ['과제별 성과 · 8개 과제']));
+    el.appendChild(renderTicker(projectTickerItems(), 'LIVE FEED'));
 
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('과제별 사업 성과 · 직접 입력',
@@ -827,6 +831,7 @@
     const el = $('#view-infra');
     el.innerHTML = '';
     el.appendChild(h('div', { class: 'view-anchor' }, ['기타 구축 · 거버넌스·인프라']));
+    el.appendChild(renderTicker(infraTickerItems(), 'LIVE FEED'));
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('기타 구축 실적 · 직접 입력', '거버넌스 구축 및 인프라 구축 현황'),
       h('div', { class: 'grid-2' }, Store.state.infra.groups.map(g => {
@@ -1038,18 +1043,14 @@
     ]);
   }
 
-  function activityTicker() {
-    const C = Store.state.community;
-    const items = [
-      ...C.students.slice(0, 5).map(p => ({ cat: p.카테고리, text: p.제목, project: p.사업단 })),
-      ...C.corpPosts.slice(0, 3).map(p => ({ cat: p.카테고리, text: p.제목, project: '기업' }))
-    ];
-    // duplicate for seamless loop
+  // Shared ticker renderer — items: [{cat, project, text}]
+  function renderTicker(items, label) {
+    if (!items || !items.length) return document.createComment('no-ticker');
     const doubled = [...items, ...items];
     return h('div', { class: 'ticker' }, [
       h('div', { class: 'live' }, [
         h('span', { class: 'dot' }),
-        'LIVE FEED'
+        label || 'LIVE FEED'
       ]),
       h('div', { class: 'track' }, [
         h('div', { class: 'rail' }, doubled.map(it => h('div', { class: 'item' }, [
@@ -1060,6 +1061,82 @@
         ])))
       ])
     ]);
+  }
+
+  function activityTicker() {
+    const C = Store.state.community;
+    const items = [
+      ...C.students.slice(0, 5).map(p => ({ cat: p.카테고리, text: p.제목, project: p.사업단 })),
+      ...C.corpPosts.slice(0, 3).map(p => ({ cat: p.카테고리, text: p.제목, project: '기업' }))
+    ];
+    return renderTicker(items, 'LIVE FEED');
+  }
+
+  // Per-view ticker feeds
+  function overviewTickerItems() {
+    const K = getKpi();
+    const items = [
+      { cat: 'MOU',      project: '전체',    text: `${K.totalMOU}건 체결` },
+      { cat: '언론',     project: '전체',    text: `${K.totalPress}건 보도` },
+      { cat: '행사',     project: '전체',    text: `${K.totalEvents}건 운영` },
+      { cat: '초광역연계', project: '전체',  text: `${K.totalCrossRegion}건` },
+      { cat: '사업단연계', project: '전체',  text: `${K.totalCrossProject}건` }
+    ];
+    PROJECTS.forEach(p => items.push({ cat: '과제', project: p.short, text: p.theme }));
+    return items;
+  }
+  function commonTickerItems() {
+    const items = [];
+    Store.state.common.forEach(ind => {
+      PROJECTS.forEach(p => {
+        const v = ind.data[p.key];
+        if (v != null && v > 0) {
+          items.push({
+            cat: ind.name.replace(' 건수','').replace(' 실적값','').replace(' 연계','연계').slice(0, 8),
+            project: p.short,
+            text: `${v}${ind.unit}`
+          });
+        }
+      });
+    });
+    return items.slice(0, 16);
+  }
+  function selfTickerItems() {
+    const items = [];
+    Store.state.self.forEach(g => {
+      g.items.forEach(it => {
+        const rate = (it.목표 && it.실적 != null)
+          ? `달성 ${Math.round((it.실적 / it.목표) * 100)}%`
+          : `${it.rows}행 지표`;
+        items.push({
+          cat: g.name.replace(' 지수','').replace(' 향상','').slice(0, 7),
+          project: it.project,
+          text: `${it.name} — ${rate}`
+        });
+      });
+    });
+    return items;
+  }
+  function projectTickerItems() {
+    return Store.state.projects.slice(0, 16).map(r => ({
+      cat: r.달성률 != null ? `달성 ${r.달성률}%` : r.지수.slice(0, 6),
+      project: r.과제명,
+      text: r.전략 || r.과제 || r.계획 || '—'
+    }));
+  }
+  function infraTickerItems() {
+    const items = [];
+    Store.state.infra.groups.forEach(g => {
+      g.items.forEach(it => {
+        const cnt = it.count;
+        items.push({
+          cat: g.name.startsWith('거버') ? '거버넌스' : '인프라',
+          project: it.label,
+          text: cnt != null ? `${cnt}건 구축` : '구축 예정'
+        });
+      });
+    });
+    return items;
   }
 
   function renderCommunityList() {
