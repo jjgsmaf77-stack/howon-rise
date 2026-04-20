@@ -281,18 +281,28 @@
     $$('#mobile-quicknav .q').forEach(b => b.classList.toggle('active', b.dataset.view === id));
     const v = VIEWS.find(x => x.id === id);
     $('#crumb').innerHTML = `호원RISE · <strong>${v.label}</strong> · ${v.desc}`;
+
     const target = document.getElementById(`view-${id}`);
-    if (target) {
-      // Compute offset manually so sticky topbar + quicknav don't cover the heading
-      const topbarH = document.querySelector('.topbar')?.offsetHeight || 0;
-      const qnH = window.matchMedia('(max-width: 880px)').matches
-        ? (document.getElementById('mobile-quicknav')?.offsetHeight || 0) : 0;
-      const y = target.getBoundingClientRect().top + window.scrollY - (topbarH + qnH + 8);
-      window.scrollTo({ top: y, behavior: 'smooth' });
-      // Center the active chip on mobile
-      const activeChip = $(`#mobile-quicknav .q[data-view="${id}"]`);
-      if (activeChip && window.matchMedia('(max-width: 880px)').matches) {
-        activeChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    if (!target) return;
+
+    // Compute final scroll position with sticky-bar offset and jump directly.
+    // Instant scrollTo is the most reliable across mobile browsers; smooth can be
+    // interrupted by touch gestures or by the chip's own scrollIntoView.
+    const isMobile = window.matchMedia('(max-width: 880px)').matches;
+    const topbarH = document.querySelector('.topbar')?.offsetHeight || 0;
+    const qnH = isMobile ? (document.getElementById('mobile-quicknav')?.offsetHeight || 0) : 0;
+    const rect = target.getBoundingClientRect();
+    const y = Math.max(0, rect.top + window.scrollY - (topbarH + qnH + 8));
+
+    window.scrollTo({ top: y, behavior: isMobile ? 'auto' : 'smooth' });
+
+    if (isMobile) {
+      // Center active chip in horizontal quicknav scroll (independent of window scroll)
+      const chipBar = document.getElementById('mobile-quicknav');
+      const activeChip = chipBar?.querySelector(`.q[data-view="${id}"]`);
+      if (chipBar && activeChip) {
+        const targetLeft = activeChip.offsetLeft - (chipBar.clientWidth - activeChip.offsetWidth) / 2;
+        chipBar.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
       }
     }
   }
