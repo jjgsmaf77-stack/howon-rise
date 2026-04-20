@@ -278,10 +278,23 @@
     }
     _currentView = id;
     $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+    $$('#mobile-quicknav .q').forEach(b => b.classList.toggle('active', b.dataset.view === id));
     const v = VIEWS.find(x => x.id === id);
     $('#crumb').innerHTML = `호원RISE · <strong>${v.label}</strong> · ${v.desc}`;
     const target = document.getElementById(`view-${id}`);
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (target) {
+      // Compute offset manually so sticky topbar + quicknav don't cover the heading
+      const topbarH = document.querySelector('.topbar')?.offsetHeight || 0;
+      const qnH = window.matchMedia('(max-width: 880px)').matches
+        ? (document.getElementById('mobile-quicknav')?.offsetHeight || 0) : 0;
+      const y = target.getBoundingClientRect().top + window.scrollY - (topbarH + qnH + 8);
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      // Center the active chip on mobile
+      const activeChip = $(`#mobile-quicknav .q[data-view="${id}"]`);
+      if (activeChip && window.matchMedia('(max-width: 880px)').matches) {
+        activeChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
   }
 
   // ---------- mobile quick nav ----------
