@@ -269,20 +269,35 @@
 
   let _currentView = 'overview';
   async function setView(id) {
-    if (!isUnlocked(id)) {
+    // Scroll-nav mode: all views visible. Only formula still gates on password.
+    if (id === 'formula' && !isUnlocked(id)) {
       const ok = await promptPassword();
-      if (!ok) return; // stay on current view
+      if (!ok) return;
+      buildFormula();   // reveal content after unlock
+      buildSidebar();
     }
     _currentView = id;
-    $$('.view').forEach(v => v.classList.toggle('active', v.id === `view-${id}`));
     $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
     const v = VIEWS.find(x => x.id === id);
     $('#crumb').innerHTML = `호원RISE · <strong>${v.label}</strong> · ${v.desc}`;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (id === 'overview') renderOverviewCharts();
-    if (id === 'common') renderCommonChart();
-    if (id === 'self') renderSelfChart();
-    if (id === 'community') buildCommunity();
+    const target = document.getElementById(`view-${id}`);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ---------- mobile quick nav ----------
+  function buildMobileQuickNav() {
+    const host = $('#mobile-quicknav');
+    if (!host) return;
+    host.innerHTML = '';
+    VIEWS.forEach(v => {
+      const btn = h('button', {
+        class: 'q',
+        'data-view': v.id,
+        onclick: () => setView(v.id)
+      }, [v.label]);
+      if (v.id === _currentView) btn.classList.add('active');
+      host.appendChild(btn);
+    });
   }
 
   // ---------- sidebar ----------
@@ -318,6 +333,7 @@
   function buildOverview() {
     const el = $('#view-overview');
     el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['개요 · 성과 종합']));
     const KPI = getKpi();
 
     const hero = h('section', { class: 'hero' }, [
@@ -431,7 +447,7 @@
       wrap.appendChild(h('div', { class: 'bar-row' }, [
         h('div', { class: 'lbl' }, [p.short]),
         h('div', { class: 'bar' }, [
-          h('i', { style: `width:${(pa+pb).toFixed(1)}%; background:#184a37;` })
+          h('i', { style: `width:${(pa+pb).toFixed(1)}%; background:linear-gradient(90deg,#047857,#9ad421);` })
         ]),
         h('div', { class: `val ${!hasAny ? 'na' : ''}` }, [!hasAny ? '—' : fmtN(tot)])
       ]));
@@ -449,12 +465,12 @@
       const d = indData(m);
       return Math.max(...Object.values(d).filter(v => v != null), 1);
     });
-    // Editorial forest · brass palette
+    // Vibrant emerald + lime palette
     const palette = [
-      'rgba(15,61,44,0.16)',   'rgba(24,74,55,0.16)',  'rgba(33,90,58,0.16)',  'rgba(47,106,72,0.18)',
-      'rgba(78,135,97,0.20)',  'rgba(184,144,92,0.18)','rgba(212,178,129,0.22)','rgba(158,122,69,0.20)'
+      'rgba(4,120,87,0.18)',  'rgba(5,150,105,0.18)', 'rgba(16,185,129,0.18)', 'rgba(52,211,153,0.22)',
+      'rgba(110,231,183,0.26)', 'rgba(154,212,33,0.22)', 'rgba(199,248,93,0.30)', 'rgba(64,77,68,0.20)'
     ];
-    const borders = ['#0f3d2c','#184a37','#215a3a','#2f6a48','#4e8761','#b8905c','#d4b281','#9e7a45'];
+    const borders = ['#047857','#059669','#10b981','#34d399','#6ee7b7','#9ad421','#c7f85d','#404d44'];
     const datasets = PROJECTS.map((p, i) => ({
       label: p.short,
       data: metrics.map((m, idx) => { const v = indData(m)[p.key]; return v == null ? 0 : (v / maxes[idx]) * 100; }),
@@ -490,6 +506,7 @@
   function buildCommon() {
     const el = $('#view-common');
     el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['공통지표 · 교육부 공통지표']));
 
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('공통지표 현황', '교육부 공통지표 및 지자체 자율지표를 제외한 대학자체 공통 지표. 값을 직접 입력할 수 있습니다.',
@@ -584,7 +601,7 @@
     let labels, datasets;
     const makeGradient = (ctx) => {
       const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 280);
-      g.addColorStop(0, 'rgba(15,61,44,0.95)'); g.addColorStop(1, 'rgba(184,144,92,0.55)');
+      g.addColorStop(0, 'rgba(4,120,87,0.95)'); g.addColorStop(1, 'rgba(199,248,93,0.55)');
       return g;
     };
     if (_commonProject === 'all') {
@@ -592,8 +609,8 @@
       datasets = countInds.map((ind, idx) => ({
         label: ind.name,
         data: PROJECTS.map(p => ind.data[p.key] || 0),
-        backgroundColor: ['#0f3d2c','#184a37','#2f6a48','#b8905c','#d4b281'][idx],
-        borderRadius: 6, barThickness: 16
+        backgroundColor: ['#047857','#059669','#10b981','#9ad421','#c7f85d'][idx],
+        borderRadius: 8, barThickness: 18
       }));
     } else {
       labels = countInds.map(i => i.name.replace(' 건수',''));
@@ -624,6 +641,7 @@
   function buildSelf() {
     const el = $('#view-self');
     el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['대학자체지표 · 5대 지수 체계']));
 
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('대학자체지표 · 5대 지수 체계',
@@ -694,7 +712,7 @@
         label: '세부 지표 수', data,
         backgroundColor: (ctx) => {
           const g = ctx.chart.ctx.createLinearGradient(0,0,ctx.chart.width,0);
-          g.addColorStop(0,'#0f3d2c'); g.addColorStop(0.6,'#184a37'); g.addColorStop(1,'#b8905c');
+          g.addColorStop(0,'#047857'); g.addColorStop(0.55,'#10b981'); g.addColorStop(1,'#c7f85d');
           return g;
         },
         borderRadius: 10, barThickness: 36
@@ -714,6 +732,7 @@
   function buildProject() {
     const el = $('#view-project');
     el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['과제별 성과 · 8개 과제']));
 
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('과제별 사업 성과 · 직접 입력',
@@ -784,6 +803,7 @@
   function buildInfra() {
     const el = $('#view-infra');
     el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['기타 구축 · 거버넌스·인프라']));
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('기타 구축 실적 · 직접 입력', '거버넌스 구축 및 인프라 구축 현황'),
       h('div', { class: 'grid-2' }, Store.state.infra.groups.map(g => {
@@ -829,6 +849,7 @@
     const el = $('#view-community');
     if (!el) return;
     el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['커뮤니티 · 학생·기업체']));
     const C = Store.state.community;
 
     // Hero tri-block (green · black · gray — ref HBM slide)
@@ -1282,6 +1303,22 @@
   function buildFormula() {
     const el = $('#view-formula');
     el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['산식 · 정의']));
+    if (!isUnlocked('formula')) {
+      el.appendChild(h('div', { class: 'lock-card' }, [
+        h('div', { class: 'lock-icon' }),
+        h('h3', {}, ['접근 제한 영역']),
+        h('p', {}, ['산식·정의는 인증된 관리자만 열람할 수 있습니다.']),
+        h('button', {
+          class: 'tb-btn primary',
+          onclick: async () => {
+            const ok = await promptPassword();
+            if (ok) { buildFormula(); buildSidebar(); }
+          }
+        }, ['잠금 해제'])
+      ]));
+      return;
+    }
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('공통지표 산식', '성과평가의 핵심 3요소 — 대학지표 달성률 · 통합만족도 · 성과확산도'),
       h('div', { class: 'card' }, [
@@ -1414,7 +1451,15 @@
   function init() {
     Store.init();
     buildSidebar();
-    buildOverview(); buildCommon(); buildSelf(); buildProject(); buildInfra(); buildFormula();
+    buildMobileQuickNav();
+    buildOverview(); buildCommon(); buildSelf(); buildProject(); buildInfra(); buildCommunity(); buildFormula();
+
+    // All charts render immediately (single-page scroll layout)
+    requestAnimationFrame(() => {
+      renderOverviewCharts();
+      renderCommonChart();
+      renderSelfChart();
+    });
 
     $('#today').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -1436,7 +1481,26 @@
     }));
     window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeNav(); });
 
-    setView('overview');
+    // Scroll-spy: highlight active nav button based on viewport
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          const id = en.target.id.replace('view-', '');
+          _currentView = id;
+          $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+          $$('#mobile-quicknav .q').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+          const v = VIEWS.find(x => x.id === id);
+          if (v) $('#crumb').innerHTML = `호원RISE · <strong>${v.label}</strong> · ${v.desc}`;
+          // auto-scroll the active chip into view on mobile quicknav
+          const activeChip = $(`#mobile-quicknav .q[data-view="${id}"]`);
+          if (activeChip && window.matchMedia('(max-width: 880px)').matches) {
+            activeChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+    $$('.view').forEach(v => observer.observe(v));
+
     pingSaveIndicator();
   }
   document.addEventListener('DOMContentLoaded', init);
