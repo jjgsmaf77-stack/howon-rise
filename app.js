@@ -1,7 +1,7 @@
 (() => {
   const { META, PROJECTS, COMMON_INDICATORS, SELF_INDICES,
           PROJECT_PERFORMANCE_COLUMNS, PROJECT_PERFORMANCE_ROWS,
-          INFRASTRUCTURE } = window.__RISE__;
+          INFRASTRUCTURE, COMMUNITY } = window.__RISE__;
 
   // ---------- helpers ----------
   const $ = (sel, el = document) => el.querySelector(sel);
@@ -43,7 +43,13 @@
           items: s.items.map(it => ({ name: it.name, project: it.project, rows: it.rows, 목표: null, 실적: null, 단위: '' }))
         })),
         projects: PROJECT_PERFORMANCE_ROWS.map(r => deepClone(r)),
-        infra: { groups: INFRASTRUCTURE.groups.map(g => ({ name: g.name, items: g.items.map(it => ({ ...it })) })) }
+        infra: { groups: INFRASTRUCTURE.groups.map(g => ({ name: g.name, items: g.items.map(it => ({ ...it })) })) },
+        community: {
+          students:  COMMUNITY.students.map(p => ({ ...p })),
+          companies: COMMUNITY.companies.map(p => ({ ...p })),
+          corpPosts: COMMUNITY.corpPosts.map(p => ({ ...p })),
+          stats:     { ...COMMUNITY.stats }
+        }
       };
     },
     migrate(s) {
@@ -58,6 +64,7 @@
         : base.self;
       base.projects = (s.projects && s.projects.length === base.projects.length) ? s.projects : base.projects;
       base.infra = s.infra || base.infra;
+      base.community = s.community && s.community.students ? s.community : base.community;
       return base;
     },
     save() {
@@ -196,6 +203,7 @@
     { id: 'self',       label: '대학자체지표',     desc: '5대 지수 체계' },
     { id: 'project',    label: '과제별 성과',      desc: '8개 과제' },
     { id: 'infra',      label: '기타 구축',         desc: '거버넌스·인프라' },
+    { id: 'community',  label: '커뮤니티',         desc: '학생 · 기업체' },
     { id: 'formula',    label: '산식·정의',         desc: '지표 방법론' }
   ];
 
@@ -274,6 +282,7 @@
     if (id === 'overview') renderOverviewCharts();
     if (id === 'common') renderCommonChart();
     if (id === 'self') renderSelfChart();
+    if (id === 'community') buildCommunity();
   }
 
   // ---------- sidebar ----------
@@ -287,6 +296,7 @@
       self: kpi.subIndicatorCount,
       project: Store.state.projects.length,
       infra: Store.state.infra.groups.reduce((a,b) => a + b.items.length, 0),
+      community: (Store.state.community?.students?.length || 0) + (Store.state.community?.companies?.length || 0),
       formula: ''
     };
     VIEWS.forEach(v => {
@@ -806,6 +816,468 @@
     ]));
   }
 
+  // ---------- community ----------
+  let _communityTab = 'student';    // 'student' | 'corp'
+  let _communityCat = 'all';        // category filter
+  let _communityQ = '';             // search query
+  let _showForm = false;            // inline post form open/close
+
+  const STUDENT_CATS = ['공지', '프로그램', '멘토링', '수상', '후기'];
+  const CORP_CATS = ['채용·인턴', '산학협력', '우수사례'];
+
+  function buildCommunity() {
+    const el = $('#view-community');
+    if (!el) return;
+    el.innerHTML = '';
+    const C = Store.state.community;
+
+    // Hero tri-block (green · black · gray — ref HBM slide)
+    el.appendChild(h('section', { class: 'tri-section' }, [
+      h('div', { class: 'tri-headline' }, [
+        h('span', { class: 'label' }, ['07 · COMMUNITY ECOSYSTEM']),
+        h('span', {}, ['호원RISE 커뮤니티 생태계']),
+        h('div', { class: 'values' }, [
+          h('span', {}, [
+            h('span', { class: 'v' }, [String(C.stats.totalStudents)]),
+            ' 명 참여 '
+          ]),
+          h('span', { class: 'arrow' }, ['→']),
+          h('span', {}, [
+            h('span', { class: 'v' }, [String(C.stats.partnerCompanies)]),
+            ' 기업 · '
+          ]),
+          h('span', { class: 'arrow' }, ['→']),
+          h('span', {}, [
+            h('span', { class: 'v' }, [String(C.stats.ongoingProjects)]),
+            ' 산학 프로젝트 '
+          ])
+        ])
+      ]),
+      h('div', { class: 'tri-block' }, [
+        triBlock('green', '01', '학생 커뮤니티', '재학생 · 졸업생 · 멘티',
+          C.stats.totalStudents, '명', '2025 → 2026E',
+          ['8대 과제 참여 트랙 공유', '멘토·멘티 매칭 허브', '우수사례·수상 기록', '프로그램 신청 창구'],
+          () => { _communityTab = 'student'; buildCommunity(); }),
+        triBlock('black', '02', '기업체 커뮤니티', '파트너 · MOU · 산학',
+          C.stats.partnerCompanies, '개', '협력기관 풀',
+          ['파트너 기업 디렉토리', '채용·인턴십 게시판', '산학협력 공동 제안', 'MOU 진행 상태 관리'],
+          () => { _communityTab = 'corp'; buildCommunity(); }),
+        triBlock('gray', '03', '지역·기관 네트워크', '전북 RISE 생태계',
+          C.stats.activeMentors, '명', '현직 멘토 풀',
+          ['초광역 지산학 연계', '지자체·유관기관 협업', '지역 현안 대응', '글로컬 인재 허브'],
+          null)
+      ])
+    ]));
+
+    // Activity ticker
+    el.appendChild(activityTicker());
+
+    // Tab bar + toolbar
+    const stuCnt = C.students.length;
+    const corpCnt = C.companies.length;
+    const tabs = h('div', { class: 'section-head' }, [
+      h('div', {}, [
+        h('div', { class: 'section-title' }, ['커뮤니티 게시판']),
+        h('div', { class: 'section-desc' }, ['학생/기업체 활동을 실시간으로 공유하고, 새로운 글을 작성할 수 있습니다.'])
+      ]),
+      h('div', { class: 'right' }, [
+        h('div', { class: 'tab-bar' }, [
+          tabBtn('student', '학생 커뮤니티', stuCnt),
+          tabBtn('corp',    '기업체 커뮤니티', corpCnt)
+        ])
+      ])
+    ]);
+    el.appendChild(h('section', { class: 'section' }, [tabs]));
+
+    // mini-stats for current tab
+    const stats = _communityTab === 'student' ? [
+      { icon: 'g', label: '참여 학생',     value: C.stats.totalStudents },
+      { icon: 'e', label: '활동 게시글',   value: C.students.length },
+      { icon: 'k', label: '현직 멘토',     value: C.stats.activeMentors },
+      { icon: 'y', label: '수상·우수사례', value: C.students.filter(p => p.카테고리 === '수상').length }
+    ] : [
+      { icon: 'k', label: '파트너 기업',    value: C.companies.length },
+      { icon: 'g', label: 'MOU 체결',       value: C.companies.filter(b => b.상태 === 'active').length },
+      { icon: 'y', label: '진행중 협약',    value: C.companies.filter(b => b.상태 === 'pending').length },
+      { icon: 'e', label: '공고·산학 글',   value: C.corpPosts.length }
+    ];
+    const miniRow = h('div', { class: 'mini-stats' },
+      stats.map(s => h('div', { class: 'mini-stat' }, [
+        h('div', { class: `icon ${s.icon}` }, [
+          _communityTab === 'student' ? (s.icon === 'g' ? '학' : s.icon === 'e' ? '글' : s.icon === 'k' ? '멘' : '★')
+                                      : (s.icon === 'k' ? '기' : s.icon === 'g' ? 'M' : s.icon === 'y' ? '협' : '글')
+        ]),
+        h('div', { class: 'meta' }, [
+          h('div', { class: 'label' }, [s.label]),
+          h('div', { class: 'value' }, [fmtN(s.value)])
+        ])
+      ]))
+    );
+    el.appendChild(miniRow);
+
+    // toolbar (search + category chips + write)
+    const cats = _communityTab === 'student' ? STUDENT_CATS
+              : (_communityTab === 'corp' ? CORP_CATS : []);
+
+    const toolbar = h('div', { class: 'community-toolbar' }, [
+      h('div', { class: 'search-input' }, [
+        h('input', {
+          type: 'text',
+          placeholder: _communityTab === 'corp' ? '기업명·분야·사업단 검색' : '제목·내용·작성자 검색',
+          value: _communityQ,
+          oninput: (e) => { _communityQ = e.target.value; renderCommunityList(); }
+        })
+      ]),
+      h('div', { class: 'category-chips' }, [
+        chipBtn('all', '전체'),
+        ...cats.map(c => chipBtn(c, c))
+      ]),
+      h('button', {
+        class: 'btn-write',
+        onclick: () => { _showForm = !_showForm; renderCommunityList(); }
+      }, [_communityTab === 'corp' ? '새 협력/공고' : '새 글 작성'])
+    ]);
+    el.appendChild(toolbar);
+
+    // list wrapper
+    const listWrap = h('div', { id: 'community-list' });
+    el.appendChild(listWrap);
+    renderCommunityList();
+
+    // Hall of fame / 우수 파트너
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('TOP 3 · 이달의 우수 파트너', '협력 활동 · 참여 규모 · 성과 기여도 종합 순위'),
+      h('div', { class: 'hall-grid' }, [
+        hallCard('green', '01', '최다 참여', C.companies[0]?.기업명 || 'JB바이오헬스㈜', '헬스케어 리빙랩 · 현장실습 20명'),
+        hallCard('black', '02', '성과 확산', C.companies[3]?.기업명 || '전북관광재단',     '지역축제 청년 기획 · 60명 파견'),
+        hallCard('gray',  '03', 'MOU 신규', C.companies[2]?.기업명 || '전북드론산업협회',  '국가자격 실기장 공유 · 18개사')
+      ])
+    ]));
+  }
+
+  function tabBtn(id, label, cnt) {
+    const btn = h('button', { onclick: () => { _communityTab = id; _communityCat = 'all'; _communityQ = ''; _showForm = false; buildCommunity(); } }, [
+      label,
+      h('span', { class: 'cnt' }, [String(cnt)])
+    ]);
+    if (_communityTab === id) btn.classList.add('active');
+    return btn;
+  }
+
+  function chipBtn(key, label) {
+    const btn = h('button', { onclick: () => { _communityCat = key; renderCommunityList(); } }, [label]);
+    if (_communityCat === key) btn.classList.add('active');
+    return btn;
+  }
+
+  function triBlock(variant, corner, title, role, bigVal, unit, era, lis, onCta) {
+    return h('div', { class: `blk ${variant}` }, [
+      h('div', { class: 'corner' }, [corner]),
+      h('div', { class: 'kicker' }, [title.toUpperCase()]),
+      h('h4', {}, [title]),
+      h('div', { class: 'role' }, [role]),
+      h('div', { class: 'big' }, [String(bigVal), ' ', h('span', { class: 'next' }, [unit])]),
+      h('div', { class: 'era' }, [era]),
+      h('ul', {}, lis.map(x => h('li', {}, [x]))),
+      onCta ? h('div', { class: 'cta', onclick: onCta }, ['바로가기 →']) : null
+    ]);
+  }
+
+  function hallCard(variant, rank, tag, name, sub) {
+    return h('div', { class: `hall-card ${variant}` }, [
+      h('div', { class: 'tag' }, [tag]),
+      h('div', { class: 'rank' }, [rank]),
+      h('div', {}, [
+        h('div', { class: 'name' }, [name]),
+        h('div', { class: 'sub' }, [sub])
+      ])
+    ]);
+  }
+
+  function activityTicker() {
+    const C = Store.state.community;
+    const items = [
+      ...C.students.slice(0, 5).map(p => ({ cat: p.카테고리, text: p.제목, project: p.사업단 })),
+      ...C.corpPosts.slice(0, 3).map(p => ({ cat: p.카테고리, text: p.제목, project: '기업' }))
+    ];
+    // duplicate for seamless loop
+    const doubled = [...items, ...items];
+    return h('div', { class: 'ticker' }, [
+      h('div', { class: 'live' }, [
+        h('span', { class: 'dot' }),
+        'LIVE FEED'
+      ]),
+      h('div', { class: 'track' }, [
+        h('div', { class: 'rail' }, doubled.map(it => h('div', { class: 'item' }, [
+          h('span', { class: 'cat' }, [it.cat]),
+          h('b', {}, [it.project]),
+          document.createTextNode(' · '),
+          document.createTextNode(it.text)
+        ])))
+      ])
+    ]);
+  }
+
+  function renderCommunityList() {
+    const host = document.getElementById('community-list');
+    if (!host) return;
+    host.innerHTML = '';
+    const C = Store.state.community;
+
+    if (_showForm) host.appendChild(postForm());
+
+    if (_communityTab === 'student') {
+      const filtered = C.students.filter(p => filterMatch(p, ['제목','내용','작성자','사업단'], STUDENT_CATS));
+      if (!filtered.length) {
+        host.appendChild(h('div', { class: 'empty' }, ['해당 조건에 맞는 게시글이 없습니다.']));
+        return;
+      }
+      const grid = h('div', { class: 'community-grid' });
+      filtered.forEach(p => grid.appendChild(studentPostCard(p)));
+      host.appendChild(grid);
+    } else {
+      // corp tab: companies grid + corp posts
+      const filteredBiz = C.companies.filter(b => filterMatchBiz(b));
+      const bizGrid = h('div', { class: 'community-grid' });
+      filteredBiz.forEach(b => bizGrid.appendChild(bizCard(b)));
+      host.appendChild(h('div', { class: 'section-head', style: 'margin:6px 0 10px' }, [
+        h('div', {}, [h('div', { class: 'section-title' }, ['파트너 기업 디렉토리'])])
+      ]));
+      host.appendChild(filteredBiz.length ? bizGrid : h('div', { class: 'empty' }, ['검색 결과가 없습니다.']));
+
+      const filteredPosts = C.corpPosts.filter(p => filterMatch(p, ['제목','내용','작성자'], CORP_CATS));
+      if (filteredPosts.length) {
+        host.appendChild(h('div', { class: 'section-head', style: 'margin:28px 0 10px' }, [
+          h('div', {}, [h('div', { class: 'section-title' }, ['협력·공고 게시판'])])
+        ]));
+        const pg = h('div', { class: 'community-grid' });
+        filteredPosts.forEach(p => pg.appendChild(corpPostCard(p)));
+        host.appendChild(pg);
+      }
+    }
+  }
+
+  function filterMatch(p, fields, validCats) {
+    if (_communityCat !== 'all' && validCats.includes(_communityCat) && p.카테고리 !== _communityCat) return false;
+    if (_communityQ.trim()) {
+      const q = _communityQ.toLowerCase();
+      return fields.some(f => String(p[f] || '').toLowerCase().includes(q));
+    }
+    return true;
+  }
+  function filterMatchBiz(b) {
+    if (_communityCat !== 'all' && CORP_CATS.includes(_communityCat)) return false; // categories apply to posts only
+    if (_communityQ.trim()) {
+      const q = _communityQ.toLowerCase();
+      return ['기업명','업종','소재지','사업단','담당자','설명'].some(f => String(b[f] || '').toLowerCase().includes(q));
+    }
+    return true;
+  }
+
+  function studentPostCard(p) {
+    return h('article', { class: 'post-card' }, [
+      h('div', { class: 'top' }, [
+        h('div', { class: 'title-wrap' }, [
+          h('h4', { class: 'title' }, [p.제목]),
+          h('div', { class: 'meta-row' }, [
+            h('span', { class: `cat-badge ${p.카테고리}` }, [p.카테고리]),
+            h('span', { class: 'chip ghost' }, [p.사업단]),
+            h('span', { class: 'dot-sep' }, ['·']),
+            document.createTextNode(p.작성자),
+            h('span', { class: 'dot-sep' }, ['·']),
+            document.createTextNode(p.날짜)
+          ])
+        ]),
+        h('button', { class: 'del-btn', onclick: () => deletePost('students', p.id) }, ['삭제'])
+      ]),
+      h('div', { class: 'body' }, [p.내용])
+    ]);
+  }
+
+  function corpPostCard(p) {
+    return h('article', { class: 'post-card' }, [
+      h('div', { class: 'top' }, [
+        h('div', { class: 'title-wrap' }, [
+          h('h4', { class: 'title' }, [p.제목]),
+          h('div', { class: 'meta-row' }, [
+            h('span', { class: `cat-badge ${p.카테고리}` }, [p.카테고리]),
+            h('span', { class: 'dot-sep' }, ['·']),
+            document.createTextNode(p.작성자),
+            h('span', { class: 'dot-sep' }, ['·']),
+            document.createTextNode(p.날짜)
+          ])
+        ]),
+        h('button', { class: 'del-btn', onclick: () => deletePost('corpPosts', p.id) }, ['삭제'])
+      ]),
+      h('div', { class: 'body' }, [p.내용])
+    ]);
+  }
+
+  function bizCard(b) {
+    const initials = (b.기업명 || '?').replace(/[㈜(주)]/g, '').trim().slice(0, 2);
+    const variant = b.상태 === 'active' ? '' : (b.사업단 === 'JB집' ? 'black' : 'gray');
+    return h('article', { class: 'biz-card' }, [
+      h('div', { class: 'top' }, [
+        h('div', { class: `avatar ${variant}` }, [initials]),
+        h('div', { style: 'flex:1; min-width:0;' }, [
+          h('h4', { class: 'bname' }, [b.기업명]),
+          h('div', { class: 'bmeta' }, [
+            h('span', {}, [b.업종]),
+            h('span', { class: 'dot-sep' }, ['·']),
+            h('span', {}, [b.소재지]),
+            h('span', { class: 'dot-sep' }, ['·']),
+            h('span', { class: 'chip ghost' }, [b.사업단])
+          ])
+        ]),
+        h('button', { class: 'del-btn', onclick: () => deletePost('companies', b.id) }, ['삭제'])
+      ]),
+      h('div', { class: 'bdesc' }, [b.설명]),
+      h('div', { class: 'bfoot' }, [
+        h('div', {}, [
+          '담당: ', h('b', { style: 'color:var(--ink-700); font-weight:600;' }, [b.담당자]),
+          '   ·   체결: ', b.체결일
+        ]),
+        h('span', { class: `status ${b.상태}` }, [b.상태 === 'active' ? 'MOU 체결' : '진행중'])
+      ])
+    ]);
+  }
+
+  function deletePost(kind, id) {
+    if (!confirm('이 항목을 삭제할까요?')) return;
+    const C = Store.state.community;
+    C[kind] = C[kind].filter(x => x.id !== id);
+    Store.save();
+    buildCommunity();
+  }
+
+  function postForm() {
+    const today = new Date().toISOString().slice(0, 10);
+    const isCorp = _communityTab === 'corp';
+    const isBiz  = false; // always post type (for now); biz add done via different shortcut
+    let cats = isCorp ? CORP_CATS : STUDENT_CATS;
+
+    // form state
+    const state = {
+      제목: '', 카테고리: cats[0], 사업단: PROJECTS[0].key,
+      작성자: '', 내용: '', mode: 'post' // or 'biz'
+    };
+    const bizState = {
+      기업명: '', 업종: '', 소재지: '', 사업단: PROJECTS[0].key,
+      담당자: '', 상태: 'pending', 체결일: today, 설명: ''
+    };
+
+    const form = h('div', { class: 'post-form' });
+
+    const rerender = () => {
+      form.innerHTML = '';
+      form.appendChild(header());
+      if (state.mode === 'post') form.appendChild(postBody());
+      else                         form.appendChild(bizBody());
+      form.appendChild(actions());
+    };
+    const header = () => h('div', { class: 'form-row full' }, [
+      h('label', {}, [
+        h('span', { class: 'lbl' }, ['작성 유형']),
+        (() => {
+          const sel = h('select', { onchange: (e) => { state.mode = e.target.value; rerender(); } });
+          sel.appendChild(h('option', { value: 'post' }, [isCorp ? '협력·공고 글' : '게시글']));
+          if (isCorp) sel.appendChild(h('option', { value: 'biz' }, ['파트너 기업 등록']));
+          sel.value = state.mode;
+          return sel;
+        })()
+      ])
+    ]);
+
+    const postBody = () => {
+      const fr1 = h('div', { class: 'form-row' }, [
+        h('label', {}, [h('span', {}, ['카테고리']), (() => {
+          const sel = h('select', { onchange: (e) => { state.카테고리 = e.target.value; } });
+          cats.forEach(c => sel.appendChild(h('option', { value: c }, [c])));
+          sel.value = state.카테고리;
+          return sel;
+        })()]),
+        !isCorp ? h('label', {}, [h('span', {}, ['사업단']), (() => {
+          const sel = h('select', { onchange: (e) => { state.사업단 = e.target.value; } });
+          ['공통', ...PROJECTS.map(p => p.key)].forEach(k => sel.appendChild(h('option', { value: k }, [k])));
+          sel.value = state.사업단;
+          return sel;
+        })()]) : h('label', {}, []),
+        h('label', {}, [h('span', {}, ['작성자']), h('input', { type: 'text', placeholder: '작성자 이름',
+          oninput: (e) => { state.작성자 = e.target.value; } })]),
+        h('label', {}, [h('span', {}, ['날짜']), h('input', { type: 'text', value: today, disabled: 'true' })])
+      ]);
+      const fr2 = h('div', { class: 'form-row full' }, [
+        h('label', {}, [h('span', {}, ['제목']), h('input', { type: 'text', placeholder: '제목 입력',
+          oninput: (e) => { state.제목 = e.target.value; } })])
+      ]);
+      const fr3 = h('div', { class: 'form-row full' }, [
+        h('label', {}, [h('span', {}, ['내용']), h('textarea', { placeholder: '내용을 입력하세요',
+          oninput: (e) => { state.내용 = e.target.value; } })])
+      ]);
+      const wrap = h('div', {});
+      wrap.appendChild(fr1); wrap.appendChild(fr2); wrap.appendChild(fr3);
+      return wrap;
+    };
+
+    const bizBody = () => h('div', {}, [
+      h('div', { class: 'form-row' }, [
+        h('label', {}, [h('span', {}, ['기업명']), h('input', { type: 'text', oninput: e => bizState.기업명 = e.target.value })]),
+        h('label', {}, [h('span', {}, ['업종']), h('input', { type: 'text', oninput: e => bizState.업종 = e.target.value })]),
+        h('label', {}, [h('span', {}, ['소재지']), h('input', { type: 'text', oninput: e => bizState.소재지 = e.target.value })]),
+        h('label', {}, [h('span', {}, ['사업단']), (() => {
+          const sel = h('select', { onchange: e => bizState.사업단 = e.target.value });
+          PROJECTS.forEach(p => sel.appendChild(h('option', { value: p.key }, [p.key])));
+          return sel;
+        })()])
+      ]),
+      h('div', { class: 'form-row' }, [
+        h('label', {}, [h('span', {}, ['담당자']), h('input', { type: 'text', oninput: e => bizState.담당자 = e.target.value })]),
+        h('label', {}, [h('span', {}, ['상태']), (() => {
+          const sel = h('select', { onchange: e => bizState.상태 = e.target.value });
+          sel.appendChild(h('option', { value: 'pending' }, ['진행중']));
+          sel.appendChild(h('option', { value: 'active' }, ['MOU 체결']));
+          return sel;
+        })()]),
+        h('label', {}, [h('span', {}, ['체결일']), h('input', { type: 'date', value: today, oninput: e => bizState.체결일 = e.target.value })])
+      ]),
+      h('div', { class: 'form-row full' }, [
+        h('label', {}, [h('span', {}, ['설명']), h('textarea', { placeholder: '협력 내용·범위', oninput: e => bizState.설명 = e.target.value })])
+      ])
+    ]);
+
+    const actions = () => h('div', { class: 'form-actions' }, [
+      h('button', { class: 'tb-btn', onclick: () => { _showForm = false; renderCommunityList(); } }, ['취소']),
+      h('button', { class: 'tb-btn primary', onclick: () => submit() }, ['등록'])
+    ]);
+
+    const submit = () => {
+      const C = Store.state.community;
+      if (state.mode === 'biz' && isCorp) {
+        if (!bizState.기업명.trim()) { alert('기업명을 입력하세요.'); return; }
+        C.companies.unshift({ id: Date.now(), ...bizState });
+      } else {
+        if (!state.제목.trim()) { alert('제목을 입력하세요.'); return; }
+        const item = {
+          id: Date.now(),
+          제목: state.제목.trim(),
+          카테고리: state.카테고리,
+          작성자: state.작성자.trim() || '익명',
+          날짜: today,
+          내용: state.내용.trim()
+        };
+        if (!isCorp) item.사업단 = state.사업단;
+        if (isCorp) C.corpPosts.unshift(item);
+        else        C.students.unshift(item);
+      }
+      Store.save();
+      _showForm = false;
+      buildCommunity();
+    };
+
+    rerender();
+    return form;
+  }
+
   // ---------- formula ----------
   function buildFormula() {
     const el = $('#view-formula');
@@ -907,6 +1379,7 @@
       if (full) {
         buildSidebar();
         buildOverview(); buildCommon(); buildSelf(); buildProject(); buildInfra(); buildFormula();
+        if (_currentView === 'community') buildCommunity();
         setView(_currentView);
       } else {
         // rebuild data-dependent views only for current view
