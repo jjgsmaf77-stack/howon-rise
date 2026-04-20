@@ -100,7 +100,9 @@
 
   --font-sans: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont,
                "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
-  --font-serif: "Fraunces", "Cormorant Garamond", "Georgia", "Apple SD Gothic Neo", serif;
+  /* Display stack (kept for headings — now Pretendard gothic, same family as body) */
+  --font-serif: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+                "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -113,10 +115,6 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "ss01", "cv01";
-  background-image:
-    radial-gradient(1200px 600px at 85% -10%, rgba(184,144,92,.07), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgba(24,74,55,.06), transparent 60%);
-  background-attachment: fixed;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -177,10 +175,9 @@ button { font-family: inherit; cursor: pointer; }
   font-weight: 600;
 }
 .brand .mark {
-  font-family: var(--font-serif);
-  font-size: 24px;
-  font-weight: 500;
-  letter-spacing: -.01em;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.02em;
   color: var(--g-800);
   display: flex;
   align-items: center;
@@ -324,19 +321,17 @@ button { font-family: inherit; cursor: pointer; }
   display: inline-block;
 }
 .hero h1 {
-  font-family: var(--font-serif);
-  font-size: 46px;
-  line-height: 1.12;
+  font-size: 40px;
+  line-height: 1.18;
   margin: 18px 0 14px;
-  letter-spacing: -.015em;
+  letter-spacing: -.025em;
   max-width: 860px;
-  font-weight: 500;
-  font-optical-sizing: auto;
+  font-weight: 700;
 }
 .hero h1 em {
-  font-style: italic;
+  font-style: normal;
   color: var(--br-300);
-  font-weight: 400;
+  font-weight: 700;
 }
 .hero .lead {
   color: rgba(251,248,240,.78);
@@ -371,9 +366,8 @@ button { font-family: inherit; cursor: pointer; }
 }
 .hero .stat .k { font-size: 10px; color: var(--br-300); letter-spacing: .2em; text-transform: uppercase; font-weight: 600; }
 .hero .stat .v {
-  font-family: var(--font-serif);
-  font-size: 34px; font-weight: 500; margin-top: 6px;
-  letter-spacing: -.015em; font-variant-numeric: tabular-nums;
+  font-size: 30px; font-weight: 800; margin-top: 6px;
+  letter-spacing: -.025em; font-variant-numeric: tabular-nums;
   color: #fbf8f0;
 }
 .hero .stat .u { font-size: 12px; color: var(--br-300); margin-left: 6px; font-weight: 500; font-family: var(--font-sans); }
@@ -385,10 +379,9 @@ button { font-family: inherit; cursor: pointer; }
   margin-bottom: 16px; gap: 18px; flex-wrap: wrap;
 }
 .section-title {
-  font-family: var(--font-serif);
-  font-size: 24px;
-  font-weight: 500;
-  letter-spacing: -.008em;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.015em;
   color: var(--ink-900);
   display: flex; align-items: center; gap: 12px;
 }
@@ -469,13 +462,12 @@ button { font-family: inherit; cursor: pointer; }
 .kpi .value {
   display: flex; align-items: baseline; gap: 6px;
   margin-top: 12px;
-  font-family: var(--font-serif);
-  font-size: 40px;
-  font-weight: 500;
+  font-size: 32px;
+  font-weight: 800;
   color: var(--g-800);
-  letter-spacing: -.02em;
+  letter-spacing: -.025em;
   font-variant-numeric: tabular-nums;
-  line-height: 1;
+  line-height: 1.1;
 }
 .kpi .value .unit {
   font-family: var(--font-sans);
@@ -610,7 +602,7 @@ table.tbl td.na, table.tbl td .na { color: var(--ink-300); font-weight: 400; }
   font-weight: 700; font-size: 16px;
   letter-spacing: -.02em;
 }
-.index-group .head h3 { margin: 0; font-family: var(--font-serif); font-size: 20px; font-weight: 500; letter-spacing: -.005em; }
+.index-group .head h3 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.015em; }
 .index-group .head p { margin: 3px 0 0; font-size: 12.5px; color: var(--ink-500); }
 .index-group .sub-list {
   display: flex; flex-direction: column; gap: 6px;
@@ -1231,26 +1223,24 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   display: flex; align-items: center; gap: 18px;
   box-shadow: var(--shadow-block);
   margin-bottom: 20px;
-  font-family: var(--font-serif);
-  font-size: 19px;
-  font-weight: 500;
-  letter-spacing: -.005em;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.015em;
   border: 1px solid rgba(212,178,129,.18);
 }
 .tri-headline .label {
-  font-family: var(--font-sans);
   font-size: 10px;
   letter-spacing: .22em;
   text-transform: uppercase;
   color: var(--br-300);
-  font-weight: 600;
+  font-weight: 700;
 }
 .tri-headline .values {
   margin-left: auto;
   display: flex; gap: 22px; align-items: baseline;
   font-variant-numeric: tabular-nums;
 }
-.tri-headline .values .v { font-family: var(--font-serif); font-size: 28px; font-weight: 500; letter-spacing: -.02em; color: #fbf8f0; }
+.tri-headline .values .v { font-size: 24px; font-weight: 800; letter-spacing: -.025em; color: #fbf8f0; }
 .tri-headline .values .arrow { color: var(--br-400); margin: 0 2px; opacity: .7; }
 
 .tri-block {
@@ -1288,22 +1278,20 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 }
 .tri-block .blk.green .kicker { color: var(--br-300); opacity: 1; }
 .tri-block .blk h4 {
-  font-family: var(--font-serif);
   margin: 0;
-  font-size: 26px; font-weight: 500; letter-spacing: -.01em;
+  font-size: 22px; font-weight: 800; letter-spacing: -.025em;
   display: flex; align-items: center; gap: 8px;
 }
 .tri-block .blk .role { font-size: 12px; opacity: .7; font-weight: 500; margin-top: -4px; }
 .tri-block .blk .big {
-  font-family: var(--font-serif);
-  font-size: 72px; font-weight: 500;
-  letter-spacing: -.025em; line-height: 1;
+  font-size: 64px; font-weight: 800;
+  letter-spacing: -.03em; line-height: 1;
   margin: 10px 0 4px;
   font-variant-numeric: tabular-nums;
 }
 .tri-block .blk.green .big { color: var(--br-100); }
 .tri-block .blk .big .arrow { font-size: 28px; margin: 0 10px; opacity: .55; font-weight: 600; }
-.tri-block .blk .big .next  { font-family: var(--font-sans); font-size: 26px; opacity: .75; font-weight: 600; margin-left: 4px; }
+.tri-block .blk .big .next  { font-size: 24px; opacity: .75; font-weight: 700; margin-left: 4px; }
 .tri-block .blk .era { font-size: 11.5px; opacity: .65; letter-spacing: .06em; margin-top: -2px; }
 .tri-block .blk ul {
   list-style: none; padding: 0; margin: 14px 0 0;
@@ -1523,10 +1511,9 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 }
 .post-card .title-wrap { flex: 1; min-width: 0; }
 .post-card .title {
-  font-family: var(--font-serif);
-  font-size: 17px; font-weight: 500; color: var(--ink-900);
-  margin: 0 0 4px; line-height: 1.3;
-  letter-spacing: -.005em;
+  font-size: 15px; font-weight: 800; color: var(--ink-900);
+  margin: 0 0 4px; line-height: 1.35;
+  letter-spacing: -.015em;
 }
 .post-card .meta-row {
   display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
@@ -1592,10 +1579,9 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .biz-card .avatar.black { background: var(--grad-black); }
 .biz-card .avatar.gray  { background: var(--grad-gray); }
 .biz-card .bname {
-  font-family: var(--font-serif);
-  font-size: 18px; font-weight: 500; color: var(--ink-900);
+  font-size: 15px; font-weight: 800; color: var(--ink-900);
   margin: 0;
-  letter-spacing: -.005em;
+  letter-spacing: -.015em;
 }
 .biz-card .bmeta {
   font-size: 12px; color: var(--ink-500); margin-top: 3px;
@@ -1713,10 +1699,9 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .mini-stat .meta { min-width: 0; flex: 1; }
 .mini-stat .label { font-size: 11.5px; color: var(--ink-500); font-weight: 600; letter-spacing: .02em; }
 .mini-stat .value {
-  font-family: var(--font-serif);
-  font-size: 28px; font-weight: 500; color: var(--g-800);
-  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
-  margin-top: 2px; line-height: 1;
+  font-size: 24px; font-weight: 800; color: var(--g-800);
+  font-variant-numeric: tabular-nums; letter-spacing: -.025em;
+  margin-top: 2px; line-height: 1.1;
 }
 
 /* =========================================================
@@ -1736,10 +1721,9 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .hall-card.green { background: var(--grad-green); }
 .hall-card.gray  { background: var(--grad-gray); }
 .hall-card .rank {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 58px; font-weight: 400;
-  letter-spacing: -.03em; line-height: 1;
+  font-family: var(--font-mono);
+  font-size: 52px; font-weight: 700;
+  letter-spacing: -.04em; line-height: 1;
   opacity: .95;
   color: var(--br-200);
 }
@@ -1750,7 +1734,7 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
   opacity: .7; font-weight: 700;
 }
-.hall-card .name { font-family: var(--font-serif); font-size: 19px; font-weight: 500; margin: 6px 0 2px; letter-spacing: -.005em; }
+.hall-card .name { font-size: 16px; font-weight: 800; margin: 6px 0 2px; letter-spacing: -.015em; }
 .hall-card .sub  { font-size: 12px; opacity: .75; line-height: 1.5; }
 
 /* =========================================================
@@ -1763,14 +1747,142 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   .hall-grid { grid-template-columns: 1fr; }
   .post-form .form-row { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ---- Mobile community optimization ---- */
+@media (max-width: 880px) {
+  /* Tab bar + section head stack cleanly */
+  #view-community .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  #view-community .section-head .right { width: 100%; }
+  #view-community .tab-bar { width: 100%; display: flex; }
+  #view-community .tab-bar button {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 560px) {
-  .tri-block .blk { padding: 22px 22px 24px; min-height: 220px; }
-  .tri-block .blk .big { font-size: 52px; }
-  .tri-headline { flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 18px; }
-  .tri-headline .values { margin-left: 0; flex-wrap: wrap; gap: 12px; }
-  .mini-stats { grid-template-columns: 1fr 1fr; }
-  .post-form .form-row { grid-template-columns: 1fr; }
-  .community-toolbar { gap: 8px; }
-  .search-input { min-width: 0; }
-  .tab-bar button { padding: 8px 14px; font-size: 12px; }
+  /* Tri-section compact hero */
+  .tri-section { margin-top: 2px; }
+  .tri-headline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px 16px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+  .tri-headline .label { font-size: 9.5px; letter-spacing: .18em; }
+  .tri-headline .values {
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    width: 100%;
+    font-size: 12px;
+  }
+  .tri-headline .values .v { font-size: 20px; }
+
+  /* Tri-block: short compact tiles */
+  .tri-block { gap: 12px; }
+  .tri-block .blk {
+    padding: 20px 20px 22px;
+    min-height: 0;
+    border-radius: 14px;
+    gap: 6px;
+  }
+  .tri-block .blk h4 { font-size: 19px; }
+  .tri-block .blk .role { font-size: 11.5px; }
+  .tri-block .blk .big {
+    font-size: 44px;
+    margin: 6px 0 2px;
+  }
+  .tri-block .blk .big .next { font-size: 16px; }
+  .tri-block .blk .era { font-size: 10.5px; }
+  .tri-block .blk ul { margin-top: 10px; gap: 5px; font-size: 12.5px; }
+  .tri-block .blk .cta { padding-top: 10px; font-size: 12px; }
+  .tri-block .blk .corner { top: 14px; right: 16px; font-size: 9.5px; }
+
+  /* Activity ticker compact */
+  .ticker { padding: 6px 10px 6px 6px; margin: 12px 0 16px; gap: 8px; }
+  .ticker .live { font-size: 9.5px; padding: 5px 9px; letter-spacing: .14em; }
+  .ticker .item { font-size: 11.5px; }
+  .ticker .rail { gap: 20px; animation-duration: 28s; }
+
+  /* Mini stats: 2 cols compact, icon smaller */
+  .mini-stats { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .mini-stat { padding: 12px 14px; gap: 10px; border-radius: 12px; }
+  .mini-stat .icon { width: 32px; height: 32px; font-size: 13px; border-radius: 9px; }
+  .mini-stat .label { font-size: 10.5px; }
+  .mini-stat .value { font-size: 20px; }
+
+  /* Community toolbar: search full row, chips scroll horizontally, button inline */
+  .community-toolbar {
+    gap: 8px;
+    margin: 12px 0 10px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-input {
+    min-width: 0; width: 100%; padding: 7px 12px; border-radius: 10px;
+  }
+  .search-input input { font-size: 12.5px; }
+  .category-chips {
+    gap: 5px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .category-chips::-webkit-scrollbar { display: none; }
+  .category-chips button {
+    padding: 6px 12px;
+    font-size: 11.5px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .btn-write {
+    padding: 9px 16px;
+    font-size: 12.5px;
+    align-self: flex-start;
+  }
+
+  /* Post / biz cards tighter */
+  .post-card, .biz-card { padding: 14px 16px; border-radius: 12px; }
+  .post-card .title { font-size: 14px; }
+  .post-card .body { font-size: 12.5px; margin-top: 8px; }
+  .post-card .meta-row { gap: 6px; font-size: 11px; }
+  .biz-card .avatar { width: 38px; height: 38px; font-size: 13px; border-radius: 10px; }
+  .biz-card .bname { font-size: 14.5px; }
+  .biz-card .bmeta, .biz-card .bdesc { font-size: 12px; }
+  .biz-card .bfoot { font-size: 11px; flex-direction: column; align-items: flex-start; gap: 8px; }
+
+  /* Hall of fame compact */
+  .hall-grid { gap: 10px; }
+  .hall-card { padding: 18px 18px 16px; min-height: 130px; border-radius: 12px; }
+  .hall-card .rank { font-size: 40px; }
+  .hall-card .name { font-size: 15px; }
+  .hall-card .sub { font-size: 11.5px; }
+
+  /* Post form tighter */
+  .post-form { padding: 14px 16px; margin-bottom: 10px; }
+  .post-form .form-row { grid-template-columns: 1fr; gap: 8px; margin-bottom: 8px; }
+  .post-form input, .post-form select, .post-form textarea { font-size: 12.5px; padding: 8px 10px; }
+
+  /* Category badges slightly smaller */
+  .cat-badge { font-size: 9.5px; padding: 2px 7px; }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  .tri-block .blk .big { font-size: 38px; }
+  .tri-block .blk h4 { font-size: 18px; }
+  .tri-headline .values .v { font-size: 18px; }
+  .mini-stats { grid-template-columns: 1fr; }
+  .mini-stat .value { font-size: 22px; }
 }
