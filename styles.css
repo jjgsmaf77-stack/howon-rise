@@ -256,6 +256,58 @@ button { font-family: inherit; cursor: pointer; }
   line-height: 1.5;
 }
 
+/* ---------- Sidebar QR box ---------- */
+.qr-box {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+}
+.qr-box img {
+  width: 96px; height: 96px;
+  display: block; flex-shrink: 0;
+  border-radius: 6px;
+  background: #ffffff;
+}
+.qr-meta { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.qr-label {
+  font-size: 10px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--br-600);
+  font-weight: 700;
+}
+.qr-url {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-900);
+  letter-spacing: -.01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.qr-dl {
+  margin-top: 6px;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--g-700);
+  padding: 5px 9px;
+  border: 1px solid var(--g-200);
+  border-radius: 8px;
+  background: var(--g-50);
+  transition: all .16s ease;
+  align-self: flex-start;
+}
+.qr-dl:hover {
+  background: var(--g-600);
+  color: #ffffff;
+  border-color: var(--g-600);
+}
+
 /* ---------- Main ---------- */
 .main { background: var(--grad-soft); min-width: 0; }
 
