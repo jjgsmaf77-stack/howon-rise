@@ -389,6 +389,14 @@
     ]);
     el.appendChild(kpiSec);
 
+    // 사업단별 종합 카드 (8개 과제) — 한눈에 핵심 데이터
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('사업단별 종합 데이터', '8개 과제별 공통지표 · 자체지표 · 추진과제 · 인프라 · 산출점수 통합'),
+      h('div', { class: 'grid-4 unit-grid' },
+        PROJECTS.map(p => unitCard(p))
+      )
+    ]));
+
     // 과제별 공통지표 종합 (A1·A2·A3) + 미래 목표
     if (PERFORMANCE_SCORES && PERFORMANCE_SCORES.length) {
       const yearAvg = META.yearAvg || {};
@@ -476,6 +484,73 @@
   }
 
   function indData(name) { return Store.state.common.find(i => i.name === name).data; }
+
+  // 사업단별 종합 카드 — 모든 데이터 소스 결합
+  function unitCard(p) {
+    const d = (name) => {
+      const ind = Store.state.common.find(i => i.name === name);
+      return ind ? ind.data[p.key] : null;
+    };
+    const score = PERFORMANCE_SCORES.find(s => s.project === p.key);
+    const projRows = Store.state.projects.filter(r => r.과제명 === p.key);
+    const rates = projRows.map(r => r.달성률).filter(v => v != null);
+    const avgRate = rates.length ? Math.round(rates.reduce((a,b)=>a+b,0) / rates.length) : null;
+    const selfCount = Store.state.self.reduce((a, g) => a + g.items.filter(it => it.project === p.key).length, 0);
+    const infraCount = (window.__RISE__.INFRASTRUCTURE.perProject || []).filter(x => x.과제 === p.key).length;
+    const infraTotal = (window.__RISE__.INFRASTRUCTURE.perProject || [])
+      .filter(x => x.과제 === p.key).reduce((a,b)=>a+(b.count||0),0);
+
+    return h('div', { class: 'unit-card' }, [
+      h('div', { class: 'uc-head' }, [
+        h('span', { class: 'chip dark' }, [p.short]),
+        h('div', { class: 'uc-theme' }, [p.theme])
+      ]),
+      h('div', { class: 'uc-full' }, [p.full]),
+
+      // Score block
+      score ? h('div', { class: 'uc-score' }, [
+        h('div', { class: 'uc-score-main' }, [
+          h('span', { class: 'uc-score-v' }, [String(score.score2025 != null ? score.score2025 : '—')]),
+          h('span', { class: 'uc-score-u' }, ['점'])
+        ]),
+        h('div', { class: 'uc-score-meta' }, [
+          h('span', {}, [`A1 ${score.A1 ?? '—'}`]),
+          h('span', {}, [`A2 ${score.A2 ?? '—'}`]),
+          h('span', {}, [`A3 ${score.A3 ?? '—'}`])
+        ])
+      ]) : null,
+
+      // Stats grid
+      h('div', { class: 'uc-stats' }, [
+        ucStat('MOU', d('MOU 건수'), '건'),
+        ucStat('언론', d('언론보도 건수'), '건'),
+        ucStat('행사', d('행사 운영 건수'), '건'),
+        ucStat('만족도', d('통합 만족도(100점 환산)'), '점'),
+        ucStat('추진과제', projRows.length, '건'),
+        ucStat('자체지표', selfCount, '개'),
+        ucStat('인프라', infraTotal, '건'),
+        ucStat('평균달성', avgRate, '%')
+      ]),
+
+      // Future targets mini
+      score ? h('div', { class: 'uc-future' }, [
+        h('span', { class: 'uc-future-l' }, ['목표 추세']),
+        h('span', { class: 'uc-future-v' }, [
+          `'25 ${score.score2025} → '26 ${score.futures[2026]} → '27 ${score.futures[2027]} → '28 ${score.futures[2028]} → '29 ${score.futures[2029]}`
+        ])
+      ]) : null
+    ]);
+  }
+  function ucStat(label, value, unit) {
+    const v = value == null ? '—' : value;
+    return h('div', { class: 'uc-stat' }, [
+      h('span', { class: 'uc-stat-l' }, [label]),
+      h('span', { class: 'uc-stat-v' }, [
+        String(v),
+        v !== '—' ? h('span', { class: 'uc-stat-u' }, [unit]) : null
+      ])
+    ]);
+  }
 
   function kpiInHero(label, value, unit) {
     return h('div', { class: 'stat' }, [
