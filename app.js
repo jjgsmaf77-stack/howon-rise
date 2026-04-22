@@ -1,7 +1,7 @@
 (() => {
   const { META, PROJECTS, COMMON_INDICATORS, SELF_INDICES,
           PROJECT_PERFORMANCE_COLUMNS, PROJECT_PERFORMANCE_ROWS,
-          INFRASTRUCTURE, COMMUNITY } = window.__RISE__;
+          INFRASTRUCTURE, COMMUNITY, PERFORMANCE_SCORES = [] } = window.__RISE__;
 
   // ---------- helpers ----------
   const $ = (sel, el = document) => el.querySelector(sel);
@@ -389,6 +389,61 @@
     ]);
     el.appendChild(kpiSec);
 
+    // 과제별 공통지표 종합 (A1·A2·A3) + 미래 목표
+    if (PERFORMANCE_SCORES && PERFORMANCE_SCORES.length) {
+      const yearAvg = META.yearAvg || {};
+      const avg2025 = PERFORMANCE_SCORES.reduce((a,b)=>a+(b.score2025||0),0) / PERFORMANCE_SCORES.length;
+      const scoreSec = h('section', { class: 'section' }, [
+        sectionHead('과제별 공통지표 종합 — A1·A2·A3 산출',
+          `2025년 평균 ${avg2025.toFixed(1)}점 → 2029년 목표 ${yearAvg[2029] || 94}점 (산식: A1×0.4 + A2×0.4 + A3×0.2)`),
+        h('div', { style: 'overflow-x:auto;' }, [(() => {
+          const tbl = h('table', { class: 'tbl' });
+          tbl.appendChild(h('thead', {}, [h('tr', {}, [
+            h('th', {}, ['과제']),
+            h('th', { style:'text-align:right' }, ['A1 달성률']),
+            h('th', { style:'text-align:right' }, ['A2 만족도']),
+            h('th', { style:'text-align:right' }, ['A3 확산도']),
+            h('th', { style:'text-align:right' }, ['2025 종합']),
+            h('th', { style:'text-align:right' }, ['2026 목표']),
+            h('th', { style:'text-align:right' }, ['2027 목표']),
+            h('th', { style:'text-align:right' }, ['2028 목표']),
+            h('th', { style:'text-align:right' }, ['2029 목표'])
+          ])]));
+          const tb = h('tbody');
+          PERFORMANCE_SCORES.forEach(p => {
+            tb.appendChild(h('tr', {}, [
+              h('td', {}, [h('span', { class:'chip dark' }, [p.project])]),
+              h('td', { class:'num' }, [fmtN(p.A1)]),
+              h('td', { class:'num' }, [fmtN(p.A2)]),
+              h('td', { class:'num' }, [fmtN(p.A3)]),
+              h('td', { class:'num', style:'color:var(--g-700); font-weight:800;' }, [fmtN(p.score2025)]),
+              h('td', { class:'num' }, [fmtN(p.futures[2026])]),
+              h('td', { class:'num' }, [fmtN(p.futures[2027])]),
+              h('td', { class:'num' }, [fmtN(p.futures[2028])]),
+              h('td', { class:'num' }, [fmtN(p.futures[2029])])
+            ]));
+          });
+          // 평균 row
+          if (yearAvg[2025]) {
+            tb.appendChild(h('tr', { style:'background:var(--g-50); font-weight:700;' }, [
+              h('td', {}, ['평균']),
+              h('td', { class:'num' }, ['—']),
+              h('td', { class:'num' }, ['—']),
+              h('td', { class:'num' }, ['—']),
+              h('td', { class:'num', style:'color:var(--g-800);' }, [String(yearAvg[2025])]),
+              h('td', { class:'num' }, [String(yearAvg[2026])]),
+              h('td', { class:'num' }, [String(yearAvg[2027])]),
+              h('td', { class:'num' }, [String(yearAvg[2028])]),
+              h('td', { class:'num' }, [String(yearAvg[2029])])
+            ]));
+          }
+          tbl.appendChild(tb);
+          return tbl;
+        })()])
+      ]);
+      el.appendChild(scoreSec);
+    }
+
     const distSec = h('section', { class: 'section' }, [
       sectionHead('과제별 성과확산 분포', 'MOU · 언론보도 · 행사 · 연계 건수의 과제별 분포'),
       h('div', { class: 'grid-2' }, [
@@ -688,6 +743,16 @@
           idx.items.map((it) => h('div', { class: 'sub-item edit' }, [
             h('div', { class: 'name' }, [it.name]),
             h('span', { class: 'chip ghost' }, [it.project]),
+            // 엑셀 측정 sub-rows 자동 표시
+            it.subItems && it.subItems.length ? h('div', {
+              style: 'grid-column:1/-1; display:flex; flex-direction:column; gap:4px; padding:8px 10px; background:var(--g-50); border-radius:8px; border-left:2px solid var(--g-500);'
+            }, it.subItems.map(s => h('div', {
+              style: 'display:flex; justify-content:space-between; gap:10px; font-size:12px;'
+            }, [
+              h('span', { style: 'color:var(--ink-700);' }, ['◦ ' + s.label]),
+              h('b', { style: 'color:var(--g-700); font-variant-numeric:tabular-nums; flex-shrink:0;' },
+                [s.value != null ? String(s.value) : '—'])
+            ]))) : null,
             h('div', { class: 'edit-fields' }, [
               h('label', {}, [
                 h('span', { class: 'lbl' }, ['목표']),
@@ -755,65 +820,150 @@
   }
 
   // ---------- project performance ----------
+  let _projectExpanded = new Set(); // expanded project keys
+
   function buildProject() {
     const el = $('#view-project');
     el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['과제별 성과 · 8개 과제']));
+    el.appendChild(h('div', { class: 'view-anchor' }, ['과제별 성과 · 8개 과제 · 146개 추진과제']));
     el.appendChild(renderTicker(projectTickerItems(), 'LIVE FEED'));
 
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('과제별 사업 성과 · 직접 입력',
-        '엑셀 양식 컬럼: 과제명 · 지수 · 추진전략 · 추진과제 · 추진계획 · 실적 · 달성률 · 페이지')
+      sectionHead('과제별 사업 성과 — 그룹별 카드',
+        '8개 과제별로 모든 추진과제를 그룹핑. 카드를 클릭하면 세부 추진과제·실적·달성률을 펼쳐 볼 수 있습니다.')
     ]));
 
+    // Group rows by 과제명
+    const groups = {};
+    Store.state.projects.forEach((r, i) => {
+      r.__idx = i; // remember original index for edits
+      if (!groups[r.과제명]) groups[r.과제명] = [];
+      groups[r.과제명].push(r);
+    });
+
     const grid = h('div', { class: 'grid-2' });
-    Store.state.projects.forEach(r => {
-      const rateDisplay = () => r.달성률 == null ? '—' : `${r.달성률}%`;
-      grid.appendChild(h('div', { class: 'card flat proj-card' }, [
-        h('div', { class: 'h3-row' }, [
-          h('div', { style: 'display:flex; align-items:center; gap:10px; flex-wrap:wrap;' }, [
-            h('span', { class: 'chip dark' }, [r.과제명]),
-            h('h3', { style: 'margin:0' }, [r.지수])
+    PROJECTS.forEach(p => {
+      const rows = groups[p.key] || [];
+      const rateVals = rows.map(r => r.달성률).filter(v => v != null);
+      const avg = rateVals.length ? Math.round(rateVals.reduce((a,b)=>a+b,0) / rateVals.length) : null;
+      const indexCounts = {};
+      rows.forEach(r => { if (r.지수) indexCounts[r.지수] = (indexCounts[r.지수]||0) + 1; });
+      const expanded = _projectExpanded.has(p.key);
+
+      const card = h('div', { class: 'card flat proj-card' }, [
+        h('div', {
+          class: 'proj-card-head',
+          style: 'cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;',
+          onclick: () => {
+            if (_projectExpanded.has(p.key)) _projectExpanded.delete(p.key);
+            else _projectExpanded.add(p.key);
+            buildProject();
+          }
+        }, [
+          h('div', { style: 'display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; flex:1;' }, [
+            h('span', { class: 'chip dark' }, [p.short]),
+            h('h3', { style: 'margin:0; font-size:15px;' }, [p.full]),
+            h('span', { class: 'chip ghost' }, [`${rows.length}건`])
           ]),
-          h('div', { class: 'rate-wrap' }, [
-            h('span', { class: 'aux' }, ['달성률']),
-            numEdit(() => r.달성률, (v) => { r.달성률 = v; Store.save(); }, { placeholder: '%' })
+          h('div', { style: 'display:flex; align-items:center; gap:10px;' }, [
+            h('div', { class: 'rate-wrap' }, [
+              h('span', { class: 'aux' }, ['평균 달성률']),
+              h('b', { style: 'color:var(--g-700); font-size:15px; font-variant-numeric:tabular-nums;' },
+                [avg != null ? `${avg}%` : '—'])
+            ]),
+            h('span', { style: 'font-size:14px; color:var(--ink-500); transform:' + (expanded ? 'rotate(180deg)' : 'rotate(0)') + '; transition:transform .2s;' }, ['▾'])
           ])
         ]),
-        h('ul', { class: 'callout-list edit' }, [
-          liEdit('추진전략', () => r.전략, v => r.전략 = v),
-          liEdit('추진과제', () => r.과제, v => r.과제 = v),
-          liEdit('추진계획', () => r.계획, v => r.계획 = v),
-          liEdit('실적',      () => (r.실적 === '-' ? '' : r.실적), v => r.실적 = v, true),
-          liEdit('페이지',    () => r.페이지, v => r.페이지 = v)
-        ])
-      ]));
+        h('div', { style: 'display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;' },
+          Object.entries(indexCounts).map(([k, c]) =>
+            h('span', { class: 'chip', style: 'font-size:10.5px;' }, [`${k.slice(0, 12)} · ${c}건`])
+          )
+        ),
+        expanded ? h('div', { class: 'proj-sub-list', style: 'margin-top:14px; display:flex; flex-direction:column; gap:8px;' },
+          rows.map((r, idx) => h('div', {
+            class: 'proj-sub',
+            style: 'background:var(--cream-100); border:1px solid var(--ink-100); border-radius:10px; padding:12px 14px;'
+          }, [
+            h('div', { style: 'display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;' }, [
+              h('span', { class: 'chip', style: 'font-size:10px;' }, [`#${idx+1}`]),
+              h('span', { class: 'chip ghost', style: 'font-size:10.5px;' }, [r.지수 || '—']),
+              r.달성률 != null ? h('span', { class: 'chip dark', style: 'font-size:10.5px;' }, [`달성 ${r.달성률}%`]) : null,
+              r.페이지 ? h('span', { style: 'font-size:10.5px; color:var(--ink-500);' }, [`p.${r.페이지}`]) : null
+            ]),
+            r.전략 ? h('div', { style: 'font-size:13px; font-weight:700; color:var(--ink-900); margin-bottom:4px;' }, [r.전략]) : null,
+            r.과제 ? h('div', { style: 'font-size:12.5px; color:var(--ink-700); margin-bottom:4px;' }, ['◦ ', r.과제]) : null,
+            r.계획 ? h('div', { style: 'font-size:12px; color:var(--ink-600); margin-bottom:6px;' }, ['📋 계획: ', r.계획]) : null,
+            r.실적 && r.실적 !== '-' ? h('div', { style: 'font-size:12px; color:var(--g-700); white-space:pre-wrap; padding:8px 10px; background:var(--g-50); border-radius:8px; border-left:2px solid var(--g-500);' }, [r.실적]) : null
+          ]))
+        ) : null
+      ]);
+      grid.appendChild(card);
     });
     el.appendChild(grid);
 
+    // Quick search + table
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('통합 테이블', '과제별 추진전략 · 실적 · 달성률 한눈에 보기 (편집 가능)'),
-      h('div', { style: 'overflow-x:auto' }, [(() => {
-        const tbl = h('table', { class: 'tbl' });
-        tbl.appendChild(h('thead', {}, [ h('tr', {}, PROJECT_PERFORMANCE_COLUMNS.map(c => h('th', {}, [c]))) ]));
-        const tb = h('tbody');
-        Store.state.projects.forEach(r => {
-          const tr = h('tr', {}, [
-            h('td', {}, [h('span', { class: 'chip' }, [r.과제명])]),
-            h('td', {}, [r.지수]),
-            h('td', { class: 'edit-td' }, [ txtEdit(() => r.전략, v => { r.전략 = v; Store.save(); }) ]),
-            h('td', { class: 'edit-td' }, [ txtEdit(() => r.과제, v => { r.과제 = v; Store.save(); }) ]),
-            h('td', { class: 'edit-td' }, [ txtEdit(() => r.계획, v => { r.계획 = v; Store.save(); }) ]),
-            h('td', { class: 'edit-td' }, [ txtEdit(() => (r.실적 === '-' ? '' : r.실적), v => { r.실적 = v; Store.save(); }) ]),
-            h('td', { class: 'num edit-td' }, [ numEdit(() => r.달성률, v => { r.달성률 = v; Store.save(); }, { placeholder: '%' }) ]),
-            h('td', { class: 'edit-td' }, [ txtEdit(() => r.페이지, v => { r.페이지 = v; Store.save(); }) ])
-          ]);
-          tb.appendChild(tr);
-        });
-        tbl.appendChild(tb);
-        return tbl;
-      })()])
+      sectionHead('통합 테이블 · 146개 추진과제', '검색 가능. 클릭해서 정렬 가능 (과제명/지수/달성률).'),
+      projectTable()
     ]));
+  }
+
+  let _projectFilter = '';
+  let _projectFilterProj = 'all';
+
+  function projectTable() {
+    const wrap = h('div', {});
+    // toolbar
+    wrap.appendChild(h('div', { class: 'community-toolbar', style: 'margin-bottom:12px;' }, [
+      h('div', { class: 'search-input' }, [
+        h('input', {
+          type: 'text',
+          placeholder: '추진전략·과제·실적·지수 검색',
+          value: _projectFilter,
+          oninput: (e) => { _projectFilter = e.target.value; const old = $('#proj-table-host'); if (old) old.replaceWith(buildProjTableInner()); }
+        })
+      ]),
+      h('div', { class: 'category-chips' }, [
+        (() => { const b = h('button', { onclick: () => { _projectFilterProj = 'all'; const old = $('#proj-table-host'); if (old) old.replaceWith(buildProjTableInner()); } }, ['전체']); if (_projectFilterProj === 'all') b.classList.add('active'); return b; })(),
+        ...PROJECTS.map(p => { const b = h('button', { onclick: () => { _projectFilterProj = p.key; const old = $('#proj-table-host'); if (old) old.replaceWith(buildProjTableInner()); } }, [p.short]); if (_projectFilterProj === p.key) b.classList.add('active'); return b; })
+      ])
+    ]));
+    wrap.appendChild(buildProjTableInner());
+    return wrap;
+  }
+
+  function buildProjTableInner() {
+    const host = h('div', { id: 'proj-table-host', style: 'overflow-x:auto;' });
+    const filtered = Store.state.projects.filter(r => {
+      if (_projectFilterProj !== 'all' && r.과제명 !== _projectFilterProj) return false;
+      if (_projectFilter.trim()) {
+        const q = _projectFilter.toLowerCase();
+        return ['전략','과제','계획','실적','지수'].some(f => String(r[f]||'').toLowerCase().includes(q));
+      }
+      return true;
+    });
+    const tbl = h('table', { class: 'tbl' });
+    tbl.appendChild(h('thead', {}, [ h('tr', {}, PROJECT_PERFORMANCE_COLUMNS.map(c => h('th', {}, [c]))) ]));
+    const tb = h('tbody');
+    if (!filtered.length) {
+      tb.appendChild(h('tr', {}, [h('td', { colspan: 8, style: 'text-align:center; color:var(--ink-500); padding:20px;' }, ['검색 결과가 없습니다.'])]));
+    }
+    filtered.forEach(r => {
+      const tr = h('tr', {}, [
+        h('td', {}, [h('span', { class: 'chip' }, [r.과제명])]),
+        h('td', { style: 'font-size:11.5px;' }, [r.지수]),
+        h('td', { class: 'edit-td' }, [ txtEdit(() => r.전략, v => { r.전략 = v; Store.save(); }) ]),
+        h('td', { class: 'edit-td' }, [ txtEdit(() => r.과제, v => { r.과제 = v; Store.save(); }) ]),
+        h('td', { class: 'edit-td' }, [ txtEdit(() => r.계획, v => { r.계획 = v; Store.save(); }) ]),
+        h('td', { class: 'edit-td' }, [ txtEdit(() => (r.실적 === '-' ? '' : r.실적), v => { r.실적 = v; Store.save(); }) ]),
+        h('td', { class: 'num edit-td' }, [ numEdit(() => r.달성률, v => { r.달성률 = v; Store.save(); }, { placeholder: '%' }) ]),
+        h('td', { class: 'edit-td', style: 'min-width:50px;' }, [ txtEdit(() => r.페이지, v => { r.페이지 = v; Store.save(); }) ])
+      ]);
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);
+    host.appendChild(tbl);
+    return host;
   }
   function liEdit(label, get, set, area = false) {
     return h('li', {}, [
