@@ -1028,6 +1028,119 @@ table.tbl td.na, table.tbl td .na { color: var(--ink-300); font-weight: 400; }
   letter-spacing: -.005em;
 }
 
+/* ---------- 사업단별 인프라 카드 (per-project Governance + Infrastructure) ---------- */
+.infra-unit-card {
+  background: var(--grad-card);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-xs);
+  display: flex; flex-direction: column; gap: 14px;
+  transition: all .2s ease;
+}
+.infra-unit-card:hover {
+  border-color: var(--g-300);
+  box-shadow: var(--shadow-sm);
+}
+.iuc-head {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ink-100);
+}
+.iuc-full {
+  font-size: 13px; font-weight: 800; color: var(--ink-900);
+  letter-spacing: -.015em; line-height: 1.3;
+  margin-bottom: 2px;
+}
+.iuc-theme {
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-500); font-weight: 600;
+}
+.iuc-totals {
+  text-align: right;
+  flex-shrink: 0;
+  padding-left: 8px;
+  border-left: 1px solid var(--ink-100);
+}
+.iuc-tot-num {
+  font-size: 22px; font-weight: 800;
+  color: var(--g-700);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.025em; line-height: 1;
+}
+.iuc-tot-l {
+  font-size: 9.5px; color: var(--ink-500);
+  letter-spacing: .12em; text-transform: uppercase;
+  font-weight: 700; margin-top: 2px;
+}
+
+.infra-unit-group {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.iug-head {
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 4px;
+}
+.iug-title {
+  font-size: 12px; font-weight: 800; color: var(--ink-800);
+  letter-spacing: .02em;
+}
+.iug-total {
+  margin-left: auto;
+  font-size: 11px; font-weight: 700;
+  color: var(--g-700);
+  background: var(--g-50);
+  border: 1px solid var(--g-200);
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.iug-list { display: flex; flex-direction: column; gap: 4px; }
+.iug-empty {
+  font-size: 11.5px; color: var(--ink-400);
+  padding: 6px 10px; text-align: center;
+  background: var(--cream-100);
+  border: 1px dashed var(--ink-200);
+  border-radius: 8px;
+}
+.iug-item {
+  background: var(--cream-100);
+  border: 1px solid var(--ink-100);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.iug-row1 {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 4px;
+}
+.iug-label {
+  font-size: 12px; font-weight: 700; color: var(--ink-800);
+  letter-spacing: -.005em;
+}
+.iug-evid {
+  font-size: 11px; font-weight: 800;
+  color: var(--g-700);
+  background: var(--g-50);
+  border: 1px solid var(--g-200);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+.iug-count {
+  font-size: 12.5px; font-weight: 800;
+  color: var(--g-800);
+  font-variant-numeric: tabular-nums;
+}
+.iug-detail {
+  font-size: 11px; color: var(--ink-600);
+  white-space: pre-wrap;
+  line-height: 1.5;
+  padding-top: 2px;
+  border-top: 1px dashed var(--ink-100);
+  margin-top: 2px;
+  max-height: 84px;
+  overflow-y: auto;
+}
+
 /* ---------- Mobile quick-nav (horizontal chip bar) ---------- */
 .mobile-quicknav {
   display: none;

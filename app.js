@@ -40,7 +40,11 @@
         common: COMMON_INDICATORS.map(i => ({ name: i.name, unit: i.unit, data: { ...i.data } })),
         self: SELF_INDICES.map(s => ({
           name: s.name, desc: s.desc,
-          items: s.items.map(it => ({ name: it.name, project: it.project, rows: it.rows, 목표: null, 실적: null, 단위: '' }))
+          items: s.items.map(it => ({
+            name: it.name, project: it.project, rows: it.rows,
+            subItems: (it.subItems || []).map(x => ({ ...x })),
+            목표: null, 실적: null, 단위: ''
+          }))
         })),
         projects: PROJECT_PERFORMANCE_ROWS.map(r => deepClone(r)),
         infra: { groups: INFRASTRUCTURE.groups.map(g => ({ name: g.name, items: g.items.map(it => ({ ...it })) })) },
@@ -818,15 +822,18 @@
           idx.items.map((it) => h('div', { class: 'sub-item edit' }, [
             h('div', { class: 'name' }, [it.name]),
             h('span', { class: 'chip ghost' }, [it.project]),
-            // 엑셀 측정 sub-rows 자동 표시
+            // 엑셀 측정 sub-rows 자동 표시 (증빙 보유 시 ✓ 마크)
             it.subItems && it.subItems.length ? h('div', {
               style: 'grid-column:1/-1; display:flex; flex-direction:column; gap:4px; padding:8px 10px; background:var(--g-50); border-radius:8px; border-left:2px solid var(--g-500);'
             }, it.subItems.map(s => h('div', {
-              style: 'display:flex; justify-content:space-between; gap:10px; font-size:12px;'
+              style: 'display:flex; justify-content:space-between; gap:10px; font-size:12px; align-items:center;'
             }, [
               h('span', { style: 'color:var(--ink-700);' }, ['◦ ' + s.label]),
-              h('b', { style: 'color:var(--g-700); font-variant-numeric:tabular-nums; flex-shrink:0;' },
-                [s.value != null ? String(s.value) : '—'])
+              h('div', { style: 'display:flex; gap:6px; align-items:center; flex-shrink:0;' }, [
+                s.evidence ? h('span', { style: 'font-size:10px; color:var(--g-700); font-weight:800;', title: '증빙 보유' }, ['✓']) : null,
+                h('b', { style: 'color:var(--g-800); font-variant-numeric:tabular-nums;' },
+                  [s.rawValue != null && s.rawValue !== '' ? s.rawValue : (s.value != null ? String(s.value) : '—')])
+              ])
             ]))) : null,
             h('div', { class: 'edit-fields' }, [
               h('label', {}, [
@@ -963,7 +970,9 @@
               h('span', { class: 'chip', style: 'font-size:10px;' }, [`#${idx+1}`]),
               h('span', { class: 'chip ghost', style: 'font-size:10.5px;' }, [r.지수 || '—']),
               r.달성률 != null ? h('span', { class: 'chip dark', style: 'font-size:10.5px;' }, [`달성 ${r.달성률}%`]) : null,
-              r.페이지 ? h('span', { style: 'font-size:10.5px; color:var(--ink-500);' }, [`p.${r.페이지}`]) : null
+              r.페이지 ? h('span', { style: 'font-size:10.5px; color:var(--ink-500);' }, [`p.${r.페이지}`]) : null,
+              r.증빙 === 'O' ? h('span', { style: 'font-size:10px; color:var(--g-700); font-weight:800; padding:2px 7px; background:var(--g-50); border:1px solid var(--g-200); border-radius:6px;' }, ['증빙 ✓']) : null,
+              r.증빙 === 'X' ? h('span', { style: 'font-size:10px; color:#a13a3a; font-weight:800; padding:2px 7px; background:#fcf4f4; border:1px solid #e8c5c5; border-radius:6px;' }, ['미수행']) : null
             ]),
             r.전략 ? h('div', { style: 'font-size:13px; font-weight:700; color:var(--ink-900); margin-bottom:4px;' }, [r.전략]) : null,
             r.과제 ? h('div', { style: 'font-size:12.5px; color:var(--ink-700); margin-bottom:4px;' }, ['◦ ', r.과제]) : null,
@@ -1032,7 +1041,8 @@
         h('td', { class: 'edit-td' }, [ txtEdit(() => r.계획, v => { r.계획 = v; Store.save(); }) ]),
         h('td', { class: 'edit-td' }, [ txtEdit(() => (r.실적 === '-' ? '' : r.실적), v => { r.실적 = v; Store.save(); }) ]),
         h('td', { class: 'num edit-td' }, [ numEdit(() => r.달성률, v => { r.달성률 = v; Store.save(); }, { placeholder: '%' }) ]),
-        h('td', { class: 'edit-td', style: 'min-width:50px;' }, [ txtEdit(() => r.페이지, v => { r.페이지 = v; Store.save(); }) ])
+        h('td', { class: 'edit-td', style: 'min-width:50px;' }, [ txtEdit(() => r.페이지, v => { r.페이지 = v; Store.save(); }) ]),
+        h('td', { style: 'text-align:center; font-weight:700; color:' + (r.증빙 === 'O' ? 'var(--g-700)' : r.증빙 === 'X' ? '#a13a3a' : 'var(--ink-300)') }, [r.증빙 || '—'])
       ]);
       tb.appendChild(tr);
     });
@@ -1057,8 +1067,10 @@
     el.innerHTML = '';
     el.appendChild(h('div', { class: 'view-anchor' }, ['기타 구축 · 거버넌스·인프라']));
     el.appendChild(renderTicker(infraTickerItems(), 'LIVE FEED'));
+
+    // 1) 전체 합계 (기존 카드)
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('기타 구축 실적 · 직접 입력', '거버넌스 구축 및 인프라 구축 현황'),
+      sectionHead('전체 합계 · 거버넌스 + 인프라', '8개 사업단 통합 집계'),
       h('div', { class: 'grid-2' }, Store.state.infra.groups.map(g => {
         const c = h('div', { class: 'infra-card' }, [
           h('h3', {}, [
@@ -1076,6 +1088,14 @@
       }))
     ]));
 
+    // 2) 사업단별 카드 (per-project 71개 항목)
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('사업단별 거버넌스·인프라 상세', '엑셀 원본 71개 per-project 항목 (구분·항목·건수·세부내용·증빙)'),
+      h('div', { class: 'grid-2' },
+        PROJECTS.map(p => infraUnitCard(p))
+      )
+    ]));
+
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('구축 범위 정의', '엑셀 원본 시트의 주석'),
       h('div', { class: 'card' }, [
@@ -1087,6 +1107,52 @@
         )
       ])
     ]));
+  }
+
+  function infraUnitCard(p) {
+    const all = (window.__RISE__.INFRASTRUCTURE.perProject || []).filter(x => x.과제 === p.key);
+    const gov = all.filter(x => x.구분 === '거버넌스 구축');
+    const inf = all.filter(x => x.구분 === '인프라 구축');
+    const sumGov = gov.reduce((a,b)=>a+(b.count||0),0);
+    const sumInf = inf.reduce((a,b)=>a+(b.count||0),0);
+
+    const renderGroup = (label, items, total) => h('div', { class: 'infra-unit-group' }, [
+      h('div', { class: 'iug-head' }, [
+        h('span', { class: 'chip dark', style: 'font-size:10px;' }, [label === '거버넌스' ? 'G' : 'I']),
+        h('span', { class: 'iug-title' }, [label]),
+        h('span', { class: 'iug-total' }, [`총 ${total}건`])
+      ]),
+      h('div', { class: 'iug-list' },
+        items.length === 0
+          ? [h('div', { class: 'iug-empty' }, ['항목 없음'])]
+          : items.map(it => h('div', { class: 'iug-item' }, [
+              h('div', { class: 'iug-row1' }, [
+                h('span', { class: 'iug-label' }, [it.항목]),
+                h('div', { style: 'display:flex; gap:6px; align-items:center;' }, [
+                  it.증빙 ? h('span', { class: 'iug-evid', title: '증빙 보유' }, ['✓']) : null,
+                  h('span', { class: 'iug-count' }, [it.count != null ? `${it.count}건` : '—'])
+                ])
+              ]),
+              it.세부 ? h('div', { class: 'iug-detail' }, [it.세부]) : null
+            ]))
+      )
+    ]);
+
+    return h('div', { class: 'infra-unit-card' }, [
+      h('div', { class: 'iuc-head' }, [
+        h('span', { class: 'chip dark' }, [p.short]),
+        h('div', { style: 'flex:1; min-width:0;' }, [
+          h('div', { class: 'iuc-full' }, [p.full]),
+          h('div', { class: 'iuc-theme' }, [p.theme])
+        ]),
+        h('div', { class: 'iuc-totals' }, [
+          h('div', { class: 'iuc-tot-num' }, [String(sumGov + sumInf)]),
+          h('div', { class: 'iuc-tot-l' }, ['총 건수'])
+        ])
+      ]),
+      renderGroup('거버넌스', gov, sumGov),
+      renderGroup('인프라',   inf, sumInf)
+    ]);
   }
 
   // ---------- community ----------
