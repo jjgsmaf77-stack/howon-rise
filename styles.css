@@ -1,33 +1,50 @@
+/* ---------- KoddiUDOnGothic (match tankeron) ---------- */
+@font-face {
+  font-family: 'KoddiUDOnGothic';
+  src: url('fonts/KoddiUDOnGothic-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KoddiUDOnGothic';
+  src: url('fonts/KoddiUDOnGothic-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  /* Primary emerald — confident modern green */
-  --g-50:  #ecfdf5;
-  --g-100: #d1fae5;
-  --g-200: #a7f3d0;
-  --g-300: #6ee7b7;
-  --g-400: #34d399;
-  --g-500: #10b981;
-  --g-600: #059669;   /* primary brand */
-  --g-700: #047857;
-  --g-800: #065f46;   /* hero */
-  --g-900: #064e3b;
-  --g-950: #022c22;
+  /* Brand palette — Tanker (Anchor + Ocean): Navy · Teal · Gold */
+  /* --g-* : navy→teal scale (dark → bright). "Primary brand" maps to teal (--g-600). */
+  --g-50:  #f4f9fc;
+  --g-100: #e5f1f7;
+  --g-200: #cfe3ee;
+  --g-300: #a1d3e5;
+  --g-400: #5cb0d0;
+  --g-500: #2a93b6;
+  --g-600: #1c7293;   /* primary brand — teal */
+  --g-700: #173a6b;   /* navy-3 */
+  --g-800: #102e55;   /* navy-2 (hero) */
+  --g-900: #0a2540;   /* navy */
+  --g-950: #061529;   /* deepest navy */
 
-  /* Jewel-tone accent */
-  --em-400: #34d399;
-  --em-500: #10b981;
-  --em-600: #059669;
-  --em-700: #047857;
+  /* Teal accent */
+  --em-400: #5cb0d0;
+  --em-500: #2a93b6;
+  --em-600: #1c7293;
+  --em-700: #173a6b;
 
-  /* Accent mint scale (reused legacy --br-* tokens) — harmonizes w/ emerald */
-  --br-50:  #ecfdf5;
-  --br-100: #d1fae5;
-  --br-200: #a7f3d0;
-  --br-300: #6ee7b7;   /* bright pop on dark surfaces */
-  --br-400: #34d399;
-  --br-500: #10b981;
-  --br-600: #059669;
-  --br-700: #047857;
-  --br-800: #065f46;
+  /* Gold accent scale (was bright mint) — used for pops on dark surfaces */
+  --br-50:  #fff9e0;
+  --br-100: #ffeea8;
+  --br-200: #ffe072;
+  --br-300: #ffc93c;   /* gold-2 — bright pop */
+  --br-400: #f5b700;   /* gold */
+  --br-500: #d89f00;
+  --br-600: #b88800;
+  --br-700: #8f6a00;
+  --br-800: #6e5200;
 
   /* Cool slate-neutral surfaces (replaces cream) */
   --cream-50:  #ffffff;
@@ -70,40 +87,41 @@
   --pearl: #ffffff;    /* pure white surface */
   --cream: #ffffff;
 
-  /* Flat color tokens (modern monochrome + emerald) */
-  --grad-hero: #064e3b;
-  --grad-soft: #f8fafc;
+  /* Brand surface/background tokens (Tanker — Navy/Teal/Gold) */
+  --grad-hero: linear-gradient(135deg, #0a2540 0%, #173a6b 45%, #1c7293 100%);
+  --grad-soft: #f4f7fb;
   --grad-card: #ffffff;
   --grad-card-warm: #ffffff;
-  --grad-accent: #059669;
-  --grad-accent-bright: #10b981;
-  --grad-dark: #0f1012;
-  --grad-green: #059669;
-  --grad-black: #0f1012;
-  --grad-gray:  #334155;
-  --grad-ring: conic-gradient(from 210deg, #059669 0 70%, #e2e8f0 70% 100%);
-  --grad-chip: #ecfdf5;
-  --grad-divider: linear-gradient(90deg, transparent, rgba(16,185,129,.28), transparent);
+  --grad-accent: #1c7293;           /* teal */
+  --grad-accent-bright: #2a93b6;    /* teal-2 */
+  --grad-dark: #0a2540;             /* navy */
+  --grad-green: linear-gradient(135deg, #102e55 0%, #1c7293 100%); /* tank grad */
+  --grad-black: #0e1a2b;            /* ink */
+  --grad-gray:  #2c3a4b;
+  --grad-gold:  linear-gradient(135deg, #f5b700 0%, #ffc93c 100%);
+  --grad-ring: conic-gradient(from 210deg, #1c7293 0 70%, #e1e7ee 70% 100%);
+  --grad-chip: #e5f1f7;
+  --grad-divider: linear-gradient(90deg, transparent, rgba(28,114,147,.28), transparent);
 
-  /* Shadows — slate-tinted, diffused */
-  --shadow-xs: 0 1px 1px rgba(15,23,42,.04);
-  --shadow-sm: 0 2px 4px -2px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
-  --shadow-md: 0 12px 28px -16px rgba(15,23,42,.16), 0 4px 10px -4px rgba(15,23,42,.07);
-  --shadow-lg: 0 28px 56px -24px rgba(15,23,42,.20), 0 8px 20px -8px rgba(15,23,42,.09);
-  --shadow-hero: 0 40px 80px -32px rgba(2,44,34,.45), 0 12px 30px -12px rgba(15,23,42,.20);
-  --shadow-block: 0 22px 44px -22px rgba(0,0,0,.28), 0 8px 18px -8px rgba(0,0,0,.14);
-  --shadow-focus: 0 0 0 3px rgba(16,185,129,.25);
+  /* Shadows — navy-tinted, diffused (tankeron) */
+  --shadow-xs: 0 1px 1px rgba(10,37,64,.04);
+  --shadow-sm: 0 2px 8px rgba(10,37,64,.06), 0 1px 2px rgba(10,37,64,.04);
+  --shadow-md: 0 12px 32px rgba(10,37,64,.10), 0 4px 10px -4px rgba(10,37,64,.07);
+  --shadow-lg: 0 28px 64px rgba(10,37,64,.18), 0 8px 20px -8px rgba(10,37,64,.10);
+  --shadow-hero: 0 40px 80px -32px rgba(10,37,64,.45), 0 12px 30px -12px rgba(10,37,64,.20);
+  --shadow-block: 0 22px 44px -22px rgba(10,37,64,.28), 0 8px 18px -8px rgba(10,37,64,.14);
+  --shadow-focus: 0 0 0 3px rgba(28,114,147,.28);
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 18px;
 
-  --font-sans: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont,
-               "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
-  /* Display stack (kept for headings — now Pretendard gothic, same family as body) */
-  --font-serif: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont,
-                "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
+  --font-sans: "KoddiUDOnGothic", system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", Roboto, sans-serif;
+  /* Display stack (same family as body — matches tankeron) */
+  --font-serif: "KoddiUDOnGothic", system-ui, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -239,7 +257,7 @@ button { font-family: inherit; cursor: pointer; }
   font-weight: 600;
   box-shadow: inset 0 0 0 1px var(--g-200);
 }
-.nav button.active .dot { background: var(--em-500); box-shadow: 0 0 8px rgba(52,211,153,.45); }
+.nav button.active .dot { background: var(--em-500); box-shadow: 0 0 8px rgba(255,201,60,.45); }
 .nav button .count {
   margin-left: auto;
   font-size: 11px;
@@ -620,7 +638,7 @@ table.tbl thead th {
   font-size: 11.5px;
   letter-spacing: .06em;
   text-transform: uppercase;
-  border-bottom: 1px solid rgba(31,93,65,.10);
+  border-bottom: 1px solid rgba(10,37,64,.10);
   white-space: nowrap;
 }
 table.tbl tbody td {
@@ -767,8 +785,8 @@ table.tbl td.na, table.tbl td .na { color: var(--ink-300); font-weight: 400; }
 .cell.l4 { background: var(--g-700); color: #ffffff; border-color: transparent; }
 
 /* Infrastructure */
-.infra-card { background: var(--grad-card); border: 1px solid rgba(31,93,65,.08); border-radius: var(--radius-lg); padding: 24px 26px; box-shadow: var(--shadow-sm); transition: all .2s ease; }
-.infra-card:hover { box-shadow: var(--shadow-md); border-color: rgba(31,93,65,.14); }
+.infra-card { background: var(--grad-card); border: 1px solid rgba(10,37,64,.08); border-radius: var(--radius-lg); padding: 24px 26px; box-shadow: var(--shadow-sm); transition: all .2s ease; }
+.infra-card:hover { box-shadow: var(--shadow-md); border-color: rgba(10,37,64,.14); }
 .infra-card h3 { margin-top: 0; display: flex; align-items: center; gap: 10px; }
 .infra-item {
   display: flex; align-items: center; justify-content: space-between;
@@ -1149,7 +1167,7 @@ table.tbl td.na, table.tbl td .na { color: var(--ink-300); font-weight: 400; }
   background: rgba(247,248,241,.94);
   backdrop-filter: saturate(140%) blur(12px);
   -webkit-backdrop-filter: saturate(140%) blur(12px);
-  border-bottom: 1px solid rgba(4,120,87,.1);
+  border-bottom: 1px solid rgba(23,58,107,.1);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -1195,7 +1213,7 @@ table.tbl td.na, table.tbl td .na { color: var(--ink-300); font-weight: 400; }
   background: var(--g-700);
   border-radius: 50%;
   position: relative;
-  box-shadow: 0 10px 22px -8px rgba(4,120,87,.4);
+  box-shadow: 0 10px 22px -8px rgba(23,58,107,.4);
 }
 .lock-card .lock-icon::before {
   content: ""; position: absolute;
@@ -1215,7 +1233,7 @@ table.tbl td.na, table.tbl td .na { color: var(--ink-300); font-weight: 400; }
   background: var(--g-600); color: #ffffff;
   border-color: transparent; padding: 10px 22px; font-size: 13px; font-weight: 700;
   border-radius: 10px;
-  box-shadow: 0 8px 18px -8px rgba(5,150,105,.55);
+  box-shadow: 0 8px 18px -8px rgba(28,114,147,.55);
 }
 .lock-card .tb-btn.primary:hover { background: var(--g-700); transform: translateY(-1px); }
 
@@ -1717,8 +1735,8 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   flex-shrink: 0;
 }
 .ticker .live .dot {
-  width: 7px; height: 7px; border-radius: 50%; background: #34d399;
-  box-shadow: 0 0 0 3px rgba(52,211,153,.25);
+  width: 7px; height: 7px; border-radius: 50%; background: #ffc93c;
+  box-shadow: 0 0 0 3px rgba(255,201,60,.30);
   animation: pulse 1.2s infinite;
 }
 .ticker .track {
@@ -1784,7 +1802,7 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .tab-bar button.active {
   background: var(--g-700);
   color: #ffffff;
-  box-shadow: 0 6px 14px -6px rgba(4,120,87,.45);
+  box-shadow: 0 6px 14px -6px rgba(23,58,107,.45);
 }
 .tab-bar button.active .cnt { background: rgba(255,255,255,.18); color: #ffffff; }
 
@@ -1836,7 +1854,7 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .category-chips button.active {
   background: var(--g-700); color: #ffffff;
   border-color: var(--g-700);
-  box-shadow: 0 4px 10px -3px rgba(4,120,87,.35);
+  box-shadow: 0 4px 10px -3px rgba(23,58,107,.35);
 }
 
 /* Write button */
@@ -1850,11 +1868,11 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   letter-spacing: .01em;
   display: inline-flex; align-items: center; gap: 6px;
   cursor: pointer;
-  box-shadow: 0 8px 18px -8px rgba(5,150,105,.55);
+  box-shadow: 0 8px 18px -8px rgba(28,114,147,.55);
   transition: all .18s ease;
   flex-shrink: 0;
 }
-.btn-write:hover { transform: translateY(-1px); background: var(--g-700); box-shadow: 0 12px 24px -10px rgba(5,150,105,.65); }
+.btn-write:hover { transform: translateY(-1px); background: var(--g-700); box-shadow: 0 12px 24px -10px rgba(28,114,147,.65); }
 .btn-write::before { content: "+"; font-size: 16px; font-weight: 700; }
 
 /* =========================================================
@@ -1992,7 +2010,7 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   content: ""; display: inline-block;
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--em-500); margin-right: 5px;
-  box-shadow: 0 0 0 2px rgba(16,185,129,.2);
+  box-shadow: 0 0 0 2px rgba(42,147,182,.2);
 }
 .biz-card .status.pending {
   background: var(--gr-100); color: var(--gr-700); border: 1px solid var(--gr-200);

@@ -605,7 +605,7 @@
       wrap.appendChild(h('div', { class: 'bar-row' }, [
         h('div', { class: 'lbl' }, [p.short]),
         h('div', { class: 'bar' }, [
-          h('i', { style: `width:${(pa+pb).toFixed(1)}%; background:linear-gradient(90deg,#064e3b,#10b981);` })
+          h('i', { style: `width:${(pa+pb).toFixed(1)}%; background:linear-gradient(90deg,#0a2540,#2a93b6);` })
         ]),
         h('div', { class: `val ${!hasAny ? 'na' : ''}` }, [!hasAny ? '—' : fmtN(tot)])
       ]));
@@ -623,12 +623,12 @@
       const d = indData(m);
       return Math.max(...Object.values(d).filter(v => v != null), 1);
     });
-    // Modern emerald + slate monochrome palette
+    // Tanker palette — Navy · Teal · Gold + slate
     const palette = [
-      'rgba(6,78,59,0.18)',   'rgba(4,120,87,0.18)', 'rgba(5,150,105,0.18)', 'rgba(16,185,129,0.20)',
-      'rgba(52,211,153,0.22)', 'rgba(51,65,85,0.18)', 'rgba(100,116,139,0.20)', 'rgba(148,163,184,0.22)'
+      'rgba(10,37,64,0.18)',   'rgba(23,58,107,0.18)', 'rgba(28,114,147,0.18)', 'rgba(42,147,182,0.20)',
+      'rgba(255,201,60,0.24)', 'rgba(242,107,79,0.20)', 'rgba(46,196,182,0.20)', 'rgba(107,120,134,0.22)'
     ];
-    const borders = ['#064e3b','#047857','#059669','#10b981','#34d399','#334155','#64748b','#94a3b8'];
+    const borders = ['#0a2540','#173a6b','#1c7293','#2a93b6','#f5b700','#f26b4f','#2ec4b6','#6b7886'];
     const datasets = PROJECTS.map((p, i) => ({
       label: p.short,
       data: metrics.map((m, idx) => { const v = indData(m)[p.key]; return v == null ? 0 : (v / maxes[idx]) * 100; }),
@@ -641,16 +641,16 @@
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#2d3e37', font: { size: 11 }, boxWidth: 10, padding: 14 } },
+          legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 11 }, boxWidth: 10, padding: 14 } },
           tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toFixed(1)} (지수)` } }
         },
         scales: {
           r: {
             min: 0, max: 100,
-            grid: { color: 'rgba(31,93,65,0.10)' },
-            angleLines: { color: 'rgba(31,93,65,0.08)' },
-            pointLabels: { color: '#1f5d41', font: { size: 11, weight: '600' } },
-            ticks: { color: '#b0bab4', backdropColor: 'transparent', font: { size: 9 } }
+            grid: { color: 'rgba(10,37,64,0.10)' },
+            angleLines: { color: 'rgba(10,37,64,0.08)' },
+            pointLabels: { color: '#173a6b', font: { size: 11, weight: '600' } },
+            ticks: { color: '#6b7886', backdropColor: 'transparent', font: { size: 9 } }
           }
         }
       }
@@ -760,7 +760,7 @@
     let labels, datasets;
     const makeGradient = (ctx) => {
       const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 280);
-      g.addColorStop(0, 'rgba(6,78,59,0.95)'); g.addColorStop(1, 'rgba(52,211,153,0.55)');
+      g.addColorStop(0, 'rgba(10,37,64,0.95)'); g.addColorStop(1, 'rgba(255,201,60,0.60)');
       return g;
     };
     if (_commonProject === 'all') {
@@ -768,7 +768,7 @@
       datasets = countInds.map((ind, idx) => ({
         label: ind.name,
         data: PROJECTS.map(p => ind.data[p.key] || 0),
-        backgroundColor: ['#064e3b','#047857','#059669','#10b981','#34d399'][idx],
+        backgroundColor: ['#0a2540','#173a6b','#1c7293','#2a93b6','#f5b700'][idx],
         borderRadius: 8, barThickness: 18
       }));
     } else {
@@ -785,12 +785,12 @@
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#2d3e37', font: { size: 11 }, boxWidth: 10, padding: 14 } },
+          legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 11 }, boxWidth: 10, padding: 14 } },
           tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}건` } }
         },
         scales: {
-          x: { grid: { display: false }, ticks: { color: '#697871', font: { size: 11 } } },
-          y: { grid: { color: 'rgba(31,93,65,0.06)' }, ticks: { color: '#b0bab4', font: { size: 10 } }, beginAtZero: true }
+          x: { grid: { display: false }, ticks: { color: '#2c3a4b', font: { size: 11 } } },
+          y: { grid: { color: 'rgba(10,37,64,0.06)' }, ticks: { color: '#6b7886', font: { size: 10 } }, beginAtZero: true }
         }
       }
     });
@@ -885,7 +885,7 @@
         label: '세부 지표 수', data,
         backgroundColor: (ctx) => {
           const g = ctx.chart.ctx.createLinearGradient(0,0,ctx.chart.width,0);
-          g.addColorStop(0,'#064e3b'); g.addColorStop(0.55,'#059669'); g.addColorStop(1,'#34d399');
+          g.addColorStop(0,'#0a2540'); g.addColorStop(0.55,'#1c7293'); g.addColorStop(1,'#ffc93c');
           return g;
         },
         borderRadius: 10, barThickness: 36
@@ -894,8 +894,8 @@
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${ctx.raw}개 항목` } } },
         scales: {
-          x: { grid: { color: 'rgba(31,93,65,0.06)' }, ticks: { color: '#b0bab4', font: { size: 10 } }, beginAtZero: true, precision: 0 },
-          y: { grid: { display: false }, ticks: { color: '#2d3e37', font: { size: 12, weight: '600' } } }
+          x: { grid: { color: 'rgba(10,37,64,0.06)' }, ticks: { color: '#6b7886', font: { size: 10 } }, beginAtZero: true, precision: 0 },
+          y: { grid: { display: false }, ticks: { color: '#2c3a4b', font: { size: 12, weight: '600' } } }
         }
       }
     });

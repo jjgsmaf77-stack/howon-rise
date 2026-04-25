@@ -6,3 +6,5 @@ node_modules/
 .idea/
 _data.json
 _analyze.js
+_serve.js
+.claude/
