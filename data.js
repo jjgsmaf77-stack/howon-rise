@@ -3372,6 +3372,34 @@ const KPI_SUMMARY = {
   perfRowCount: PROJECT_PERFORMANCE_ROWS.length
 };
 
+// ---------- 사업단 평가 (Source: 사업단 평가 완료.xlsx) ----------
+const EVALUATION = {
+  source: '사업단 평가 완료.xlsx',
+  criteria: [
+    { name: '성과지표 달성율', max: 20 },
+    { name: '예산 집행률',     max: 20 },
+    { name: '사업 집행 실적',  max: 20 },
+    { name: '사업 종합 만족도', max: 20 },
+    { name: '사업 추진 노력',  max: 20 }
+  ],
+  // 등급 기준 (점수표 기준 — A/B/C 3단계)
+  grades: [
+    { label: 'A', min: 91, max: 100, desc: '우수', range: '91 ~ 100점' },
+    { label: 'B', min: 81, max: 90,  desc: '양호', range: '81 ~ 90점'  },
+    { label: 'C', min: 71, max: 80,  desc: '보통', range: '71 ~ 80점'  }
+  ],
+  results: [
+    { key: '보건',   unit: 'H-산업보건헬스 사업단',         scores: [19, 20, 20, 18, 20], total: 97 },
+    { key: '컬쳐',   unit: '호원 K-컬처&아트테크사업단',    scores: [16, 15, 15, 19, 18], total: 83 },
+    { key: 'JB집',   unit: 'JB-ZIP사업단',                  scores: [17, 19, 18, 17, 17], total: 88 },
+    { key: '성인',   unit: 'H-성인학습지원사업단',          scores: [20, 18, 19, 19, 19], total: 95 },
+    { key: '드론',   unit: 'K-드론콘텐츠인력양성사업단',    scores: [15, 13, 15, 17, 17], total: 77 },
+    { key: '축제',   unit: 'K-컬처퍼포먼스사업단',          scores: [18, 13, 18, 18, 15], total: 82 },
+    { key: '맛잡고', unit: '맛JOB GO사업단',                scores: [18, 19, 18, 18, 18], total: 91 },
+    { key: '늘봄',   unit: '늘돌봄융합인재양성사업단',      scores: [15, 10, 10, 19, 17], total: 71 }
+  ]
+};
+
 window.__RISE__ = { META, PROJECTS, COMMON_INDICATORS, PERFORMANCE_SCORES,
   SELF_INDICES, PROJECT_PERFORMANCE_COLUMNS, PROJECT_PERFORMANCE_ROWS,
-  INFRASTRUCTURE, COMMUNITY, KPI_SUMMARY };
+  INFRASTRUCTURE, COMMUNITY, KPI_SUMMARY, EVALUATION };

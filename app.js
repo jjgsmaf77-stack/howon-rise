@@ -1,7 +1,8 @@
 (() => {
   const { META, PROJECTS, COMMON_INDICATORS, SELF_INDICES,
           PROJECT_PERFORMANCE_COLUMNS, PROJECT_PERFORMANCE_ROWS,
-          INFRASTRUCTURE, COMMUNITY, PERFORMANCE_SCORES = [] } = window.__RISE__;
+          INFRASTRUCTURE, COMMUNITY, PERFORMANCE_SCORES = [],
+          EVALUATION = { criteria: [], grades: [], results: [] } } = window.__RISE__;
 
   // ---------- helpers ----------
   const $ = (sel, el = document) => el.querySelector(sel);
@@ -206,6 +207,7 @@
     { id: 'common',     label: '공통지표',         desc: '교육부 공통지표' },
     { id: 'self',       label: '대학자체지표',     desc: '5대 지수 체계' },
     { id: 'project',    label: '과제별 성과',      desc: '8개 과제' },
+    { id: 'evaluation', label: '사업단 평가',      desc: '5개 항목 종합 평가' },
     { id: 'infra',      label: '기타 구축',         desc: '거버넌스·인프라' },
     { id: 'community',  label: '커뮤니티',         desc: '학생 · 기업체' },
     { id: 'formula',    label: '산식·정의',         desc: '지표 방법론' }
@@ -337,6 +339,7 @@
       common: Store.state.common.length,
       self: kpi.subIndicatorCount,
       project: Store.state.projects.length,
+      evaluation: EVALUATION.results.length,
       infra: Store.state.infra.groups.reduce((a,b) => a + b.items.length, 0),
       community: (Store.state.community?.students?.length || 0) + (Store.state.community?.companies?.length || 0),
       formula: ''
@@ -1059,6 +1062,152 @@
           : txtEdit(get, v => { set(v); Store.save(); })
       ])
     ]);
+  }
+
+  // ---------- 사업단 평가 (evaluation) ----------
+  function gradeOf(total) {
+    const g = (EVALUATION.grades || []).find(x => total >= x.min && total <= x.max);
+    return g || { label: '-', desc: '미부여', range: '' };
+  }
+  function buildEvaluation() {
+    const el = $('#view-evaluation');
+    if (!el) return;
+    el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['사업단 평가 · 5개 항목 종합 평가']));
+
+    const results = EVALUATION.results || [];
+    const criteria = EVALUATION.criteria || [];
+    const grades = EVALUATION.grades || [];
+
+    // ---------- 요약 KPI ----------
+    const totals = results.map(r => r.total);
+    const avg = totals.length ? (totals.reduce((a,b)=>a+b,0) / totals.length) : 0;
+    const top = results.slice().sort((a,b)=>b.total-a.total)[0];
+    const bot = results.slice().sort((a,b)=>a.total-b.total)[0];
+    const counts = grades.map(g => ({
+      g, n: results.filter(r => r.total >= g.min && r.total <= g.max).length
+    }));
+
+    el.appendChild(h('div', { class: 'eval-kpi' }, [
+      h('div', { class: 'eval-kpi-card' }, [
+        h('div', { class: 'eval-kpi-label' }, ['평가 사업단 수']),
+        h('div', { class: 'eval-kpi-val' }, [String(results.length), h('span', { class: 'u' }, ['개'])])
+      ]),
+      h('div', { class: 'eval-kpi-card' }, [
+        h('div', { class: 'eval-kpi-label' }, ['평균 총점']),
+        h('div', { class: 'eval-kpi-val' }, [avg.toFixed(1), h('span', { class: 'u' }, ['/100'])])
+      ]),
+      h('div', { class: 'eval-kpi-card' }, [
+        h('div', { class: 'eval-kpi-label' }, ['최고 점수']),
+        h('div', { class: 'eval-kpi-val' }, [String(top?.total ?? '—'),
+          h('span', { class: 'u' }, [top ? ` ${top.key}` : ''])])
+      ]),
+      h('div', { class: 'eval-kpi-card' }, [
+        h('div', { class: 'eval-kpi-label' }, ['최저 점수']),
+        h('div', { class: 'eval-kpi-val' }, [String(bot?.total ?? '—'),
+          h('span', { class: 'u' }, [bot ? ` ${bot.key}` : ''])])
+      ])
+    ]));
+
+    // ---------- 등급 분포 ----------
+    el.appendChild(h('div', { class: 'eval-grade-strip' }, counts.map(({ g, n }) =>
+      h('div', { class: `eval-grade eval-grade-${g.label.toLowerCase()}` }, [
+        h('div', { class: 'eval-grade-badge' }, [g.label]),
+        h('div', { class: 'eval-grade-meta' }, [
+          h('div', { class: 'eval-grade-range' }, [g.range]),
+          h('div', { class: 'eval-grade-desc' }, [`${g.desc} · ${n}개 사업단`])
+        ])
+      ])
+    )));
+
+    // ---------- 사업단별 평가 카드 ----------
+    const byKey = Object.fromEntries(PROJECTS.map(p => [p.key, p]));
+    const sorted = results.slice().sort((a,b) => b.total - a.total);
+
+    const grid = h('div', { class: 'eval-grid' });
+    sorted.forEach((r, idx) => {
+      const grade = gradeOf(r.total);
+      const proj = byKey[r.key];
+      const max = criteria.reduce((a,c)=>a+c.max, 0) || 100;
+      const pct = (r.total / max) * 100;
+
+      const card = h('article', { class: `eval-card eval-grade-${grade.label.toLowerCase()}` }, [
+        h('header', { class: 'eval-card-head' }, [
+          h('div', { class: 'eval-card-rank' }, [`#${idx + 1}`]),
+          h('div', { class: 'eval-card-title' }, [
+            h('div', { class: 'eval-card-key' }, [r.key]),
+            h('div', { class: 'eval-card-unit' }, [r.unit]),
+            proj ? h('div', { class: 'eval-card-theme' }, [proj.theme]) : null
+          ]),
+          h('div', { class: 'eval-card-score' }, [
+            h('div', { class: 'eval-card-grade' }, [grade.label]),
+            h('div', { class: 'eval-card-total' }, [
+              h('strong', {}, [String(r.total)]),
+              h('span', {}, [' / 100'])
+            ])
+          ])
+        ]),
+        h('div', { class: 'eval-card-bar' }, [
+          h('i', { style: `width:${pct.toFixed(1)}%;` })
+        ]),
+        h('ul', { class: 'eval-card-criteria' }, criteria.map((c, i) => {
+          const score = r.scores[i];
+          const cpct = (score / c.max) * 100;
+          return h('li', {}, [
+            h('span', { class: 'eval-c-name' }, [c.name]),
+            h('span', { class: 'eval-c-bar' }, [
+              h('i', { style: `width:${cpct.toFixed(1)}%;` })
+            ]),
+            h('span', { class: 'eval-c-score' }, [`${score}/${c.max}`])
+          ]);
+        }))
+      ]);
+      grid.appendChild(card);
+    });
+    el.appendChild(grid);
+
+    // ---------- 종합 비교 표 ----------
+    const tableWrap = h('div', { class: 'eval-table-wrap' });
+    const headRow = h('tr', {}, [
+      h('th', {}, ['순위']),
+      h('th', { class: 'l' }, ['사업단']),
+      ...criteria.map(c => h('th', {}, [c.name, h('br', {}), h('span', { class: 'm' }, [`(${c.max})`])])),
+      h('th', {}, ['총점']),
+      h('th', {}, ['등급'])
+    ]);
+    const bodyRows = sorted.map((r, idx) => {
+      const grade = gradeOf(r.total);
+      return h('tr', { class: `row-grade-${grade.label.toLowerCase()}` }, [
+        h('td', {}, [`#${idx + 1}`]),
+        h('td', { class: 'l' }, [
+          h('div', { class: 'eval-tbl-key' }, [r.key]),
+          h('div', { class: 'eval-tbl-unit' }, [r.unit])
+        ]),
+        ...r.scores.map((s, i) => {
+          const c = criteria[i];
+          const isMax = s === c.max;
+          const isLow = s <= c.max * 0.6;
+          return h('td', { class: `num ${isMax ? 'max' : ''} ${isLow ? 'low' : ''}` }, [String(s)]);
+        }),
+        h('td', { class: 'num total' }, [h('strong', {}, [String(r.total)])]),
+        h('td', {}, [h('span', { class: `eval-pill eval-pill-${grade.label.toLowerCase()}` }, [grade.label])])
+      ]);
+    });
+    tableWrap.appendChild(h('table', { class: 'eval-table' }, [
+      h('thead', {}, [headRow]),
+      h('tbody', {}, bodyRows)
+    ]));
+    el.appendChild(h('div', { class: 'eval-section-title' }, ['종합 비교표']));
+    el.appendChild(tableWrap);
+
+    // ---------- 등급 기준 안내 ----------
+    el.appendChild(h('div', { class: 'eval-legend' }, [
+      h('span', { class: 'eval-legend-title' }, ['등급 기준']),
+      ...grades.map(g => h('span', { class: `eval-legend-chip eval-grade-${g.label.toLowerCase()}` }, [
+        h('b', {}, [g.label, '등급']),
+        ` ${g.range} (${g.desc})`
+      ]))
+    ]));
   }
 
   // ---------- infrastructure ----------
@@ -1806,7 +1955,7 @@
       _pending = null;
       if (full) {
         buildSidebar();
-        buildOverview(); buildCommon(); buildSelf(); buildProject(); buildInfra(); buildFormula();
+        buildOverview(); buildCommon(); buildSelf(); buildProject(); buildEvaluation(); buildInfra(); buildFormula();
         if (_currentView === 'community') buildCommunity();
         setView(_currentView);
       } else {
@@ -1843,7 +1992,7 @@
     Store.init();
     buildSidebar();
     buildMobileQuickNav();
-    buildOverview(); buildCommon(); buildSelf(); buildProject(); buildInfra(); buildCommunity(); buildFormula();
+    buildOverview(); buildCommon(); buildSelf(); buildProject(); buildEvaluation(); buildInfra(); buildCommunity(); buildFormula();
 
     // All charts render immediately (single-page scroll layout)
     requestAnimationFrame(() => {

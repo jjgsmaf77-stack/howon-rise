@@ -2286,3 +2286,189 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   .mini-stats { grid-template-columns: 1fr; }
   .mini-stat .value { font-size: 22px; }
 }
+
+/* ========== 사업단 평가 (evaluation) ========== */
+#view-evaluation { padding-top: 8px; }
+
+/* KPI strip */
+.eval-kpi {
+  display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr);
+  margin: 14px 0 22px;
+}
+.eval-kpi-card {
+  background: var(--grad-card); border: 1px solid var(--ink-200);
+  border-radius: var(--radius-lg); padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+.eval-kpi-label { font-size: 12px; font-weight: 600; color: var(--ink-500); letter-spacing: .04em; }
+.eval-kpi-val   { font-size: 32px; font-weight: 800; color: var(--g-900); margin-top: 6px; line-height: 1.1; }
+.eval-kpi-val .u { font-size: 13px; font-weight: 600; color: var(--ink-500); margin-left: 4px; }
+
+/* Grade distribution strip */
+.eval-grade-strip {
+  display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 26px;
+}
+.eval-grade {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px; border-radius: var(--radius-lg);
+  border: 1px solid var(--ink-200); background: var(--grad-card);
+  box-shadow: var(--shadow-sm);
+}
+.eval-grade-badge {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 22px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+.eval-grade-a .eval-grade-badge { background: linear-gradient(135deg, #0a2540, #1c7293); }
+.eval-grade-b .eval-grade-badge { background: linear-gradient(135deg, #1c7293, #2a93b6); }
+.eval-grade-c .eval-grade-badge { background: linear-gradient(135deg, #f5b700, #ffc93c); color: #0a2540; }
+.eval-grade-meta .eval-grade-range { font-size: 14px; font-weight: 700; color: var(--g-900); }
+.eval-grade-meta .eval-grade-desc  { font-size: 12.5px; color: var(--ink-500); margin-top: 3px; }
+
+/* Cards */
+.eval-grid {
+  display: grid; gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  margin-bottom: 32px;
+}
+.eval-card {
+  background: var(--grad-card); border: 1px solid var(--ink-200);
+  border-radius: var(--radius-lg); padding: 18px 20px 16px;
+  box-shadow: var(--shadow-sm);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s;
+}
+.eval-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--g-500); }
+
+.eval-card-head {
+  display: grid; grid-template-columns: 36px 1fr auto;
+  gap: 12px; align-items: center; margin-bottom: 14px;
+}
+.eval-card-rank {
+  font-size: 13px; font-weight: 800; color: var(--ink-400);
+  font-family: var(--font-mono); letter-spacing: -.02em;
+}
+.eval-card-key   { font-size: 17px; font-weight: 800; color: var(--g-900); }
+.eval-card-unit  { font-size: 11.5px; color: var(--ink-500); margin-top: 2px; line-height: 1.3; }
+.eval-card-theme { font-size: 10.5px; color: var(--g-600); margin-top: 4px; font-weight: 600; }
+.eval-card-score { text-align: right; }
+.eval-card-grade {
+  font-size: 26px; font-weight: 900; line-height: 1;
+  color: var(--g-700); letter-spacing: -.03em;
+}
+.eval-grade-a .eval-card-grade { color: #0a2540; }
+.eval-grade-b .eval-card-grade { color: #1c7293; }
+.eval-grade-c .eval-card-grade { color: #b88800; }
+.eval-card-total { font-size: 12px; color: var(--ink-500); margin-top: 4px; }
+.eval-card-total strong { color: var(--g-900); font-size: 15px; font-weight: 800; }
+
+.eval-card-bar {
+  height: 6px; background: var(--ink-100); border-radius: 4px;
+  overflow: hidden; margin-bottom: 14px;
+}
+.eval-card-bar i { display: block; height: 100%; border-radius: 4px; }
+.eval-grade-a .eval-card-bar i { background: linear-gradient(90deg, #0a2540, #2a93b6); }
+.eval-grade-b .eval-card-bar i { background: linear-gradient(90deg, #1c7293, #2a93b6); }
+.eval-grade-c .eval-card-bar i { background: linear-gradient(90deg, #f5b700, #ffc93c); }
+
+.eval-card-criteria {
+  display: flex; flex-direction: column; gap: 8px;
+  list-style: none; padding: 0; margin: 0;
+}
+.eval-card-criteria li {
+  display: grid; grid-template-columns: 110px 1fr 56px;
+  gap: 10px; align-items: center;
+}
+.eval-c-name { font-size: 12px; color: var(--ink-700); }
+.eval-c-bar  { height: 5px; background: var(--ink-100); border-radius: 3px; overflow: hidden; }
+.eval-c-bar i { display: block; height: 100%; background: var(--g-600); border-radius: 3px; }
+.eval-c-score {
+  font-size: 12px; font-weight: 700; color: var(--g-900);
+  text-align: right; font-family: var(--font-mono);
+}
+
+/* Section title between blocks */
+.eval-section-title {
+  font-size: 16px; font-weight: 800; color: var(--g-900);
+  margin: 22px 0 12px; padding-left: 12px;
+  border-left: 4px solid var(--g-600); line-height: 1.2;
+}
+
+/* Comparison table */
+.eval-table-wrap {
+  overflow-x: auto; border-radius: var(--radius-lg);
+  border: 1px solid var(--ink-200); background: var(--grad-card);
+  box-shadow: var(--shadow-sm);
+}
+.eval-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  min-width: 720px;
+}
+.eval-table thead th {
+  background: var(--grad-soft); color: var(--g-900);
+  font-weight: 700; font-size: 12.5px;
+  padding: 12px 10px; border-bottom: 1px solid var(--ink-200);
+  text-align: center;
+}
+.eval-table thead th .m { font-size: 10.5px; color: var(--ink-500); font-weight: 500; }
+.eval-table thead th.l { text-align: left; }
+.eval-table tbody td {
+  padding: 12px 10px; border-bottom: 1px solid var(--ink-100);
+  text-align: center; vertical-align: middle;
+}
+.eval-table tbody td.l { text-align: left; }
+.eval-table tbody td.num { font-family: var(--font-mono); font-weight: 600; color: var(--ink-800); }
+.eval-table tbody td.num.max  { color: #1c7293; font-weight: 800; }
+.eval-table tbody td.num.low  { color: #b88800; font-weight: 800; }
+.eval-table tbody td.total strong { font-size: 15px; color: var(--g-900); }
+.eval-tbl-key  { font-weight: 700; color: var(--g-900); }
+.eval-tbl-unit { font-size: 11px; color: var(--ink-500); margin-top: 2px; }
+
+.eval-table tbody tr.row-grade-a { background: rgba(10,37,64,.02); }
+.eval-table tbody tr.row-grade-b { background: rgba(28,114,147,.02); }
+.eval-table tbody tr.row-grade-c { background: rgba(245,183,0,.04); }
+.eval-table tbody tr:hover { background: var(--grad-chip); }
+
+.eval-pill {
+  display: inline-block; min-width: 30px; padding: 4px 10px;
+  border-radius: 999px; font-weight: 800; font-size: 12px;
+  color: #fff;
+}
+.eval-pill-a { background: linear-gradient(135deg, #0a2540, #1c7293); }
+.eval-pill-b { background: linear-gradient(135deg, #1c7293, #2a93b6); }
+.eval-pill-c { background: linear-gradient(135deg, #f5b700, #ffc93c); color: #0a2540; }
+
+/* Legend */
+.eval-legend {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  margin-top: 18px; padding: 14px 16px;
+  background: var(--grad-soft); border-radius: var(--radius-md);
+  border: 1px solid var(--ink-200);
+  font-size: 12.5px; color: var(--ink-700);
+}
+.eval-legend-title { font-weight: 800; color: var(--g-900); margin-right: 4px; }
+.eval-legend-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 999px;
+  background: #fff; border: 1px solid var(--ink-200);
+}
+.eval-legend-chip b { font-weight: 800; }
+.eval-legend-chip.eval-grade-a b { color: #0a2540; }
+.eval-legend-chip.eval-grade-b b { color: #1c7293; }
+.eval-legend-chip.eval-grade-c b { color: #b88800; }
+
+/* Responsive */
+@media (max-width: 880px) {
+  .eval-kpi { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .eval-kpi-val { font-size: 26px; }
+  .eval-grade-strip { grid-template-columns: 1fr; }
+  .eval-grid { grid-template-columns: 1fr; gap: 12px; }
+  .eval-card-head { grid-template-columns: 28px 1fr auto; gap: 10px; }
+  .eval-card-grade { font-size: 22px; }
+  .eval-card-criteria li { grid-template-columns: 96px 1fr 50px; }
+}
+@media (max-width: 480px) {
+  .eval-kpi { grid-template-columns: 1fr 1fr; }
+  .eval-card { padding: 14px 16px; }
+}
