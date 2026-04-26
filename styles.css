@@ -2458,6 +2458,60 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .eval-legend-chip.eval-grade-b b { color: #1c7293; }
 .eval-legend-chip.eval-grade-c b { color: #b88800; }
 
+/* ---- Charts grid (2x2) ---- */
+.eval-charts-grid {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(2, 1fr);
+  margin-bottom: 22px;
+}
+.eval-chart-card {
+  background: var(--grad-card); border: 1px solid var(--ink-200);
+  border-radius: var(--radius-lg); padding: 16px 18px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.eval-chart-head { margin-bottom: 12px; }
+.eval-chart-head h4 {
+  margin: 0; font-size: 15px; font-weight: 800; color: var(--g-900);
+  letter-spacing: -.01em;
+}
+.eval-chart-sub {
+  display: block; font-size: 11.5px; color: var(--ink-500); margin-top: 4px;
+}
+.eval-chart-body {
+  position: relative; height: 320px; width: 100%;
+}
+.eval-chart-body canvas { max-width: 100%; height: 100% !important; }
+
+/* ---- Heatmap ---- */
+.eval-heatmap-card .eval-chart-body { height: auto; padding: 4px 0; }
+.eval-heatmap { overflow-x: auto; }
+.eval-heatmap-tbl {
+  width: 100%; border-collapse: separate; border-spacing: 4px;
+  min-width: 720px;
+}
+.eval-heatmap-tbl thead th {
+  font-size: 11.5px; font-weight: 700; color: var(--ink-700);
+  padding: 8px 6px; text-align: center;
+  background: var(--grad-soft); border-radius: 6px;
+}
+.eval-heatmap-tbl thead th.lbl { text-align: left; padding-left: 12px; }
+.eval-heatmap-tbl thead th.tot { background: var(--g-700); color: #fff; }
+.eval-heatmap-tbl td {
+  padding: 12px 6px; text-align: center; border-radius: 6px;
+  font-family: var(--font-mono); font-weight: 700; font-size: 13.5px;
+  transition: transform .15s ease;
+}
+.eval-heatmap-tbl td:hover { transform: scale(1.05); }
+.eval-heatmap-tbl td.lbl {
+  background: #fff; border: 1px solid var(--ink-200);
+  text-align: left; padding: 10px 12px; font-family: inherit;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-width: 140px;
+}
+.eval-heatmap-tbl td.lbl .eval-tbl-key { font-weight: 800; color: var(--g-900); font-size: 13.5px; }
+.eval-heatmap-tbl td.cell { min-width: 56px; }
+.eval-heatmap-tbl td.tot { font-size: 15px; font-weight: 900; min-width: 64px; }
+
 /* Responsive */
 @media (max-width: 880px) {
   .eval-kpi { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -2467,8 +2521,11 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   .eval-card-head { grid-template-columns: 28px 1fr auto; gap: 10px; }
   .eval-card-grade { font-size: 22px; }
   .eval-card-criteria li { grid-template-columns: 96px 1fr 50px; }
+  .eval-charts-grid { grid-template-columns: 1fr; gap: 12px; }
+  .eval-chart-body { height: 280px; }
 }
 @media (max-width: 480px) {
   .eval-kpi { grid-template-columns: 1fr 1fr; }
   .eval-card { padding: 14px 16px; }
+  .eval-chart-body { height: 240px; }
 }

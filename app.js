@@ -1069,6 +1069,230 @@
     const g = (EVALUATION.grades || []).find(x => total >= x.min && total <= x.max);
     return g || { label: '-', desc: '미부여', range: '' };
   }
+  // 등급별 브랜드 컬러 매핑 (Tanker palette)
+  const GRADE_COLOR = {
+    A: { fill: 'rgba(10,37,64,0.85)',  border: '#0a2540', soft: 'rgba(10,37,64,0.15)'  },
+    B: { fill: 'rgba(28,114,147,0.85)', border: '#1c7293', soft: 'rgba(28,114,147,0.15)' },
+    C: { fill: 'rgba(245,183,0,0.85)',  border: '#f5b700', soft: 'rgba(245,183,0,0.18)' }
+  };
+  // 5개 평가항목별 색상
+  const CRIT_COLORS = ['#0a2540', '#173a6b', '#1c7293', '#2a93b6', '#f5b700'];
+
+  // 히트맵 셀 색강도 계산 (0~1 → 흰색 → 네이비)
+  function heatColor(score, max) {
+    const t = max ? Math.max(0, Math.min(1, score / max)) : 0;
+    // 흰색 (255,255,255) → 네이비 (10,37,64) 보간
+    const r = Math.round(255 + (10 - 255) * t);
+    const g = Math.round(255 + (37 - 255) * t);
+    const b = Math.round(255 + (64 - 255) * t);
+    return `rgb(${r},${g},${b})`;
+  }
+  function heatTextColor(score, max) {
+    return (score / max) > 0.55 ? '#ffffff' : '#0a2540';
+  }
+
+  function renderEvalHeatmap() {
+    const criteria = EVALUATION.criteria || [];
+    const results = (EVALUATION.results || []).slice().sort((a,b) => b.total - a.total);
+    const wrap = h('div', { class: 'eval-heatmap' });
+    const tbl = h('table', { class: 'eval-heatmap-tbl' });
+    const thead = h('thead');
+    const headRow = h('tr', {}, [
+      h('th', { class: 'lbl' }, ['사업단 \\ 항목']),
+      ...criteria.map(c => h('th', {}, [c.name])),
+      h('th', { class: 'tot' }, ['총점'])
+    ]);
+    thead.appendChild(headRow);
+    tbl.appendChild(thead);
+    const tbody = h('tbody');
+    results.forEach(r => {
+      const grade = gradeOf(r.total);
+      const row = h('tr', {}, [
+        h('td', { class: 'lbl' }, [
+          h('span', { class: 'eval-tbl-key' }, [r.key]),
+          h('span', { class: `eval-pill eval-pill-${grade.label.toLowerCase()}` }, [grade.label])
+        ]),
+        ...r.scores.map((s, i) => {
+          const max = criteria[i].max;
+          return h('td', {
+            class: 'cell',
+            style: `background:${heatColor(s, max)}; color:${heatTextColor(s, max)};`
+          }, [String(s)]);
+        }),
+        h('td', { class: 'tot', style: `background:${heatColor(r.total, 100)}; color:${heatTextColor(r.total, 100)};` }, [String(r.total)])
+      ]);
+      tbody.appendChild(row);
+    });
+    tbl.appendChild(tbody);
+    wrap.appendChild(tbl);
+    return wrap;
+  }
+
+  // Chart.js 인스턴스 캐시
+  const _evalCharts = { radar: null, rank: null, donut: null, stack: null };
+
+  function renderEvaluationCharts() {
+    if (!window.Chart) return;
+    const criteria = EVALUATION.criteria || [];
+    const results = (EVALUATION.results || []).slice();
+    const sorted = results.slice().sort((a,b) => b.total - a.total);
+
+    // 1) Radar — 8 datasets × 5 axes
+    const radarEl = document.getElementById('eval-radar');
+    if (radarEl) {
+      if (_evalCharts.radar) _evalCharts.radar.destroy();
+      const palette = [
+        'rgba(10,37,64,0.18)', 'rgba(23,58,107,0.18)', 'rgba(28,114,147,0.18)', 'rgba(42,147,182,0.20)',
+        'rgba(245,183,0,0.22)', 'rgba(242,107,79,0.20)', 'rgba(46,196,182,0.20)', 'rgba(107,120,134,0.22)'
+      ];
+      const borders = ['#0a2540','#173a6b','#1c7293','#2a93b6','#f5b700','#f26b4f','#2ec4b6','#6b7886'];
+      const datasets = results.map((r, i) => ({
+        label: r.key,
+        data: r.scores.map((s, j) => (s / criteria[j].max) * 100),
+        backgroundColor: palette[i % palette.length],
+        borderColor: borders[i % borders.length],
+        borderWidth: 1.6,
+        pointBackgroundColor: borders[i % borders.length],
+        pointRadius: 2.4
+      }));
+      _evalCharts.radar = new Chart(radarEl, {
+        type: 'radar',
+        data: { labels: criteria.map(c => c.name.replace(' ', '\n')), datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 11 }, boxWidth: 10, padding: 12 } },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toFixed(0)}%` } }
+          },
+          scales: {
+            r: {
+              min: 0, max: 100,
+              grid: { color: 'rgba(10,37,64,0.10)' },
+              angleLines: { color: 'rgba(10,37,64,0.08)' },
+              pointLabels: { color: '#173a6b', font: { size: 11, weight: '600' } },
+              ticks: { color: '#6b7886', backdropColor: 'transparent', font: { size: 9 }, stepSize: 25 }
+            }
+          }
+        }
+      });
+    }
+
+    // 2) Ranked horizontal bar — 총점, 등급 색상
+    const rankEl = document.getElementById('eval-rank');
+    if (rankEl) {
+      if (_evalCharts.rank) _evalCharts.rank.destroy();
+      _evalCharts.rank = new Chart(rankEl, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(r => r.key),
+          datasets: [{
+            label: '총점',
+            data: sorted.map(r => r.total),
+            backgroundColor: sorted.map(r => GRADE_COLOR[gradeOf(r.total).label]?.fill || 'rgba(107,120,134,0.6)'),
+            borderColor: sorted.map(r => GRADE_COLOR[gradeOf(r.total).label]?.border || '#6b7886'),
+            borderWidth: 1.5,
+            borderRadius: 6,
+            barThickness: 22
+          }]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const r = sorted[ctx.dataIndex];
+                  return ` ${r.unit}: ${r.total}점 (${gradeOf(r.total).label}등급)`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              min: 60, max: 100,
+              grid: { color: 'rgba(10,37,64,0.06)' },
+              ticks: { color: '#6b7886', font: { size: 10 } }
+            },
+            y: { grid: { display: false }, ticks: { color: '#2c3a4b', font: { size: 12, weight: '600' } } }
+          }
+        }
+      });
+    }
+
+    // 3) Doughnut — 등급 분포
+    const donutEl = document.getElementById('eval-donut');
+    if (donutEl) {
+      if (_evalCharts.donut) _evalCharts.donut.destroy();
+      const grades = EVALUATION.grades || [];
+      const counts = grades.map(g => results.filter(r => r.total >= g.min && r.total <= g.max).length);
+      const labels = grades.map(g => `${g.label}등급 (${g.range})`);
+      _evalCharts.donut = new Chart(donutEl, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: counts,
+            backgroundColor: grades.map(g => GRADE_COLOR[g.label]?.border || '#6b7886'),
+            borderColor: '#ffffff',
+            borderWidth: 3,
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          cutout: '62%',
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 11 }, boxWidth: 12, padding: 12 } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.label}: ${ctx.raw}개 사업단`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 4) Stacked bar — 항목별 기여도
+    const stackEl = document.getElementById('eval-stack');
+    if (stackEl) {
+      if (_evalCharts.stack) _evalCharts.stack.destroy();
+      const datasets = criteria.map((c, i) => ({
+        label: c.name,
+        data: sorted.map(r => r.scores[i]),
+        backgroundColor: CRIT_COLORS[i % CRIT_COLORS.length],
+        borderColor: '#ffffff',
+        borderWidth: 1,
+        barThickness: 28,
+        borderRadius: { topLeft: i === criteria.length - 1 ? 6 : 0, topRight: i === criteria.length - 1 ? 6 : 0 }
+      }));
+      _evalCharts.stack = new Chart(stackEl, {
+        type: 'bar',
+        data: { labels: sorted.map(r => r.key), datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 10.5 }, boxWidth: 10, padding: 10 } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}점 / 20`,
+                footer: (items) => {
+                  const total = items.reduce((a, it) => a + (it.raw || 0), 0);
+                  return `합계: ${total}점`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { stacked: true, grid: { display: false }, ticks: { color: '#2c3a4b', font: { size: 11, weight: '600' } } },
+            y: { stacked: true, max: 100, grid: { color: 'rgba(10,37,64,0.06)' }, ticks: { color: '#6b7886', font: { size: 10 } } }
+          }
+        }
+      });
+    }
+  }
+
   function buildEvaluation() {
     const el = $('#view-evaluation');
     if (!el) return;
@@ -1120,7 +1344,56 @@
       ])
     )));
 
+    // ---------- 시각화 차트 (2x2 + 히트맵) ----------
+    el.appendChild(h('div', { class: 'eval-section-title' }, ['📊 시각화 분석']));
+
+    const chartsGrid = h('div', { class: 'eval-charts-grid' }, [
+      // 1) Radar
+      h('div', { class: 'eval-chart-card' }, [
+        h('div', { class: 'eval-chart-head' }, [
+          h('h4', {}, ['항목별 5각 비교']),
+          h('span', { class: 'eval-chart-sub' }, ['8개 사업단 × 5개 평가항목 (만점 대비 %)'])
+        ]),
+        h('div', { class: 'eval-chart-body' }, [h('canvas', { id: 'eval-radar' })])
+      ]),
+      // 2) Ranked horizontal bar
+      h('div', { class: 'eval-chart-card' }, [
+        h('div', { class: 'eval-chart-head' }, [
+          h('h4', {}, ['총점 순위']),
+          h('span', { class: 'eval-chart-sub' }, ['100점 만점 / 등급별 색상'])
+        ]),
+        h('div', { class: 'eval-chart-body' }, [h('canvas', { id: 'eval-rank' })])
+      ]),
+      // 3) Doughnut for grade distribution
+      h('div', { class: 'eval-chart-card' }, [
+        h('div', { class: 'eval-chart-head' }, [
+          h('h4', {}, ['등급 분포']),
+          h('span', { class: 'eval-chart-sub' }, ['A · B · C 비율'])
+        ]),
+        h('div', { class: 'eval-chart-body' }, [h('canvas', { id: 'eval-donut' })])
+      ]),
+      // 4) Stacked bar — per criterion contribution
+      h('div', { class: 'eval-chart-card' }, [
+        h('div', { class: 'eval-chart-head' }, [
+          h('h4', {}, ['항목별 기여도 (누적)']),
+          h('span', { class: 'eval-chart-sub' }, ['총점에 대한 5개 항목 누적'])
+        ]),
+        h('div', { class: 'eval-chart-body' }, [h('canvas', { id: 'eval-stack' })])
+      ])
+    ]);
+    el.appendChild(chartsGrid);
+
+    // 5) Heatmap matrix
+    el.appendChild(h('div', { class: 'eval-chart-card eval-heatmap-card' }, [
+      h('div', { class: 'eval-chart-head' }, [
+        h('h4', {}, ['🔥 점수 히트맵']),
+        h('span', { class: 'eval-chart-sub' }, ['색이 짙을수록 높은 점수 (사업단 × 평가항목)'])
+      ]),
+      h('div', { class: 'eval-chart-body' }, [renderEvalHeatmap()])
+    ]));
+
     // ---------- 사업단별 평가 카드 ----------
+    el.appendChild(h('div', { class: 'eval-section-title' }, ['📌 사업단별 상세 카드']));
     const byKey = Object.fromEntries(PROJECTS.map(p => [p.key, p]));
     const sorted = results.slice().sort((a,b) => b.total - a.total);
 
@@ -1957,6 +2230,7 @@
         buildSidebar();
         buildOverview(); buildCommon(); buildSelf(); buildProject(); buildEvaluation(); buildInfra(); buildFormula();
         if (_currentView === 'community') buildCommunity();
+        renderEvaluationCharts();
         setView(_currentView);
       } else {
         // rebuild data-dependent views only for current view
@@ -1999,6 +2273,7 @@
       renderOverviewCharts();
       renderCommonChart();
       renderSelfChart();
+      renderEvaluationCharts();
     });
 
     $('#today').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
