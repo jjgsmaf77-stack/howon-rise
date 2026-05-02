@@ -2529,3 +2529,52 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   .eval-card { padding: 14px 16px; }
   .eval-chart-body { height: 240px; }
 }
+
+/* ---------- 상생사업 ---------- */
+.sangsaeng-grid { gap: 16px; }
+.card.flat.sangsaeng-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  border-left: 3px solid var(--g-700);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.sangsaeng-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .08);
+}
+.sangsaeng-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sangsaeng-title {
+  margin: 4px 0 2px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-900);
+  line-height: 1.45;
+  letter-spacing: -.01em;
+}
+.sangsaeng-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-700, #334155);
+  line-height: 1.55;
+}
+.sangsaeng-foot {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px dashed var(--cream-300);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.sangsaeng-foot .aux { font-size: 11px; color: var(--ink-500, #64748b); }
+.sangsaeng-foot b { font-size: 13px; color: var(--g-700); font-weight: 700; }
+@media (max-width: 880px) {
+  .sangsaeng-card { padding: 16px 18px; }
+  .sangsaeng-title { font-size: 15px; }
+}

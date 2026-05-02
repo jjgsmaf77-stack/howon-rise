@@ -3400,6 +3400,42 @@ const EVALUATION = {
   ]
 };
 
+// 상생사업 — 호원대학교 RISE 상생사업 4개 과제 (2차년도 운영)
+const SANGSAENG_PROJECTS = [
+  {
+    "key": "K인플루언서",
+    "no": "S1",
+    "full": "JB글로컬 K-컬처 인플루언서 양성사업",
+    "short": "K-인플루언서",
+    "theme": "K-컬처/인플루언서",
+    "desc": "전북 K-컬처 콘텐츠를 글로벌로 확산할 차세대 인플루언서 양성"
+  },
+  {
+    "key": "로컬콘텐츠",
+    "no": "S2",
+    "full": "지역특화 JB-로컬콘텐츠 창업가 양성사업",
+    "short": "로컬콘텐츠",
+    "theme": "로컬콘텐츠/창업",
+    "desc": "전북 지역자원 기반 로컬콘텐츠 창업가 발굴·육성"
+  },
+  {
+    "key": "아동뮤지컬",
+    "no": "S3",
+    "full": "아동 뮤지컬 상시 공연 관광자원화 및 교육 프로그램 운영",
+    "short": "아동뮤지컬",
+    "theme": "공연/관광/교육",
+    "desc": "아동 뮤지컬 상시 공연을 관광자원화하고 연계 교육 프로그램 운영"
+  },
+  {
+    "key": "문화관광음식",
+    "no": "S4",
+    "full": "지역특화 문화·관광·음식 산업의 지속 가능 성장 모델 구축",
+    "short": "문화·관광·음식",
+    "theme": "문화·관광·음식 융합",
+    "desc": "지역 문화·관광·음식 산업의 융합 기반 지속가능 성장 모델 구축"
+  }
+];
+
 window.__RISE__ = { META, PROJECTS, COMMON_INDICATORS, PERFORMANCE_SCORES,
   SELF_INDICES, PROJECT_PERFORMANCE_COLUMNS, PROJECT_PERFORMANCE_ROWS,
-  INFRASTRUCTURE, COMMUNITY, KPI_SUMMARY, EVALUATION };
+  INFRASTRUCTURE, COMMUNITY, KPI_SUMMARY, EVALUATION, SANGSAENG_PROJECTS };

@@ -2,7 +2,8 @@
   const { META, PROJECTS, COMMON_INDICATORS, SELF_INDICES,
           PROJECT_PERFORMANCE_COLUMNS, PROJECT_PERFORMANCE_ROWS,
           INFRASTRUCTURE, COMMUNITY, PERFORMANCE_SCORES = [],
-          EVALUATION = { criteria: [], grades: [], results: [] } } = window.__RISE__;
+          EVALUATION = { criteria: [], grades: [], results: [] },
+          SANGSAENG_PROJECTS = [] } = window.__RISE__;
 
   // ---------- helpers ----------
   const $ = (sel, el = document) => el.querySelector(sel);
@@ -207,6 +208,7 @@
     { id: 'common',     label: '공통지표',         desc: '교육부 공통지표' },
     { id: 'self',       label: '대학자체지표',     desc: '5대 지수 체계' },
     { id: 'project',    label: '과제별 성과',      desc: '8개 과제' },
+    { id: 'sangsaeng',  label: '상생사업',         desc: '4개 상생사업 과제' },
     { id: 'evaluation', label: '사업단 평가',      desc: '5개 항목 종합 평가' },
     { id: 'infra',      label: '기타 구축',         desc: '거버넌스·인프라' },
     { id: 'community',  label: '커뮤니티',         desc: '학생 · 기업체' },
@@ -339,6 +341,7 @@
       common: Store.state.common.length,
       self: kpi.subIndicatorCount,
       project: Store.state.projects.length,
+      sangsaeng: SANGSAENG_PROJECTS.length,
       evaluation: EVALUATION.results.length,
       infra: Store.state.infra.groups.reduce((a,b) => a + b.items.length, 0),
       community: (Store.state.community?.students?.length || 0) + (Store.state.community?.companies?.length || 0),
@@ -993,6 +996,35 @@
       sectionHead('통합 테이블 · 146개 추진과제', '검색 가능. 클릭해서 정렬 가능 (과제명/지수/달성률).'),
       projectTable()
     ]));
+  }
+
+  // ---------- 상생사업 ----------
+  function buildSangsaeng() {
+    const el = $('#view-sangsaeng');
+    if (!el) return;
+    el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['상생사업 · 4개 과제']));
+
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('호원대학교 RISE 상생사업',
+        '전북지역 K-컬처·로컬콘텐츠·관광·문화 산업과 상생 성장을 견인하는 4개 과제')
+    ]));
+
+    const grid = h('div', { class: 'grid-2 sangsaeng-grid' },
+      SANGSAENG_PROJECTS.map(p => h('div', { class: 'card flat sangsaeng-card' }, [
+        h('div', { class: 'sangsaeng-head' }, [
+          h('span', { class: 'chip dark' }, [p.no]),
+          h('span', { class: 'chip ghost' }, [p.theme])
+        ]),
+        h('h3', { class: 'sangsaeng-title' }, [p.full]),
+        p.desc ? h('p', { class: 'sangsaeng-desc' }, [p.desc]) : null,
+        h('div', { class: 'sangsaeng-foot' }, [
+          h('span', { class: 'aux' }, ['약칭']),
+          h('b', {}, [p.short])
+        ])
+      ]))
+    );
+    el.appendChild(grid);
   }
 
   let _projectFilter = '';
@@ -2228,7 +2260,7 @@
       _pending = null;
       if (full) {
         buildSidebar();
-        buildOverview(); buildCommon(); buildSelf(); buildProject(); buildEvaluation(); buildInfra(); buildFormula();
+        buildOverview(); buildCommon(); buildSelf(); buildProject(); buildSangsaeng(); buildEvaluation(); buildInfra(); buildFormula();
         if (_currentView === 'community') buildCommunity();
         renderEvaluationCharts();
         setView(_currentView);
@@ -2266,7 +2298,7 @@
     Store.init();
     buildSidebar();
     buildMobileQuickNav();
-    buildOverview(); buildCommon(); buildSelf(); buildProject(); buildEvaluation(); buildInfra(); buildCommunity(); buildFormula();
+    buildOverview(); buildCommon(); buildSelf(); buildProject(); buildSangsaeng(); buildEvaluation(); buildInfra(); buildCommunity(); buildFormula();
 
     // All charts render immediately (single-page scroll layout)
     requestAnimationFrame(() => {
