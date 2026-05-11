@@ -49,7 +49,7 @@
         </div>
       </div>
 
-      <a class="input-admin-link" href="https://admin.howonrise.co.kr" target="_blank" rel="noopener" aria-label="성과 입력관리 시스템으로 이동">
+      <a class="input-admin-link" href="#" onclick="event.preventDefault(); document.getElementById('input-admin-modal').style.display='flex';" aria-label="성과 입력관리 시스템 안내">
         <div class="ial-icon">✏️</div>
         <div class="ial-text">
           <div class="ial-title">성과 입력관리</div>
@@ -68,7 +68,7 @@
         <div class="spacer"></div>
         <span id="save-indicator" class="save-indicator saved">저장됨</span>
         <div class="toolbar">
-          <a id="btn-admin" class="tb-btn primary" href="https://admin.howonrise.co.kr" target="_blank" rel="noopener" title="담당자 입력관리 시스템">✏️ 입력관리</a>
+          <a id="btn-admin" class="tb-btn primary" href="#" onclick="event.preventDefault(); document.getElementById('input-admin-modal').style.display='flex';" title="담당자 입력관리 시스템">✏️ 입력관리</a>
           <button id="btn-import" class="tb-btn" title="JSON 불러오기">불러오기</button>
           <button id="btn-export" class="tb-btn" title="JSON 내보내기">내보내기</button>
           <button id="btn-reset"  class="tb-btn danger" title="입력값 초기화">초기화</button>
@@ -91,6 +91,48 @@
         <section id="view-formula"  class="view"></section>
       </div>
     </main>
+  </div>
+
+  <div id="input-admin-modal" class="ia-modal" style="display:none;" onclick="if(event.target===this) this.style.display='none';">
+    <div class="ia-modal-card">
+      <button class="ia-modal-close" onclick="document.getElementById('input-admin-modal').style.display='none';" aria-label="닫기">✕</button>
+      <div class="ia-modal-icon">✏️</div>
+      <h2 class="ia-modal-title">성과 입력관리 시스템</h2>
+      <div class="ia-modal-sub">사업단 담당자가 추진과제·MOU·홍보 등을 입력하는 별도 관리자 시스템입니다.</div>
+
+      <div class="ia-modal-section">
+        <div class="ia-modal-label">📍 현재 상태</div>
+        <div class="ia-modal-status">
+          <span class="ia-status-dot"></span> 개발 완료 · 배포 준비 중
+        </div>
+        <div class="ia-modal-note">
+          정식 도메인(<code>admin.howonrise.co.kr</code>) 연결 작업이 진행 중입니다.
+        </div>
+      </div>
+
+      <div class="ia-modal-section">
+        <div class="ia-modal-label">🖥️ 내부망 접속 (사업단 담당자)</div>
+        <div class="ia-modal-note">
+          담당 PC에서 다음 주소로 접속하실 수 있습니다:<br/>
+          <code class="ia-modal-url">http://localhost:5173</code>
+        </div>
+      </div>
+
+      <div class="ia-modal-section">
+        <div class="ia-modal-label">📋 주요 기능</div>
+        <ul class="ia-modal-list">
+          <li>8개 사업단 추진과제 입력·수정</li>
+          <li>MOU·홍보·참여인력 관리</li>
+          <li>실시간 통합 대시보드 및 엑셀 출력</li>
+          <li>사진 자동 압축 업로드</li>
+          <li>모바일에서도 입력 가능</li>
+        </ul>
+      </div>
+
+      <div class="ia-modal-footer">
+        문의: 호원대학교 RISE사업단
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
