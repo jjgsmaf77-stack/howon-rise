@@ -205,6 +205,7 @@
   // ---------- navigation ----------
   const VIEWS = [
     { id: 'overview',   label: '개요',             desc: '성과 종합' },
+    { id: 'year2',      label: '2차년도 현황',     desc: '2026 실적·예산 집행' },
     { id: 'common',     label: '공통지표',         desc: '교육부 공통지표' },
     { id: 'self',       label: '대학자체지표',     desc: '5대 지수 체계' },
     { id: 'project',    label: '과제별 성과',      desc: '8개 과제' },
@@ -338,6 +339,7 @@
     const kpi = getKpi();
     const counts = {
       overview: '',
+      year2: (window.__RISE2__ && window.__RISE2__.totals) ? window.__RISE2__.totals.programs : '',
       common: Store.state.common.length,
       self: kpi.subIndicatorCount,
       project: Store.state.projects.length,
@@ -686,7 +688,7 @@
 
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('공통지표 원자료', '엑셀 성과양식의 공통지표 전체 원자료 (편집 가능).'),
-      h('div', {}, [commonFullTable()])
+      h('div', { class: 'y2-tblwrap' }, [commonFullTable()])
     ]));
 
     renderCommonChart();
@@ -2252,6 +2254,197 @@
     queueRerender(true);
   }
 
+  // ---------- year2 (2차년도 현황) ----------
+  // 데이터 원천: 옵시디언 성과관리 볼트 → build_data2.js → data2.js (window.__RISE2__)
+  function y2Data() { return window.__RISE2__ || null; }
+
+  function y2Status(status) {
+    const active = status === '진행';
+    return h('span', { class: `y2-status ${active ? 'active' : 'pending'}` }, [active ? '진행' : '자료 대기']);
+  }
+
+  function y2BarRow(label, pct, valText, muted) {
+    return h('div', { class: 'bar-row' }, [
+      h('div', { class: 'lbl' }, [label]),
+      h('div', { class: `bar ${muted ? 'muted' : ''}` }, [ h('i', { style: `width:${Math.min(pct, 100).toFixed(1)}%` }) ]),
+      h('div', { class: 'val' }, [valText])
+    ]);
+  }
+
+  function y2DivCard(d) {
+    const waiting = d.status !== '진행';
+    const satis = d.satisfaction.avg != null ? `${d.satisfaction.avg}` : '—';
+    return h('div', { class: `card y2-divcard ${waiting ? 'waiting' : ''}` }, [
+      h('div', { class: 'h' }, [ h('h3', {}, [d.key]), y2Status(d.status) ]),
+      h('div', { class: 'y2-full' }, [d.fullName || '']),
+      y2BarRow('집행률', d.budget.rate, `${d.budget.rate}%`, waiting),
+      h('div', { class: 'y2-mini' }, [
+        h('div', { class: 'm' }, [h('b', {}, [String(d.programs.length)]), h('span', {}, ['프로그램'])]),
+        h('div', { class: 'm' }, [h('b', {}, [String(d.students)]), h('span', {}, ['참여학생'])]),
+        h('div', { class: 'm' }, [h('b', {}, [satis]), h('span', {}, [d.satisfaction.avg != null ? `만족도(n=${d.satisfaction.n})` : '만족도'])]),
+        h('div', { class: 'm' }, [h('b', {}, [String(d.spread.사업단연계 + d.spread.초광역)]), h('span', {}, ['연계실적'])])
+      ]),
+      h('div', { class: 'note' }, [
+        waiting ? '결과보고서 인박스 투입 대기'
+                : `편성 ${fmtN(d.budget.totalM)}백만원 · 집행 ${fmtN(d.budget.spentWon)}원${d.unverified ? ` · 미검증 ${d.unverified}건 🔴` : ''}`
+      ])
+    ]);
+  }
+
+  function buildYear2() {
+    const el = $('#view-year2');
+    if (!el) return;
+    const Y2 = y2Data();
+    el.innerHTML = '';
+    el.appendChild(h('div', { class: 'view-anchor' }, ['2차년도 현황 · 2026 실적·예산 집행 (옵시디언 성과관리 연동)']));
+    if (!Y2) {
+      el.appendChild(h('section', { class: 'section' }, [
+        sectionHead('2차년도 현황', 'data2.js가 로드되지 않았습니다'),
+        h('div', { class: 'card' }, [h('div', { class: 'empty' }, ['build_data2.js 실행 후 재배포가 필요합니다.'])])
+      ]));
+      return;
+    }
+    const T = Y2.totals;
+    const divs = Y2.divisions;
+
+    // KPI + 경보
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('2차년도 요약', `${Y2.yearLabel} · 자동 집계 ${new Date(Y2.generatedAt).toLocaleDateString('ko-KR')}`,
+        [h('span', { class: 'chip ghost' }, [Y2.source])]),
+      h('div', { class: 'grid-4' }, [
+        kpiCard('자료 접수 사업단', T.activeDivisions, ' / 8', '결과보고서 접수 기준'),
+        kpiCard('프로그램 실적', T.programs, '건', `참여학생 ${fmtN(T.students)}명`),
+        kpiCard('집행액(반영분)', T.spentWon, '원', `편성 ${fmtN(T.budgetM)}백만원 · 집행률 ${T.rate}%`),
+        kpiCard('미검증 항목', T.unverified, '건', '🔴 확정 전 잠정값')
+      ]),
+      Y2.warnings && Y2.warnings.length ? h('ul', { class: 'callout-list y2-warn-list' },
+        Y2.warnings.map(w => h('li', { class: 'warn' }, [
+          h('div', { class: 'k' }, ['⚠️ 확인']),
+          h('div', { class: 'v' }, [w])
+        ]))) : null
+    ]));
+
+    // 사업단별 카드
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('사업단별 현황', '예산 집행률·프로그램·만족도 — 카드의 수치는 볼트 A층(프로그램 카드·지출대장) 합산값'),
+      h('div', { class: 'y2-divgrid' }, divs.map(y2DivCard))
+    ]));
+
+    // 예산 차트 + 집행 현황 표
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('예산 편성·집행', '단위: 백만원 — 집행은 인박스에 투입된 지출 문서만 반영'),
+      h('div', { class: 'grid-2' }, [
+        h('div', { class: 'card' }, [
+          h('h3', {}, ['사업단별 편성 대비 집행']),
+          h('div', { class: 'chart-wrap tall' }, [h('canvas', { id: 'y2-budget-chart' })])
+        ]),
+        h('div', { class: 'card' }, [
+          h('h3', {}, ['집행률 현황']),
+          h('div', {}, divs.map(d => y2BarRow(d.key, d.budget.rate, d.budget.spentWon ? `${d.budget.rate}%` : '—', d.status !== '진행'))),
+          h('div', { class: 'note' }, ['집행률 = 반영된 지출 ÷ 편성 총액. 지급요청 공문이 전부 투입되기 전까지는 실제보다 낮게 표시됩니다.'])
+        ])
+      ])
+    ]));
+
+    // 프로그램 실적 표
+    const progRows = [];
+    divs.forEach(d => d.programs.forEach(p => progRows.push({ div: d.key, ...p })));
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('프로그램 실적', `${progRows.length}건 — 프로그램 1건 = 1행 (표준 서식)`),
+      h('div', { class: 'card' }, [
+        progRows.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+          h('thead', {}, [h('tr', {}, ['사업단','프로그램명','유형','교육기관','참여학생','교육시간','만족도','소요예산','상태'].map(c => h('th', {}, [c])))]),
+          h('tbody', {}, progRows.map(p => h('tr', {}, [
+            h('td', {}, [p.div]),
+            h('td', {}, [p.name]),
+            h('td', {}, [p.category || '—']),
+            h('td', {}, [p.org || '—']),
+            h('td', { class: 'num' }, [p.students != null ? `${p.students}명` : '—']),
+            h('td', {}, [p.hours || '—']),
+            h('td', { class: 'num' }, [p.satis != null ? `${p.satis}${p.satisN ? ` (n=${p.satisN})` : ' 🔴'}` : '—']),
+            h('td', { class: 'num' }, [p.budget != null ? `${fmtN(p.budget)}원` : '—']),
+            h('td', {}, [p.status === '검토완료' || p.status === '입력반영' ? '🟢 ' + p.status : '🔴 ' + p.status])
+          ])))
+        ])]) : h('div', { class: 'empty' }, ['접수된 프로그램 실적이 없습니다.'])
+      ])
+    ]));
+
+    // 지출 기록 표 (B안)
+    const spendRows = [];
+    divs.forEach(d => d.spending.forEach(s => spendRows.push({ div: d.key, ...s })));
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('지출 기록', `${spendRows.length}건 — 지급요청 공문 전수 기록(B안)`),
+      h('div', { class: 'card' }, [
+        spendRows.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+          h('thead', {}, [h('tr', {}, ['사업단','일자','지출건명','예산항목','금액','근거문서','검증'].map(c => h('th', {}, [c])))]),
+          h('tbody', {}, spendRows.map(s => h('tr', {}, [
+            h('td', {}, [s.div]),
+            h('td', {}, [s.date || '—']),
+            h('td', {}, [s.name]),
+            h('td', {}, [s.item || '—']),
+            h('td', { class: 'num' }, [`${fmtN(s.amount)}원`]),
+            h('td', {}, [s.doc || '—']),
+            h('td', {}, [s.verified ? '🟢' : '🔴'])
+          ])))
+        ])]) : h('div', { class: 'empty' }, ['기록된 지출이 없습니다.'])
+      ])
+    ]));
+
+    // 성과지표 목표 ('26)
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('성과지표 목표 (’26)', '출처: 2차연도 종합수정사업계획서 — 실적(누적)은 카드 집계 후 자동 반영'),
+      h('div', { class: 'card' }, divs.map(d => h('details', { class: 'y2-ind' }, [
+        h('summary', {}, [`${d.key} — 지표 ${d.indicators.length}개`]),
+        d.indicators.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+          h('thead', {}, [h('tr', {}, ['구분','지표명','기준값','’26 목표','’25 실적','’26 실적(누적)'].map(c => h('th', {}, [c])))]),
+          h('tbody', {}, d.indicators.map(i => h('tr', {}, [
+            h('td', {}, [i.group]),
+            h('td', {}, [i.name]),
+            h('td', { class: 'num' }, [String(i.base || '—')]),
+            h('td', { class: 'num' }, [String(i.target || '—')]),
+            h('td', { class: 'num' }, [String(i.prev || '—')]),
+            h('td', { class: 'num na' }, ['집계 대기'])
+          ])))
+        ])]) : h('div', { class: 'empty' }, ['지표 정보 없음'])
+      ])))
+    ]));
+
+    el.appendChild(h('div', { class: 'note' }, [
+      `데이터 원천: 옵시디언 성과관리 볼트 (원장·프로그램 카드·지출대장) · 생성 ${new Date(Y2.generatedAt).toLocaleString('ko-KR')} · 갱신: 인박스 처리 후 build_data2.js 실행`
+    ]));
+  }
+
+  let _y2Chart = null;
+  function renderYear2Charts() {
+    if (!window.Chart) return;
+    const Y2 = y2Data();
+    if (!Y2) return;
+    const ctx = document.getElementById('y2-budget-chart');
+    if (!ctx) return;
+    if (_y2Chart) { _y2Chart.destroy(); _y2Chart = null; }
+    const labels = Y2.divisions.map(d => d.key);
+    _y2Chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: '편성(백만원)', data: Y2.divisions.map(d => d.budget.totalM), backgroundColor: 'rgba(10,37,64,0.18)', borderColor: '#0a2540', borderWidth: 1 },
+          { label: '집행(백만원)', data: Y2.divisions.map(d => d.budget.spentWon / 1e6), backgroundColor: 'rgba(28,114,147,0.75)', borderColor: '#1c7293', borderWidth: 1 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { callbacks: { label: (ctx) =>
+            `${ctx.dataset.label}: ${Math.round(ctx.parsed.x * 1e6).toLocaleString('ko-KR')}원`
+          } }
+        },
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+  }
+
   // ---------- re-render orchestrator ----------
   let _pending = null;
   function queueRerender(full = false) {
@@ -2260,9 +2453,11 @@
       _pending = null;
       if (full) {
         buildSidebar();
-        buildOverview(); buildCommon(); buildSelf(); buildProject(); buildSangsaeng(); buildEvaluation(); buildInfra(); buildFormula();
+        buildOverview(); buildYear2(); buildCommon(); buildSelf(); buildProject(); buildSangsaeng(); buildEvaluation(); buildInfra(); buildFormula();
         if (_currentView === 'community') buildCommunity();
+        renderOverviewCharts();
         renderEvaluationCharts();
+        renderYear2Charts();
         setView(_currentView);
       } else {
         // rebuild data-dependent views only for current view
@@ -2298,11 +2493,12 @@
     Store.init();
     buildSidebar();
     buildMobileQuickNav();
-    buildOverview(); buildCommon(); buildSelf(); buildProject(); buildSangsaeng(); buildEvaluation(); buildInfra(); buildCommunity(); buildFormula();
+    buildOverview(); buildYear2(); buildCommon(); buildSelf(); buildProject(); buildSangsaeng(); buildEvaluation(); buildInfra(); buildCommunity(); buildFormula();
 
     // All charts render immediately (single-page scroll layout)
     requestAnimationFrame(() => {
       renderOverviewCharts();
+      renderYear2Charts();
       renderCommonChart();
       renderSelfChart();
       renderEvaluationCharts();
