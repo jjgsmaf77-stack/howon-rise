@@ -155,6 +155,7 @@ function loadSpending(div) {
       item,
       tanker: checkTanker(cell('TANKer').trim(), item, `${div} 지출대장/${cell('지출건명')}`),
       execType: cell('집행방식').trim(),
+      fund: cell('재원').trim() || '본예산',   // 본예산 | 이월금
       amount, // 음수(환수·정정)도 그대로 합산
       doc: cell('근거문서(내부결재)').replace(/\[\[|\]\]/g, ''),
       verified: /🟢/.test(cell('검증')),
@@ -181,13 +182,21 @@ function loadLedger(div) {
     rate25: pick(r, col('25 달성도')),
     target: pick(r, col('26 목표')),
   })).filter(i => i.name) : [];
-  // 항목별 편성 (수정사업계획서 당해연도 예산 집행 계획 — §3 표)
-  const bt = parseTables(src).find(t => t.header.includes('예산항목') && t.header.includes('편성'));
+  // 항목별 편성 (당해연도) + 2025 이월금 집행 계획 — §3의 두 표
+  const allT = parseTables(src);
+  const bt = allT.find(t => t.header.includes('예산항목') && t.header.includes('편성') && !t.header.some(h => h.includes('이월')));
   const budgetPlan = bt ? bt.rows
     .filter(r => r[0] && !r[0].includes('총계'))
     .map(r => ({ item: r[0].replace(/\*/g, '').trim(), plannedM: num(r[1]),
                  flagged: /🔴/.test(r[1] || '') }))
     .filter(x => x.plannedM != null) : [];
+  const ct = allT.find(t => t.header.some(h => h.includes('이월금')));
+  const carryPlan = ct ? ct.rows
+    .filter(r => r[0] && !r[0].includes('총계'))
+    .map(r => ({ item: r[0].replace(/\*/g, '').trim(), plannedM: num(r[1]) }))
+    .filter(x => x.plannedM != null) : [];
+  const carryTotalRow = ct ? ct.rows.find(r => r[0] && r[0].includes('총계')) : null;
+  const carryTotalM = carryTotalRow ? (num(carryTotalRow[1]) || 0) : carryPlan.reduce((a, x) => a + x.plannedM, 0);
 
   return {
     code: fm['과제코드'] || '',
@@ -197,6 +206,8 @@ function loadLedger(div) {
     budgetMainM: num(fm['예산_주관대학']) || 0,
     budgetOpM: num(fm['예산_운영비']) || 0,
     budgetPlan,
+    carryPlan,
+    carryTotalM,
     indicators,
   };
 }
@@ -239,6 +250,12 @@ const divisions = DIVISIONS.map(key => {
     lead: ledger.lead,
     budget: { totalM: ledger.budgetTotalM, mainM: ledger.budgetMainM, opM: ledger.budgetOpM, spentWon, rate: budgetWon ? +(spentWon / budgetWon * 100).toFixed(1) : 0 },
     budgetPlan: ledger.budgetPlan,
+    carryPlan: ledger.carryPlan || [],
+    carry: (() => {
+      const totalM = ledger.carryTotalM || 0;
+      const spent = spending.filter(x => x.fund === '이월금').reduce((a, x) => a + x.amount, 0);
+      return { totalM, spentWon: spent, rate: totalM ? +(spent / (totalM * 1e6) * 100).toFixed(1) : 0 };
+    })(),
     programs: cards,
     spending,
     students,

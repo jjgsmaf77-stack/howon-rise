@@ -211,6 +211,25 @@
             return rows;
           })())
         ])]) : h('div', { class: 'empty' }, ['항목별 편성 정보 없음']),
+        h('h3', {}, ['2025년도 이월금 집행 계획 (백만원)']),
+        (d.carryPlan && d.carryPlan.length) ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+          h('thead', {}, [h('tr', {}, ['예산항목', '이월금 편성', '집행(재원=이월금)'].map((c, i) => h('th', { class: i ? 'num' : '' }, [c])))]),
+          h('tbody', {}, [
+            ...d.carryPlan.map(cp => {
+              const spent = d.spending.filter(x => x.fund === '이월금' && x.item === cp.item).reduce((a, x) => a + x.amount, 0);
+              return h('tr', {}, [
+                h('td', {}, [cp.item]),
+                h('td', { class: 'num' }, [String(cp.plannedM)]),
+                h('td', { class: 'num' }, [spent ? `${fmtN(spent)}원` : '—'])
+              ]);
+            }),
+            h('tr', { class: 'strong' }, [
+              h('td', {}, ['합계']),
+              h('td', { class: 'num strong' }, [String(d.carry.totalM)]),
+              h('td', { class: 'num strong' }, [d.carry.spentWon ? `${fmtN(d.carry.spentWon)}원 (${d.carry.rate}%)` : '—'])
+            ])
+          ])
+        ])]) : h('div', { class: 'empty' }, ['이월금 없음']),
         h('h3', {}, ['성과지표']),
         h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
           h('thead', {}, [h('tr', {}, ['구분','지표명','단위','’25 목표','’25 실적','’25 달성도','’26 목표'].map(c => h('th', {}, [c])))]),
@@ -410,6 +429,39 @@
           h('div', {}, divs.map(y2RateRow)),
           h('div', { class: 'note' }, ['집행률 = 반영된 지출 ÷ 편성 총액. 지급요청 공문이 전부 접수되기 전까지는 실제보다 낮게 표시됩니다.'])
         ])
+      ])
+    ]));
+
+    // 이월금 집행현황 (2025년도 이월금 — 수정사업계획서 이월금 집행 계획 기준)
+    const carryDivs = divs.filter(d => d.carry && d.carry.totalM > 0);
+    const carryTotalM = carryDivs.reduce((a, d) => a + d.carry.totalM, 0);
+    const carrySpent = carryDivs.reduce((a, d) => a + d.carry.spentWon, 0);
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('이월금 집행현황', `2025년도 이월금 총 ${fmtN(Math.round(carryTotalM * 100) / 100)}백만원 — 출처: 수정사업계획서 「2025년도 이월금 집행 계획」 · 집행은 지출 기록의 재원=이월금 합산`,
+        [h('span', { class: 'chip ghost' }, [`집행 ${fmtN(carrySpent)}원 (${carryTotalM ? (carrySpent / (carryTotalM * 1e6) * 100).toFixed(1) : 0}%)`])]),
+      h('div', { class: 'card' }, [
+        h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+          h('thead', {}, [h('tr', {}, ['사업단', '이월금 편성(백만)', '집행(원)', '집행률', '주요 편성 항목'].map((c, i) => h('th', { class: i ? 'num' : '' }, [c])))]),
+          h('tbody', {}, [
+            ...carryDivs.map(d => h('tr', {}, [
+              h('td', { class: 'y2-divcell', title: divNameWithCode(d) }, [d.key]),
+              h('td', { class: 'num' }, [String(d.carry.totalM)]),
+              h('td', { class: 'num' }, [d.carry.spentWon ? fmtN(d.carry.spentWon) : '—']),
+              h('td', { class: 'num' }, [d.carry.spentWon ? `${d.carry.rate}%` : '—']),
+              h('td', { style: 'white-space:normal;word-break:keep-all;' }, [
+                (d.carryPlan || []).map(cp => `${cp.item} ${cp.plannedM}`).join(' · ') || '—'
+              ])
+            ])),
+            h('tr', { class: 'strong' }, [
+              h('td', {}, ['합계']),
+              h('td', { class: 'num strong' }, [String(Math.round(carryTotalM * 100) / 100)]),
+              h('td', { class: 'num strong' }, [carrySpent ? fmtN(carrySpent) : '—']),
+              h('td', { class: 'num strong' }, [carrySpent ? `${(carrySpent / (carryTotalM * 1e6) * 100).toFixed(1)}%` : '—']),
+              h('td', {}, [''])
+            ])
+          ])
+        ])]),
+        h('div', { class: 'note' }, ['이월금 지출은 지출 기록에 재원=이월금으로 기재 시 자동 집계됩니다. 늘봄은 계획서에 3~4월 기집행 표기 존재 — 지급 문서 확보 시 반영.'])
       ])
     ]));
 

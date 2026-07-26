@@ -81,6 +81,7 @@ class Spending(SQLModel, table=True):
     budget_item: str = ""                        # BUDGET_ITEMS 9종
     tanker: str = ""                             # TANKer 주분류 (간접비는 공란)
     exec_type: str = ""                          # 자체운영/용역(수의계약)/용역(입찰)
+    fund: str = "본예산"                          # 본예산 | 이월금
     amount_won: int = 0                          # 음수(환수·정정) 허용
     doc: str = ""                                # 근거문서(내부결재)
     program_id: Optional[int] = Field(default=None, foreign_key="program.id")

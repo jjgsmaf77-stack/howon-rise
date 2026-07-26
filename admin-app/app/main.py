@@ -353,7 +353,7 @@ def program_delete(pid: int, request: Request, s: Session = Depends(db)):
 @app.post("/division/{key}/spending/new")
 def spending_create(key: str, request: Request, date: str = Form(""), name: str = Form(...),
                     budget_item: str = Form(""), tanker: str = Form(""), exec_type: str = Form(""),
-                    amount_won: str = Form(...), doc: str = Form(""),
+                    fund: str = Form("본예산"), amount_won: str = Form(...), doc: str = Form(""),
                     s: Session = Depends(db)):
     u = require_user(request, s)
     require_division(s, key)
@@ -372,9 +372,11 @@ def spending_create(key: str, request: Request, date: str = Form(""), name: str 
         raise HTTPException(422, "간접비는 TANKer 분류 제외입니다")
     if exec_type.strip() and exec_type.strip() not in EXEC_TYPES:
         raise HTTPException(422, "집행방식 값이 올바르지 않습니다")
+    if fund.strip() not in ("본예산", "이월금"):
+        raise HTTPException(422, "재원은 본예산/이월금 중 선택입니다")
     sp = Spending(division_key=key, date=date.strip(), name=name.strip(),
                   budget_item=budget_item.strip(), tanker=tanker, exec_type=exec_type.strip(),
-                  amount_won=amount, doc=doc.strip())
+                  fund=fund.strip(), amount_won=amount, doc=doc.strip())
     s.add(sp)
     s.flush()
     audit(s, u, "create", "spending", sp.id, f"{key} · {sp.name} · {amount:,}원")
@@ -514,7 +516,7 @@ def export_data2(request: Request, key: str = "", s: Session = Depends(db)):
                            indicators=[t.strip() for t in p.indicator_tags.split(",") if t.strip()],
                            status=p.status, approval=p.approval_doc) for p in sm["programs"]],
             spending=[dict(date=x.date, name=x.name, item=x.budget_item, tanker=x.tanker,
-                           execType=x.exec_type, amount=x.amount_won,
+                           execType=x.exec_type, fund=x.fund, amount=x.amount_won,
                            doc=x.doc, verified=x.verified) for x in sm["spendings"]],
             students=sm["students"],
             satisfaction=dict(avg=sm["satis_avg"], n=sm["satis_n"], scale=5, excluded=sm["satis_excluded"]),

@@ -1,6 +1,6 @@
 // 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.
 window.__RISE2__ = {
-  "generatedAt": "2026-07-26T05:39:34.428Z",
+  "generatedAt": "2026-07-26T05:53:39.372Z",
   "year": 2026,
   "yearLabel": "2차년도(2026)",
   "source": "성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)",
@@ -18,6 +18,12 @@ window.__RISE2__ = {
         "rate": 0
       },
       "budgetPlan": [],
+      "carryPlan": [],
+      "carry": {
+        "totalM": 0,
+        "spentWon": 0,
+        "rate": 0
+      },
       "programs": [],
       "spending": [],
       "students": 0,
@@ -98,6 +104,33 @@ window.__RISE2__ = {
           "flagged": false
         }
       ],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 63
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 22
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 16
+        },
+        {
+          "item": "교육 연구 환경 개선",
+          "plannedM": 3
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 4
+        }
+      ],
+      "carry": {
+        "totalM": 108,
+        "spentWon": 0,
+        "rate": 0
+      },
       "programs": [],
       "spending": [],
       "students": 0,
@@ -228,6 +261,33 @@ window.__RISE2__ = {
           "flagged": false
         }
       ],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 42
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 30
+        },
+        {
+          "item": "교육 연구 환경 개선",
+          "plannedM": 28
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 1
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 2
+        }
+      ],
+      "carry": {
+        "totalM": 103,
+        "spentWon": 0,
+        "rate": 0
+      },
       "programs": [],
       "spending": [],
       "students": 0,
@@ -343,6 +403,21 @@ window.__RISE2__ = {
           "flagged": false
         }
       ],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 6.79
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 0.26
+        }
+      ],
+      "carry": {
+        "totalM": 7.06,
+        "spentWon": 0,
+        "rate": 0
+      },
       "programs": [],
       "spending": [],
       "students": 0,
@@ -478,18 +553,73 @@ window.__RISE2__ = {
           "flagged": false
         }
       ],
-      "programs": [],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 17
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 44
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 0
+        },
+        {
+          "item": "성과 활용 확산",
+          "plannedM": 3
+        },
+        {
+          "item": "교육 연구 환경 개선",
+          "plannedM": 49
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 7
+        }
+      ],
+      "carry": {
+        "totalM": 120,
+        "spentWon": 0,
+        "rate": 0
+      },
+      "programs": [
+        {
+          "file": "2026-05 아이들 웃음도 JobGO 배움도 JobGO(연계·성인)",
+          "name": "아이들 웃음도 JobGO! 배움도 JobGO! (맛잡고 연계)",
+          "category": "사회공헌·봉사",
+          "org": "익산보육원",
+          "period": "2026-05-03",
+          "students": 17,
+          "hours": "1회",
+          "satis": 4.92,
+          "satisN": null,
+          "satisScale": 5,
+          "budget": null,
+          "budgetItem": "",
+          "tanker": "A",
+          "tankerSub": "",
+          "execType": "",
+          "indicators": [
+            "사업단연계"
+          ],
+          "extra": "맛잡고 사업단과의 연계 프로그램 (H-성인학습지원사업단 = 실사구시365 성인 사업단) — 실적 양측 계상, 예산은 맛잡고 집행분(935,380원)이므로 본 사업단 예산 미반영",
+          "status": "추출완료",
+          "approval": "RISE사업팀-1288(2026.06.09)"
+        }
+      ],
       "spending": [],
-      "students": 0,
+      "students": 17,
       "satisfaction": {
         "avg": null,
         "n": 0,
         "scale": 5,
-        "excluded": 0
+        "excluded": 1
       },
       "spread": {
         "초광역": 0,
-        "사업단연계": 0,
+        "사업단연계": 1,
         "MOU": 0,
         "언론보도": 0,
         "행사": 0
@@ -551,8 +681,8 @@ window.__RISE2__ = {
           "target": "111.3"
         }
       ],
-      "unverified": 0,
-      "status": "자료대기"
+      "unverified": 1,
+      "status": "진행"
     },
     {
       "key": "드론",
@@ -598,6 +728,33 @@ window.__RISE2__ = {
           "flagged": false
         }
       ],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 5
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 11
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 24
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 7
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 1
+        }
+      ],
+      "carry": {
+        "totalM": 48,
+        "spentWon": 0,
+        "rate": 0
+      },
       "programs": [],
       "spending": [],
       "students": 0,
@@ -708,6 +865,25 @@ window.__RISE2__ = {
           "flagged": false
         }
       ],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 7
+        },
+        {
+          "item": "성과 활용 확산",
+          "plannedM": 1.4
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 1
+        }
+      ],
+      "carry": {
+        "totalM": 9.4,
+        "spentWon": 0,
+        "rate": 0
+      },
       "programs": [],
       "spending": [],
       "students": 0,
@@ -833,6 +1009,29 @@ window.__RISE2__ = {
           "flagged": false
         }
       ],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 5
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 6
+        },
+        {
+          "item": "교육 연구 환경 개선",
+          "plannedM": 4
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 2
+        }
+      ],
+      "carry": {
+        "totalM": 17,
+        "spentWon": 0,
+        "rate": 0
+      },
       "programs": [
         {
           "file": "2026-05 COOKING브릿지-조리경연대회 교육(덕암정보고)",
@@ -915,6 +1114,7 @@ window.__RISE2__ = {
           "item": "교육·연구 프로그램 운영·개발",
           "tanker": "T",
           "execType": "자체운영",
+          "fund": "본예산",
           "amount": 7650000,
           "doc": "결과보고서(hwpx) 지출내역",
           "verified": false
@@ -925,6 +1125,7 @@ window.__RISE2__ = {
           "item": "교육·연구 프로그램 운영·개발",
           "tanker": "T",
           "execType": "자체운영",
+          "fund": "본예산",
           "amount": 6450000,
           "doc": "결과보고서(최종_0716) 지출내역 p.5",
           "verified": false
@@ -935,6 +1136,7 @@ window.__RISE2__ = {
           "item": "지역 연계 협업 지원",
           "tanker": "A",
           "execType": "자체운영",
+          "fund": "본예산",
           "amount": 935380,
           "doc": "RISE사업팀-1288 지급요청",
           "verified": false
@@ -1058,6 +1260,33 @@ window.__RISE2__ = {
           "flagged": false
         }
       ],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 15
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 1.6
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 0
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 0.4
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 0.4
+        }
+      ],
+      "carry": {
+        "totalM": 17,
+        "spentWon": 0,
+        "rate": 0
+      },
       "programs": [],
       "spending": [],
       "students": 0,
@@ -1138,15 +1367,15 @@ window.__RISE2__ = {
   "totals": {
     "budgetM": 2975,
     "spentWon": 15035380,
-    "programs": 3,
-    "students": 81,
-    "unverified": 6,
-    "activeDivisions": 1,
+    "programs": 4,
+    "students": 98,
+    "unverified": 7,
+    "activeDivisions": 2,
     "rate": 0.51
   },
   "warnings": [
-    "프로그램 자료 접수: 1/8 사업단 — 나머지 사업단 결과보고서 투입 필요",
+    "프로그램 자료 접수: 2/8 사업단 — 나머지 사업단 결과보고서 투입 필요",
     "집행률은 인박스에 투입된 지출 문서만 반영 (비프로그램성 지출 미반영 시 실제보다 낮음)",
-    "미검증(🔴) 항목 6건 — 확정 전 수치는 잠정값"
+    "미검증(🔴) 항목 7건 — 확정 전 수치는 잠정값"
   ]
 };

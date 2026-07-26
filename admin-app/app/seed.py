@@ -120,6 +120,17 @@ PROGRAMS = [
          card_file="2026-07 COOKING브릿지-조리경연대회 교육(진경여고)", status="추출완료"),
 ]
 
+PROGRAMS.append(
+    dict(division_key="성인", name="아이들 웃음도 JobGO! 배움도 JobGO! (맛잡고 연계)", category="사회공헌·봉사",
+         org="익산보육원", period="2026-05-03", students=17, hours="1회",
+         satisfaction=4.92, satisfaction_n=None, satisfaction_scale=5,
+         budget_won=None, budget_item="", tanker="A", exec_type="",
+         indicator_tags="사업단연계",
+         extra="맛잡고 사업단 연계 (H-성인학습지원사업단=성인 사업단 동일체) — 실적 양측 계상, 예산은 맛잡고 집행분만 반영",
+         approval_doc="RISE사업팀-1288(2026.06.09)",
+         evidence="아이들 웃음도 JobGO! 배움도 JobGO! 결과보고_붙임파일.pdf | p.1 | 참여 19명·만족도 4.92",
+         card_file="2026-05 아이들 웃음도 JobGO 배움도 JobGO(연계·성인)", status="추출완료"))
+
 SPENDINGS = [
     dict(division_key="맛잡고", date="2026-06-23", name="COOKING브릿지(덕암정보고) 강사료·재료비",
          budget_item="교육·연구 프로그램 운영·개발", tanker="T", exec_type="자체운영",

@@ -102,7 +102,7 @@
           </td>
           <td>{{ x.date or "—" }}</td>
           <td class="strong">{{ x.name }}</td>
-          <td>{{ x.budget_item or "—" }}</td>
+          <td>{{ x.budget_item or "—" }}{% if x.fund == "이월금" %} <span class="cnt">이월금</span>{% endif %}</td>
           <td class="num">{{ "{:,}".format(x.amount_won) }}원</td>
           <td>{{ x.doc or "—" }}</td>
           <td class="acts">
@@ -131,6 +131,10 @@
     <select name="exec_type">
       <option value="">집행방식</option>
       {% for e in EXEC_TYPES %}<option value="{{ e }}">{{ e }}</option>{% endfor %}
+    </select>
+    <select name="fund">
+      <option value="본예산">본예산</option>
+      <option value="이월금">이월금</option>
     </select>
     <input name="amount_won" placeholder="금액(원) * 환수는 음수" required />
     <input name="doc" placeholder="근거문서 (RISE사업팀-NNNN)" />
