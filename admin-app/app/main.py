@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Request, Form, Depends, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, PlainTextResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.templating import Jinja2Templates
@@ -584,6 +584,32 @@ def export_data2(request: Request, key: str = "", s: Session = Depends(db)):
         divisions=out_divs, totals=totals,
         warnings=warnings,
     ))
+
+
+# ---------- 성과 대시보드 (로그인 계정만 열람) ----------
+DASH_DIR = (BASE / "dashboard").resolve()
+
+
+@app.get("/dashboard", include_in_schema=False)
+def dash_redirect(request: Request, s: Session = Depends(db)):
+    require_user(request, s)
+    return RedirectResponse("/dashboard/")
+
+
+@app.get("/dashboard/", include_in_schema=False)
+def dash_index(request: Request, s: Session = Depends(db)):
+    require_user(request, s)
+    return FileResponse(DASH_DIR / "index.html",
+                        headers={"Cache-Control": "no-cache, must-revalidate"})
+
+
+@app.get("/dashboard/{asset:path}", include_in_schema=False)
+def dash_asset(asset: str, request: Request, s: Session = Depends(db)):
+    require_user(request, s)
+    p = (DASH_DIR / asset).resolve()
+    if not p.is_relative_to(DASH_DIR) or not p.is_file():
+        raise HTTPException(404, "파일을 찾을 수 없습니다")
+    return FileResponse(p)
 
 
 @app.get("/healthz")

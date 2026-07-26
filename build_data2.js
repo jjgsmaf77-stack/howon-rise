@@ -293,7 +293,11 @@ const out = {
   ].filter(Boolean),
 };
 
-fs.writeFileSync(OUT, '// 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.\n'
-  + 'window.__RISE2__ = ' + JSON.stringify(out, null, 2) + ';\n');
+const payload = '// 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.\n'
+  + 'window.__RISE2__ = ' + JSON.stringify(out, null, 2) + ';\n';
+fs.writeFileSync(OUT, payload);
+// 입력관리(admin-app) 내장 대시보드에도 동일 데이터 배포 (로그인 뒤에서 서빙)
+const OUT2 = path.join(__dirname, 'admin-app', 'dashboard', 'data2.js');
+if (fs.existsSync(path.dirname(OUT2))) fs.writeFileSync(OUT2, payload);
 console.log(`data2.js generated: ${divisions.length} divisions, ${totals.programs} programs, spent ${totals.spentWon.toLocaleString()}원, unverified ${totals.unverified}`);
 if (WARN.length) { console.warn('빌드 경고 ' + WARN.length + '건:'); WARN.forEach(w => console.warn('  - ' + w)); }
