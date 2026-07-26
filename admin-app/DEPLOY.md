@@ -35,6 +35,11 @@ railway domain                     # 공개 도메인 발급
 발급된 주소를 알려주면 대시보드 `admin/index.html`의 `ADMIN_URL`에 넣어 커밋 →
 성과관리 플랫폼의 "입력관리" 버튼이 실제 시스템으로 자동 연결됩니다.
 
+**보호 대시보드**: 배포 주소 `/dashboard/` = 로그인 계정만 열람 가능한 성과 대시보드
+(data2.js 포함 전부 인증 필수). 계정은 admin 로그인 → 계정관리에서 발급/차단.
+이후 원하면 howonrise.co.kr 도메인을 Railway 커스텀 도메인으로 연결해
+공개 정적 사이트를 대체할 수 있음 (그 전까지 정적 사이트는 공용 비번 howon2026 차단막 유지).
+
 ## 보안 체크리스트
 - [x] HTTPS (Railway 기본) + `COOKIE_SECURE=1`
 - [x] SESSION_SECRET 무작위 지정
