@@ -124,6 +124,7 @@ function loadCards(div) {
       tankerSub: String(fm['TANKer_부분류'] || '').trim(),
       execType: String(fm['집행방식'] || '').trim(),
       indicators: Array.isArray(fm['지표매핑']) ? fm['지표매핑'] : [],
+      extra: String(fm['기타실적'] || ''),
       status: fm['상태'] || '추출완료',
       approval: fm['내부결재'] || '',
     };

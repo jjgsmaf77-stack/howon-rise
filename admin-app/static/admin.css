@@ -152,3 +152,12 @@ fieldset.satis .note { grid-column: span 3; }
 .tbl th, .tbl td { white-space: nowrap; }
 .tbl td.strong { white-space: normal; word-break: keep-all; min-width: 190px; line-height: 1.45; }
 .tbl td .muted { white-space: nowrap; }
+
+/* 지출 추가 폼: 2행 정돈 배치 */
+.spend-form { grid-template-columns: 120px 1.6fr 1.2fr 0.8fr 1fr 1fr; }
+.spend-form input[name="doc"] { grid-column: span 4; }
+.spend-form button { grid-column: span 2; }
+@media (max-width: 880px) {
+  .spend-form { grid-template-columns: 1fr 1fr; }
+  .spend-form input[name="doc"], .spend-form button { grid-column: span 2; }
+}

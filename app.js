@@ -133,24 +133,10 @@
     ]);
   }
 
-  // 사업단 상세 모달 — 입력관리와 같은 내용의 읽기 전용 뷰
-  function y2DivModal(d) {
-    const prev = document.getElementById('y2-modal');
-    if (prev) prev.remove();
+  // 사업단 상세 — 입력관리와 같은 내용의 읽기 전용 뷰 (단일/전체 공용 본문 빌더)
+  function y2DivDetailNodes(d) {
     const TK = k => k ? `${k} ${TANKER[k] || ''}` : '—';
-    const close = () => { const m = document.getElementById('y2-modal'); if (m) m.remove(); document.removeEventListener('keydown', esc); };
-    const esc = (e) => { if (e.key === 'Escape') close(); };
-    document.addEventListener('keydown', esc);
-    const modal = h('div', { id: 'y2-modal', class: 'y2-modal', onclick: (e) => { if (e.target.id === 'y2-modal') close(); } }, [
-      h('div', { class: 'y2-modal-card' }, [
-        h('div', { class: 'y2-modal-head' }, [
-          h('div', {}, [
-            h('div', { class: 'y2-code' }, [d.code || d.key]),
-            h('h2', {}, [divName(d)]),
-            h('div', { class: 'muted' }, [`책임자 ${d.lead || '—'} · 조회 전용 (수정은 입력관리에서)`])
-          ]),
-          h('button', { class: 'y2-modal-close', onclick: close, 'aria-label': '닫기' }, ['✕'])
-        ]),
+    return [
         h('div', { class: 'y2-modal-kpis' }, [
           h('span', {}, [`집행률 ${d.budget.rate}%`]),
           h('span', {}, [`집행 ${fmtN(d.budget.spentWon)}원 / 편성 ${fmtN(d.budget.totalM)}백만원`]),
@@ -178,6 +164,13 @@
             h('td', {}, [p.approval || '—'])
           ])))
         ])]) : h('div', { class: 'empty' }, ['접수된 프로그램이 없습니다.']),
+        // 주요 실적(수상 등) — 카드의 기타실적 표시
+        ...d.programs.filter(p => p.extra).map(p =>
+          h('div', { class: 'y2-extra' }, [
+            h('span', { class: 'y2-extra-k' }, ['🏆 주요 실적']),
+            h('span', { class: 'y2-extra-p' }, [`[${p.name}]`]),
+            h('span', {}, [p.extra])
+          ])),
         h('h3', {}, [`지출 기록 (${d.spending.length})`]),
         d.spending.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
           h('thead', {}, [h('tr', {}, ['검증','일자','지출건명','예산항목','TANKer','집행방식','금액','근거문서'].map(c => h('th', {}, [c])))]),
@@ -231,9 +224,64 @@
             h('td', { class: 'num strong' }, [String(i.target || '—')])
           ])))
         ])])
+    ];
+  }
+
+  function y2OpenModal(bodyNodes, headNode) {
+    const prev = document.getElementById('y2-modal');
+    if (prev) prev.remove();
+    const close = () => { const m = document.getElementById('y2-modal'); if (m) m.remove(); document.removeEventListener('keydown', esc); };
+    const esc = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', esc);
+    const modal = h('div', { id: 'y2-modal', class: 'y2-modal', onclick: (e) => { if (e.target.id === 'y2-modal') close(); } }, [
+      h('div', { class: 'y2-modal-card' }, [
+        h('div', { class: 'y2-modal-head' }, [
+          headNode,
+          h('button', { class: 'y2-modal-close', onclick: close, 'aria-label': '닫기' }, ['✕'])
+        ]),
+        ...bodyNodes
       ])
     ]);
     document.body.appendChild(modal);
+  }
+
+  // 단일 사업단 모달
+  function y2DivModal(d) {
+    y2OpenModal(y2DivDetailNodes(d), h('div', {}, [
+      h('div', { class: 'y2-code' }, [d.code || d.key]),
+      h('h2', {}, [divName(d)]),
+      h('div', { class: 'muted' }, [
+        `책임자 ${d.lead || '—'} · 조회 전용 (수정은 입력관리에서) · `,
+        h('a', { href: '#', class: 'y2-alllink', onclick: (e) => { e.preventDefault(); y2AllModal(); } }, ['전체 사업단 보기 →'])
+      ])
+    ]));
+  }
+
+  // 전체보기 — 9개 사업단 상세를 한 화면에
+  function y2AllModal() {
+    const Y2 = y2Data();
+    if (!Y2) return;
+    const body = [];
+    Y2.divisions.forEach((d, i) => {
+      body.push(h('div', { class: 'y2-all-div' }, [
+        h('div', { class: 'y2-all-head' }, [
+          h('span', { class: 'y2-code' }, [d.code || d.key]),
+          h('h2', {}, [divName(d)]),
+          y2Status(d.status),
+          h('span', { class: 'muted' }, [d.lead ? `책임자 ${d.lead}` : ''])
+        ]),
+        ...(d.status === '진행' || d.programs.length || d.spending.length
+          ? y2DivDetailNodes(d)
+          : [h('div', { class: 'y2-modal-kpis' }, [
+              h('span', {}, [`편성 ${fmtN(d.budget.totalM)}백만원`]),
+              h('span', {}, ['결과보고서 인박스 투입 대기'])
+            ])])
+      ]));
+    });
+    y2OpenModal(body, h('div', {}, [
+      h('h2', {}, ['전체 사업단 상세 (9개 단위)']),
+      h('div', { class: 'muted' }, ['조회 전용 — 자료 대기 사업단은 요약만 표시됩니다'])
+    ]));
   }
 
   function y2DivCard(d) {
@@ -334,7 +382,8 @@
 
     // 사업단별 카드
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('사업단별 현황', '2차년도 수정사업계획서 기준 단위과제 — 수치는 프로그램 카드·지출 기록 합산값'),
+      sectionHead('사업단별 현황', '2차년도 수정사업계획서 기준 단위과제 — 카드 클릭 시 상세, 수치는 프로그램 카드·지출 기록 합산값',
+        [h('button', { class: 'chip y2-exec-btn', onclick: () => y2AllModal() }, ['전체 상세보기'])]),
       h('div', { class: 'y2-divgrid' }, divs.map(y2DivCard))
     ]));
 

@@ -1,6 +1,6 @@
 // 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.
 window.__RISE2__ = {
-  "generatedAt": "2026-07-26T05:31:18.918Z",
+  "generatedAt": "2026-07-26T05:39:34.428Z",
   "year": 2026,
   "yearLabel": "2차년도(2026)",
   "source": "성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)",
@@ -793,8 +793,8 @@ window.__RISE2__ = {
         "totalM": 294,
         "mainM": 185,
         "opM": 109,
-        "spentWon": 6450000,
-        "rate": 2.2
+        "spentWon": 15035380,
+        "rate": 5.1
       },
       "budgetPlan": [
         {
@@ -835,6 +835,55 @@ window.__RISE2__ = {
       ],
       "programs": [
         {
+          "file": "2026-05 COOKING브릿지-조리경연대회 교육(덕암정보고)",
+          "name": "COOKING브릿지-조리경연대회 교육(덕암정보고)",
+          "category": "경연대회지도",
+          "org": "덕암정보고등학교",
+          "period": "2026-05-15 ~ 2026-06-15",
+          "students": 16,
+          "hours": "18시간(6회)",
+          "satis": 4.56,
+          "satisN": 16,
+          "satisScale": 5,
+          "budget": 7650000,
+          "budgetItem": "교육·연구 프로그램 운영·개발",
+          "tanker": "T",
+          "tankerSub": "K",
+          "execType": "자체운영",
+          "indicators": [
+            "지자체➊ 연계교육",
+            "자체➋ 대회수상률",
+            "자체➍ 만족도지수"
+          ],
+          "extra": "2025 대한민국 국제요리&제과 경연대회 16명 전원 수상 — 대상 2(전북교육감상·기후에너지환경부장관상)·금상 2·은상 2·우수상 1·장려상 1·조리협회 전북지회장상 1",
+          "status": "추출완료",
+          "approval": "결과보고서 제출 2026.06.23"
+        },
+        {
+          "file": "2026-05 아이들 웃음도 JobGO 배움도 JobGO(사회공헌)",
+          "name": "아이들 웃음도 JobGO! 배움도 JobGO!",
+          "category": "사회공헌·봉사",
+          "org": "익산보육원",
+          "period": "2026-05-03",
+          "students": 17,
+          "hours": "1회",
+          "satis": 4.92,
+          "satisN": null,
+          "satisScale": 5,
+          "budget": 935380,
+          "budgetItem": "지역 연계 협업 지원",
+          "tanker": "A",
+          "tankerSub": "",
+          "execType": "자체운영",
+          "indicators": [
+            "사업단연계",
+            "행사(분류확인)"
+          ],
+          "extra": "H-성인학습지원사업단×맛JobGO 사업단 간 연계 실적 1건 — 어린이날 기념 전공실습 연계 사회공헌 (총 19명, 교직원 2 포함)",
+          "status": "추출완료",
+          "approval": "RISE사업팀-1288(2026.06.09)"
+        },
+        {
           "file": "2026-07 COOKING브릿지-조리경연대회 교육(진경여고)",
           "name": "COOKING브릿지-조리경연대회 교육(진경여고)",
           "category": "경연대회지도",
@@ -854,11 +903,22 @@ window.__RISE2__ = {
             "지자체➊ 연계교육",
             "자체➋ 대회수상률"
           ],
+          "extra": "2026 대한민국 국제요리&제과 경연대회 10팀 48명 전원 수상 — 금상 6팀·은상 4팀, 특별상 5종(전북교육감상·대회장상 최우수상·국회의원상 우수상·기후에너지환경부장관상 대상·조리기능장려회장상 장려상)",
           "status": "추출완료",
           "approval": "결과보고서 제출 2026.07.15 (계획 제출 06.25)"
         }
       ],
       "spending": [
+        {
+          "date": "2026-06-23",
+          "name": "COOKING브릿지(덕암정보고) 강사료·재료비",
+          "item": "교육·연구 프로그램 운영·개발",
+          "tanker": "T",
+          "execType": "자체운영",
+          "amount": 7650000,
+          "doc": "결과보고서(hwpx) 지출내역",
+          "verified": false
+        },
         {
           "date": "2026-07-15",
           "name": "COOKING브릿지(진경여고) 강사료·재료비",
@@ -868,23 +928,33 @@ window.__RISE2__ = {
           "amount": 6450000,
           "doc": "결과보고서(최종_0716) 지출내역 p.5",
           "verified": false
+        },
+        {
+          "date": "2026-06-09",
+          "name": "사회공헌단 프로그램 현수막·재료비",
+          "item": "지역 연계 협업 지원",
+          "tanker": "A",
+          "execType": "자체운영",
+          "amount": 935380,
+          "doc": "RISE사업팀-1288 지급요청",
+          "verified": false
         }
       ],
-      "students": 48,
+      "students": 81,
       "satisfaction": {
-        "avg": null,
-        "n": 0,
+        "avg": 4.56,
+        "n": 16,
         "scale": 5,
-        "excluded": 0
+        "excluded": 1
       },
       "spread": {
         "초광역": 0,
-        "사업단연계": 0,
+        "사업단연계": 1,
         "MOU": 0,
         "언론보도": 0,
         "행사": 0
       },
-      "spreadPending": 0,
+      "spreadPending": 1,
       "indicators": [
         {
           "group": "지자체➊",
@@ -941,7 +1011,7 @@ window.__RISE2__ = {
           "target": "84.0"
         }
       ],
-      "unverified": 2,
+      "unverified": 6,
       "status": "진행"
     },
     {
@@ -1067,16 +1137,16 @@ window.__RISE2__ = {
   ],
   "totals": {
     "budgetM": 2975,
-    "spentWon": 6450000,
-    "programs": 1,
-    "students": 48,
-    "unverified": 2,
+    "spentWon": 15035380,
+    "programs": 3,
+    "students": 81,
+    "unverified": 6,
     "activeDivisions": 1,
-    "rate": 0.22
+    "rate": 0.51
   },
   "warnings": [
     "프로그램 자료 접수: 1/8 사업단 — 나머지 사업단 결과보고서 투입 필요",
     "집행률은 인박스에 투입된 지출 문서만 반영 (비프로그램성 지출 미반영 시 실제보다 낮음)",
-    "미검증(🔴) 항목 2건 — 확정 전 수치는 잠정값"
+    "미검증(🔴) 항목 6건 — 확정 전 수치는 잠정값"
   ]
 };

@@ -65,8 +65,7 @@
           <td class="num">{% if p.satisfaction is not none %}{{ p.satisfaction }}{% if p.satisfaction_n %} <span class="muted">(n={{ p.satisfaction_n }})</span>{% else %} 🔴{% endif %}{% else %}—{% endif %}</td>
           <td class="num">
             {% if p.budget_won is not none %}{{ "{:,}".format(p.budget_won) }}원{% else %}—{% endif %}
-            {% if p.exec_type %}<div class="muted" style="font-size:10.5px;">{{ p.exec_type }}</div>{% endif %}
-            {% if p.budget_item %}<div class="muted" style="font-size:10.5px;">{{ p.budget_item }}</div>{% endif %}
+            {% if p.exec_type or p.budget_item %}<div class="muted" style="font-size:10.5px;">{{ p.exec_type }}{% if p.exec_type and p.budget_item %} · {% endif %}{{ p.budget_item }}</div>{% endif %}
           </td>
           <td class="acts">
             {% if editable %}

@@ -3011,3 +3011,15 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 }
 #view-year2 .tbl td.y2-divcell, .y2-modal .tbl td.y2-divcell { white-space: normal; }
 .y2-exec-sub { white-space: nowrap; }
+#y2-tk-detail .y2-divcell, #y2-exec-detail .y2-divcell { white-space: nowrap; min-width: 0; }
+.y2-extra {
+  background: var(--br-50); border: 1px solid #f0e2b0; border-radius: 4px;
+  padding: 8px 12px; margin: 8px 0; font-size: 12.5px; line-height: 1.55; word-break: keep-all;
+}
+.y2-extra-k { font-weight: 800; color: #8a6d00; margin-right: 6px; white-space: nowrap; }
+.y2-extra-p { font-weight: 700; color: var(--g-800); margin-right: 6px; }
+.y2-alllink { color: var(--g-600); font-weight: 700; }
+.y2-all-div { border-top: 2px solid var(--ink-100); margin-top: 22px; padding-top: 14px; }
+.y2-all-div:first-of-type { border-top: 0; margin-top: 6px; padding-top: 0; }
+.y2-all-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.y2-all-head h2 { margin: 0; font-size: 16.5px; color: var(--g-900); font-family: var(--font-sans); }
