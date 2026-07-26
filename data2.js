@@ -1,6 +1,6 @@
 // 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.
 window.__RISE2__ = {
-  "generatedAt": "2026-07-26T03:53:18.297Z",
+  "generatedAt": "2026-07-26T04:17:49.183Z",
   "year": 2026,
   "yearLabel": "2차년도(2026)",
   "source": "성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)",
@@ -38,44 +38,56 @@ window.__RISE2__ = {
         {
           "group": "지자체➊",
           "name": "기업연계 교과 이수학생 비율 증가",
-          "base": "36.0",
-          "target": "36.0",
-          "prev": "36.0"
+          "unit": "%",
+          "target25": "36.0",
+          "actual25": "36.0",
+          "rate25": "100.0",
+          "target": "37.8"
         },
         {
           "group": "지자체➋",
           "name": "기업연계교과 이수학생 지역중점 취업률 증가",
-          "base": "22.4",
-          "target": "22.4",
-          "prev": "22.4"
+          "unit": "%p",
+          "target25": "22.4",
+          "actual25": "22.4",
+          "rate25": "100.0",
+          "target": "22.8"
         },
         {
           "group": "자체➊",
-          "name": "대학경쟁력제고(대학공통성과지표)",
-          "base": "90.9",
-          "target": "90.9",
-          "prev": "90.9"
+          "name": "호원RISE공통성과지표",
+          "unit": "점",
+          "target25": "90.9",
+          "actual25": "90.9",
+          "rate25": "100.0",
+          "target": "91.8"
         },
         {
           "group": "자체➋",
           "name": "지역사회 협력 및 성과확산 증가",
-          "base": "31.5",
-          "target": "31.5",
-          "prev": "31.5"
+          "unit": "%",
+          "target25": "31.5",
+          "actual25": "31.5",
+          "rate25": "100.0",
+          "target": "32.7"
         },
         {
           "group": "자체➌",
           "name": "JB-산업체근로자 Healthcare증진 리빙랩 증가율",
-          "base": "237.4",
-          "target": "237.4",
-          "prev": "237.4"
+          "unit": "%",
+          "target25": "237.4",
+          "actual25": "237.4",
+          "rate25": "100.0",
+          "target": "242.1"
         },
         {
           "group": "자체➍",
           "name": "취업경쟁력 증가율",
-          "base": "82.9",
-          "target": "83.4",
-          "prev": "99.7"
+          "unit": "%",
+          "target25": "83.4",
+          "actual25": "99.7",
+          "rate25": "119.5",
+          "target": "83.9"
         }
       ],
       "unverified": 0,
@@ -114,44 +126,56 @@ window.__RISE2__ = {
         {
           "group": "지자체➊",
           "name": "학생·교원 창업기업 수 및 매출액 증가율",
-          "base": "1.4",
-          "target": "0",
-          "prev": "0"
+          "unit": "%",
+          "target25": "",
+          "actual25": "0",
+          "rate25": "0",
+          "target": "1.41"
         },
         {
           "group": "지자체➋",
           "name": "창업교육 이수 학생 증가",
-          "base": "2620.5",
-          "target": "2620.5",
-          "prev": "2620.5"
+          "unit": "명",
+          "target25": "2620.5",
+          "actual25": "2620.5",
+          "rate25": "100.0",
+          "target": "2646.7"
         },
         {
           "group": "자체➊",
-          "name": "대학경쟁력제고(대학공통성과지표)",
-          "base": "89.6",
-          "target": "89.6",
-          "prev": "89.6"
+          "name": "호원RISE공통성과지표",
+          "unit": "점",
+          "target25": "89.6",
+          "actual25": "89.6",
+          "rate25": "100.0",
+          "target": "90.4"
         },
         {
           "group": "자체➋",
           "name": "K-컬처 & 아트테크 관련 창업교과목 신규개설",
-          "base": "1",
-          "target": "1",
-          "prev": "1"
+          "unit": "건",
+          "target25": "1",
+          "actual25": "1",
+          "rate25": "100.0",
+          "target": "2"
         },
         {
           "group": "자체➌",
           "name": "창업동아리 수",
-          "base": "7",
-          "target": "5",
-          "prev": "5"
+          "unit": "개",
+          "target25": "5",
+          "actual25": "7",
+          "rate25": "140.0",
+          "target": "10"
         },
         {
           "group": "자체➍",
           "name": "콘텐츠/IP 개발 건수",
-          "base": "4",
-          "target": "4",
-          "prev": "4"
+          "unit": "건",
+          "target25": "4",
+          "actual25": "4",
+          "rate25": "100.0",
+          "target": "2"
         }
       ],
       "unverified": 0,
@@ -190,44 +214,56 @@ window.__RISE2__ = {
         {
           "group": "지자체➊",
           "name": "해외 인재 양성 수 증가",
-          "base": "762",
-          "target": "777",
-          "prev": "564"
+          "unit": "명",
+          "target25": "777",
+          "actual25": "564",
+          "rate25": "72.5",
+          "target": "792"
         },
         {
           "group": "지자체➋",
           "name": "외국인 유학생 지역중점 취·창업자 수 증가",
-          "base": "1",
-          "target": "1",
-          "prev": "1"
+          "unit": "명",
+          "target25": "1",
+          "actual25": "1",
+          "rate25": "100.0",
+          "target": "1.01"
         },
         {
           "group": "자체➊",
-          "name": "대학경쟁력제고(대학공통성과지표)",
-          "base": "93.8",
-          "target": "93.8",
-          "prev": "93.8"
+          "name": "호원RISE공통성과지표",
+          "unit": "점",
+          "target25": "93.8",
+          "actual25": "93.8",
+          "rate25": "100.0",
+          "target": "94.7"
         },
         {
           "group": "자체➋",
           "name": "JB형 해외 우수인재 유치·지원 지수",
-          "base": "50",
-          "target": "64",
-          "prev": "83.9"
+          "unit": "%",
+          "target25": "64",
+          "actual25": "83.9",
+          "rate25": "131.0",
+          "target": "73"
         },
         {
           "group": "자체➌",
           "name": "JB형 인재양성 지수",
-          "base": "24",
-          "target": "32",
-          "prev": "33.4"
+          "unit": "%",
+          "target25": "32",
+          "actual25": "33.4",
+          "rate25": "104.3",
+          "target": "53"
         },
         {
           "group": "자체➍",
           "name": "JB 지역 활성화 지수",
-          "base": "41",
-          "target": "53",
-          "prev": "54.4"
+          "unit": "%",
+          "target25": "53",
+          "actual25": "54.4",
+          "rate25": "102.6",
+          "target": "65"
         }
       ],
       "unverified": 0,
@@ -266,44 +302,56 @@ window.__RISE2__ = {
         {
           "group": "지자체➊",
           "name": "성인학습자 친화적 제도 운영 실적 증가",
-          "base": "95",
-          "target": "104.5",
-          "prev": "131"
+          "unit": "명",
+          "target25": "105",
+          "actual25": "131",
+          "rate25": "125.3",
+          "target": "109.2"
         },
         {
           "group": "지자체➋",
           "name": "성인학습자 정원 증가",
-          "base": "289",
-          "target": "289",
-          "prev": "289"
+          "unit": "명",
+          "target25": "289",
+          "actual25": "289",
+          "rate25": "100.0",
+          "target": "294.7"
         },
         {
           "group": "자체➊",
-          "name": "대학경쟁력제고(대학공통성과지표)",
-          "base": "93.4",
-          "target": "93.4",
-          "prev": "93.4"
+          "name": "호원RISE공통성과지표",
+          "unit": "점",
+          "target25": "93.4",
+          "actual25": "93.4",
+          "rate25": "100.0",
+          "target": "94.3"
         },
         {
           "group": "자체➋",
           "name": "지역수요 맞춤형 교육참여 지수",
-          "base": "93",
-          "target": "93",
-          "prev": "93"
+          "unit": "%",
+          "target25": "93",
+          "actual25": "93",
+          "rate25": "100.0",
+          "target": "95.7"
         },
         {
           "group": "자체➌",
           "name": "지역사회 가치창출 기여지수",
-          "base": "102.8",
-          "target": "102.8",
-          "prev": "102.8"
+          "unit": "%",
+          "target25": "102.8",
+          "actual25": "102.8",
+          "rate25": "100.0",
+          "target": "104.8"
         },
         {
           "group": "자체➍",
           "name": "대학의 성인학습 친화지수",
-          "base": "109.2",
-          "target": "109.2",
-          "prev": "109.2"
+          "unit": "%",
+          "target25": "109.2",
+          "actual25": "109.2",
+          "rate25": "100.0",
+          "target": "111.3"
         }
       ],
       "unverified": 0,
@@ -342,44 +390,56 @@ window.__RISE2__ = {
         {
           "group": "지자체➊",
           "name": "지자체-대학 협력 교육 운영 실적 증가",
-          "base": "148",
-          "target": "148",
-          "prev": "148"
+          "unit": "시간",
+          "target25": "148",
+          "actual25": "148",
+          "rate25": "100.0",
+          "target": "155.4"
         },
         {
           "group": "지자체➋",
           "name": "지자체-대학 협력 교육 이수학생 증가",
-          "base": "18",
-          "target": "18",
-          "prev": "18"
+          "unit": "명",
+          "target25": "18",
+          "actual25": "18",
+          "rate25": "100.0",
+          "target": "19.8"
         },
         {
           "group": "자체➊",
-          "name": "대학경쟁력제고(대학공통성과지표)",
-          "base": "79.8",
-          "target": "79.8",
-          "prev": "79.8"
+          "name": "호원RISE공통성과지표",
+          "unit": "점",
+          "target25": "79.8",
+          "actual25": "79.8",
+          "rate25": "100.0",
+          "target": "80.5"
         },
         {
           "group": "자체➋",
           "name": "드론관련 자격증 취득 비율",
-          "base": "90",
-          "target": "90",
-          "prev": "90"
+          "unit": "%",
+          "target25": "90",
+          "actual25": "90",
+          "rate25": "100.0",
+          "target": "99"
         },
         {
           "group": "자체➌",
           "name": "K-드론 융합콘텐츠 개발 건수",
-          "base": "0",
-          "target": "1",
-          "prev": "1"
+          "unit": "건",
+          "target25": "1",
+          "actual25": "1",
+          "rate25": "100.0",
+          "target": "1"
         },
         {
           "group": "자체➍",
           "name": "K-드론 산업체 현장실습 참여건수",
-          "base": "0",
-          "target": "0",
-          "prev": "0"
+          "unit": "건",
+          "target25": "0",
+          "actual25": "0",
+          "rate25": "0",
+          "target": "1"
         }
       ],
       "unverified": 0,
@@ -418,44 +478,56 @@ window.__RISE2__ = {
         {
           "group": "지자체➊",
           "name": "지역기업 연계 로코노미 조성 콘텐츠 기획 및 사업화 건수",
-          "base": "13.5",
-          "target": "13.5",
-          "prev": "13.5"
+          "unit": "건",
+          "target25": "13.5",
+          "actual25": "13.5",
+          "rate25": "100.0",
+          "target": "14.1"
         },
         {
           "group": "지자체➋",
           "name": "시군 방문객 증가",
-          "base": "68,786",
-          "target": "69,817",
-          "prev": "73,768"
+          "unit": "명",
+          "target25": "69,817",
+          "actual25": "73,768",
+          "rate25": "105.6",
+          "target": "70,849"
         },
         {
           "group": "자체➊",
-          "name": "대학경쟁력제고(대학공통성과지표)",
-          "base": "109.6",
-          "target": "109.6",
-          "prev": "109.6"
+          "name": "호원RISE공통성과지표",
+          "unit": "점",
+          "target25": "109.6",
+          "actual25": "109.6",
+          "rate25": "100.0",
+          "target": "110.6"
         },
         {
           "group": "자체➋",
           "name": "시민디자이너 육성지표 (군장대학교)",
-          "base": "0",
-          "target": "1.2",
-          "prev": "2.2"
+          "unit": "%",
+          "target25": "1.2",
+          "actual25": "2.2",
+          "rate25": "177.8",
+          "target": "1.4"
         },
         {
           "group": "자체➌",
           "name": "프로그램 참여 대학생 수 (호원대학교)",
-          "base": "15",
-          "target": "15",
-          "prev": "21"
+          "unit": "명",
+          "target25": "15",
+          "actual25": "21",
+          "rate25": "140.0",
+          "target": "20"
         },
         {
           "group": "자체➍",
           "name": "축제 음원 제작 건수(호원대학교)",
-          "base": "12",
-          "target": "12",
-          "prev": "12"
+          "unit": "건",
+          "target25": "12",
+          "actual25": "12",
+          "rate25": "100.0",
+          "target": "14"
         }
       ],
       "unverified": 0,
@@ -486,7 +558,10 @@ window.__RISE2__ = {
           "satisN": 16,
           "satisScale": 5,
           "budget": 7650000,
-          "budgetItem": "교육·연구 프로그램 개발·운영비",
+          "budgetItem": "교육·연구 프로그램 운영·개발",
+          "tanker": "T",
+          "tankerSub": "K",
+          "execType": "자체운영",
           "indicators": [
             "지자체➊ 연계교육",
             "자체➋ 대회수상률",
@@ -507,7 +582,10 @@ window.__RISE2__ = {
           "satisN": null,
           "satisScale": 5,
           "budget": 935380,
-          "budgetItem": "지역 연계·협업 지원비",
+          "budgetItem": "지역 연계 협업 지원",
+          "tanker": "A",
+          "tankerSub": "",
+          "execType": "자체운영",
           "indicators": [
             "사업단연계",
             "행사(분류확인)"
@@ -520,7 +598,9 @@ window.__RISE2__ = {
         {
           "date": "2026-06-09",
           "name": "사회공헌단 프로그램 현수막·재료비",
-          "item": "지역 연계·협업 지원비",
+          "item": "지역 연계 협업 지원",
+          "tanker": "A",
+          "execType": "자체운영",
           "amount": 935380,
           "doc": "RISE사업팀-1288 지급요청",
           "verified": false
@@ -528,7 +608,9 @@ window.__RISE2__ = {
         {
           "date": "2026-06-25",
           "name": "COOKING브릿지 강사료·재료비",
-          "item": "교육·연구 프로그램 개발·운영비",
+          "item": "교육·연구 프로그램 운영·개발",
+          "tanker": "T",
+          "execType": "자체운영",
           "amount": 7650000,
           "doc": "RISE사업팀-1355 결과보고",
           "verified": false
@@ -553,44 +635,56 @@ window.__RISE2__ = {
         {
           "group": "지자체➊",
           "name": "초중고교 및 대학 연계교육 운영 실적 증가",
-          "base": "9",
-          "target": "9",
-          "prev": "9"
+          "unit": "건",
+          "target25": "9",
+          "actual25": "9",
+          "rate25": "100.0",
+          "target": "9.9"
         },
         {
           "group": "지자체➋",
           "name": "직업계고 졸업자 지역중점 취업 증가",
-          "base": "13.2",
-          "target": "13.2",
-          "prev": "13.2"
+          "unit": "명",
+          "target25": "13.2",
+          "actual25": "13.2",
+          "rate25": "100.0",
+          "target": "13.4"
         },
         {
           "group": "자체➊",
-          "name": "대학경쟁력제고(대학공통성과지표)",
-          "base": "96.2",
-          "target": "96.2",
-          "prev": "96.2"
+          "name": "호원RISE공통성과지표",
+          "unit": "점",
+          "target25": "96.2",
+          "actual25": "96.2",
+          "rate25": "100.0",
+          "target": "97.1"
         },
         {
           "group": "자체➋",
           "name": "전국규모 조리대회 수상률",
-          "base": "26.4",
-          "target": "26.4",
-          "prev": "26.4"
+          "unit": "%",
+          "target25": "26.4",
+          "actual25": "26.4",
+          "rate25": "100.0",
+          "target": "27.0"
         },
         {
           "group": "자체➌",
           "name": "조리분야 자격증 취득률",
-          "base": "63.2",
-          "target": "63.2",
-          "prev": "63.2"
+          "unit": "%",
+          "target25": "63.2",
+          "actual25": "63.2",
+          "rate25": "100.0",
+          "target": "64.7"
         },
         {
           "group": "자체➍",
           "name": "교육·현장·진로 연계 만족도 지수",
-          "base": "81.6",
-          "target": "81.6",
-          "prev": "81.6"
+          "unit": "%",
+          "target25": "81.6",
+          "actual25": "81.6",
+          "rate25": "100.0",
+          "target": "84.0"
         }
       ],
       "unverified": 4,
@@ -629,44 +723,56 @@ window.__RISE2__ = {
         {
           "group": "지자체➊",
           "name": "JB늘봄학교 교육 운영 실적 증가",
-          "base": "59",
-          "target": "59",
-          "prev": "59"
+          "unit": "시간",
+          "target25": "59",
+          "actual25": "59",
+          "rate25": "100.0",
+          "target": "61.9"
         },
         {
           "group": "지자체➋",
           "name": "JB늘봄학교 참여자 만족도 증가",
-          "base": "80",
-          "target": "82",
-          "prev": "85"
+          "unit": "점",
+          "target25": "82",
+          "actual25": "85",
+          "rate25": "103.6",
+          "target": "84"
         },
         {
           "group": "자체➊",
-          "name": "대학경쟁력제고(대학공통성과지표)",
-          "base": "92.8",
-          "target": "92.8",
-          "prev": "92.8"
+          "name": "호원RISE공통성과지표",
+          "unit": "점",
+          "target25": "92.8",
+          "actual25": "92.8",
+          "rate25": "100.0",
+          "target": "93.7"
         },
         {
           "group": "자체➋",
           "name": "늘봄 프로그램 참여 전문인력 규모",
-          "base": "3",
-          "target": "3",
-          "prev": "3"
+          "unit": "건",
+          "target25": "3",
+          "actual25": "3",
+          "rate25": "100.0",
+          "target": "4"
         },
         {
           "group": "자체➌",
           "name": "늘봄 프로그램 개발 또는 돌봄교육 협력 건수",
-          "base": "3",
-          "target": "3",
-          "prev": "3"
+          "unit": "건",
+          "target25": "3",
+          "actual25": "3",
+          "rate25": "100.0",
+          "target": "4"
         },
         {
           "group": "자체➍",
           "name": "아동·학부모 만족도 평균 점수",
-          "base": "85",
-          "target": "80",
-          "prev": "85"
+          "unit": "점",
+          "target25": "80",
+          "actual25": "85",
+          "rate25": "106.2",
+          "target": "82"
         }
       ],
       "unverified": 0,

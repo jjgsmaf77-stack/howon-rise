@@ -97,6 +97,12 @@
   // ---------- year2 (2차년도 현황) ----------
   function y2Data() { return window.__RISE2__ || null; }
 
+  // 2축 분류 (설계 §12): 예산항목 9종(간접비는 TANKer 제외) × TANKer 4종
+  const BUDGET_ITEMS = ['장학금', '교육·연구 프로그램 운영·개발', '실험실습 장비·기자재',
+    '지역 연계 협업 지원', '기업지원 협력 활동', '성과 활용 확산', '교육 연구 환경 개선', '기타운영', '간접비'];
+  const TANKER = { T: '지역인재육성', A: '지역현장강화', N: '지역기업연계', K: '취창업 실현' };
+  const TANKER_KEYS = ['T', 'A', 'N', 'K'];
+
   // 사업단 표시명: 수정사업계획서 풀네임 (과제코드)
   const divName = d => d.fullName || d.key;
   const divNameWithCode = d => d.code ? `${divName(d)} (${d.code})` : divName(d);
@@ -175,6 +181,46 @@
     const T = Y2.totals;
     const divs = Y2.divisions;
 
+    // TANKer ON 특성화 체계 배너
+    const TK_META = [
+      { k: 'T', en: 'Talent', kr: '지역인재 육성' },
+      { k: 'A', en: 'Action', kr: '지역현장 강화' },
+      { k: 'N', en: 'Network', kr: '지역기업 연계' },
+      { k: 'K', en: 'K-brand', kr: '취·창업 실현' },
+    ];
+    el.appendChild(h('section', { class: 'section' }, [
+      h('div', { class: 'card y2-tkbanner' }, [
+        h('div', { class: 'tkb-top' }, [
+          h('span', { class: 'tkb-kicker' }, ['앵커산업 4대 추진방향']),
+          h('div', { class: 'tkb-headline' }, ['대학이 바뀌면 지역이 바뀐다'])
+        ]),
+        h('div', { class: 'tkb-flow' }, [
+          h('div', { class: 'tkb-tiles' }, TK_META.flatMap((t, i) => [
+            i ? h('span', { class: 'tkb-plus' }, ['+']) : null,
+            h('div', { class: 'tkb-tile' }, [
+              h('div', { class: 'tkb-letter' }, [t.k]),
+              h('div', { class: 'tkb-en' }, [t.en]),
+              h('div', { class: 'tkb-kr' }, [t.kr])
+            ])
+          ])),
+          h('span', { class: 'tkb-plus' }, ['+']),
+          h('div', { class: 'tkb-anchor' }, [
+            h('div', { class: 'tkb-anchor-badge' }, ['앵커']),
+            h('div', { class: 'tkb-anchor-name' }, ['Anchor']),
+            h('div', { class: 'tkb-anchor-sub' }, ['지역 성장 인재양성 체계'])
+          ]),
+          h('span', { class: 'tkb-arrow' }, ['➜']),
+          h('div', { class: 'tkb-result' }, [
+            h('div', { class: 'tkb-result-kicker' }, ['호원 20·60 취·창업']),
+            h('div', { class: 'tkb-result-name' }, ['TANKer ', h('span', { class: 'on' }, ['ON'])]),
+            h('div', { class: 'tkb-result-sub' }, ['전북지역 내 취·창업 앵커체계 구축']),
+            h('div', { class: 'tkb-result-formula' }, ['[ TANK + Anchor ] ON'])
+          ])
+        ]),
+        h('div', { class: 'tkb-foot' }, ['호원 20·60 취·창업 TANKer ON 특성화 시스템'])
+      ])
+    ]));
+
     // KPI + 경보
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('2차년도 요약', `${Y2.yearLabel} · 자동 집계 ${new Date(Y2.generatedAt).toLocaleDateString('ko-KR')}`,
@@ -208,8 +254,90 @@
         ]),
         h('div', { class: 'card' }, [
           h('h3', {}, ['집행률 현황']),
+          h('div', { class: 'y2-ringrow' }, [
+            h('div', { class: 'y2-ring', style: `background:conic-gradient(#1c7293 ${Math.min(T.rate, 100) * 3.6}deg, #e9eef3 0deg)` }, [
+              h('span', {}, [`${T.rate}%`])
+            ]),
+            h('div', { class: 'y2-ring-meta' }, [
+              h('b', {}, ['전체 집행률']),
+              h('span', {}, [`집행 ${fmtN(T.spentWon)}원`]),
+              h('span', {}, [`편성 ${fmtN(T.budgetM)}백만원`])
+            ])
+          ]),
           h('div', {}, divs.map(y2RateRow)),
           h('div', { class: 'note' }, ['집행률 = 반영된 지출 ÷ 편성 총액. 지급요청 공문이 전부 접수되기 전까지는 실제보다 낮게 표시됩니다.'])
+        ])
+      ])
+    ]));
+
+    // 예산항목 × TANKer 매트릭스
+    const allPrograms = divs.flatMap(d => d.programs);
+    const allSpending = divs.flatMap(d => d.spending);
+    const cell = {};  // item → tanker → {count, amount}
+    BUDGET_ITEMS.forEach(it => { cell[it] = {}; });
+    const put = (item, tk, count, amount) => {
+      if (!item) item = '(미분류)';
+      if (!cell[item]) cell[item] = {};
+      const key = item === '간접비' ? '제외' : (TANKER[tk] ? tk : '미지정');
+      const c = cell[item][key] || (cell[item][key] = { count: 0, amount: 0 });
+      c.count += count; c.amount += amount;
+    };
+    allPrograms.forEach(p => put(p.budgetItem, p.tanker, 1, 0));
+    allSpending.forEach(s => put(s.item, s.tanker, 0, s.amount));
+    const tankerTotals = {};
+    TANKER_KEYS.forEach(k => {
+      tankerTotals[k] = {
+        count: allPrograms.filter(p => p.tanker === k).length,
+        amount: allSpending.filter(s => s.tanker === k).reduce((a, s) => a + s.amount, 0)
+      };
+    });
+    const execCounts = {};
+    allPrograms.forEach(p => { if (p.execType) execCounts[p.execType] = (execCounts[p.execType] || 0) + 1; });
+    const matrixRows = Object.keys(cell).filter(it => Object.keys(cell[it]).length || BUDGET_ITEMS.includes(it));
+    const fmtCell = c => c ? `${c.count ? c.count + '건' : ''}${c.count && c.amount ? ' · ' : ''}${c.amount ? fmtN(c.amount) + '원' : ''}` : '';
+    el.appendChild(h('section', { class: 'section' }, [
+      sectionHead('예산항목 × TANKer 매트릭스', '축1: 예산항목 9종(인건비 없음·간접비는 TANKer 제외) · 축2: TANKer 주분류 기준 — 셀 = 프로그램 건수 · 집행액'),
+      h('div', { class: 'grid-2' }, [
+        h('div', { class: 'card' }, [
+          h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl y2-matrix' }, [
+            h('thead', {}, [h('tr', {}, [
+              h('th', {}, ['예산항목']),
+              ...TANKER_KEYS.map(k => h('th', { class: 'num' }, [`${k} ${TANKER[k]}`])),
+              h('th', { class: 'num' }, ['합계'])
+            ])]),
+            h('tbody', {}, (() => {
+              const maxAmt = Math.max(1, ...matrixRows.flatMap(it => Object.values(cell[it]).map(c => c.amount)));
+              return matrixRows.map(it => {
+                const isIndirect = it === '간접비';
+                const rowCells = cell[it];
+                const sum = Object.values(rowCells).reduce((a, c) => ({ count: a.count + c.count, amount: a.amount + c.amount }), { count: 0, amount: 0 });
+                const heat = c => c && c.amount ? `background:rgba(28,114,147,${(0.08 + 0.3 * c.amount / maxAmt).toFixed(2)})` : '';
+                return h('tr', { class: isIndirect ? 'y2-indirect' : '' }, [
+                  h('td', {}, [it]),
+                  ...(isIndirect
+                    ? [h('td', { class: 'num y2-excluded', colspan: '4' }, [fmtCell(rowCells['제외']) || 'TANKer 분류 제외'])]
+                    : TANKER_KEYS.map(k => h('td', { class: 'num', style: heat(rowCells[k]) }, [fmtCell(rowCells[k]) || '—']))),
+                  h('td', { class: 'num strong' }, [fmtCell(sum) || '—'])
+                ]);
+              });
+            })())
+          ])]),
+          h('div', { class: 'note' }, ['건수=프로그램(주분류 기준), 금액=지출 기록 — 셀 색 농도는 집행액 비중. 부분류는 카드에 참고 표기.'])
+        ]),
+        h('div', { class: 'card' }, [
+          h('h3', {}, ['TANKer 전략별 집행 분포']),
+          h('div', { class: 'chart-wrap y2-donut-wrap' }, [h('canvas', { id: 'y2-tanker-donut' })]),
+          h('div', { class: 'y2-tanker-dist' }, TANKER_KEYS.map(k =>
+            y2BarRow(`${k} ${TANKER[k]}`,
+              T.spentWon ? (tankerTotals[k].amount / T.spentWon) * 100 : 0,
+              tankerTotals[k].count || tankerTotals[k].amount ? `${tankerTotals[k].count}건` : '—',
+              !tankerTotals[k].amount))),
+          h('div', { class: 'divider' }),
+          h('h3', {}, ['집행방식']),
+          h('div', { class: 'y2-exec' },
+            ['자체운영', '용역(수의계약)', '용역(입찰)'].map(t =>
+              h('span', { class: `chip ${execCounts[t] ? '' : 'ghost'}` }, [`${t} ${execCounts[t] || 0}건`]))),
+          h('div', { class: 'note' }, ['용역 여부·계약방식은 프로그램 카드의 집행방식 필드에서 집계.'])
         ])
       ])
     ]));
@@ -221,11 +349,14 @@
       sectionHead('프로그램 실적', `${progRows.length}건 — 프로그램 1건 = 1행 (표준 서식)`),
       h('div', { class: 'card' }, [
         progRows.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
-          h('thead', {}, [h('tr', {}, ['사업단(단위과제)','프로그램명','유형','교육기관','참여학생','교육시간','만족도','소요예산','상태'].map(c => h('th', {}, [c])))]),
+          h('thead', {}, [h('tr', {}, ['사업단(단위과제)','프로그램명','유형','TANKer','예산항목','집행방식','교육기관','참여학생','교육시간','만족도','소요예산','상태'].map(c => h('th', {}, [c])))]),
           h('tbody', {}, progRows.map(p => h('tr', {}, [
             h('td', { class: 'y2-divcell' }, [p.divLabel]),
             h('td', {}, [p.name]),
             h('td', {}, [p.category || '—']),
+            h('td', {}, [p.tanker ? h('span', { class: 'y2-tk', title: TANKER[p.tanker] || '' }, [`${p.tanker}${p.tankerSub ? '·' + p.tankerSub : ''}`]) : '—']),
+            h('td', {}, [p.budgetItem || '—']),
+            h('td', {}, [p.execType || '—']),
             h('td', {}, [p.org || '—']),
             h('td', { class: 'num' }, [p.students != null ? `${p.students}명` : '—']),
             h('td', {}, [p.hours || '—']),
@@ -258,23 +389,40 @@
       ])
     ]));
 
-    // 성과지표 목표 ('26)
+    // 성과지표 (’26 목표 + 프로그램 연관)
+    // 연관: 카드의 지표매핑 태그가 지표의 구분 토큰(지자체➊, 자체➋ …)으로 시작하면 연결
+    function linkedPrograms(d, group) {
+      return d.programs.filter(p => (p.indicators || []).some(t => t.startsWith(group)));
+    }
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('성과지표 목표 (’26)', '출처: 2차연도 종합수정사업계획서 — 실적(누적)은 프로그램 집계 후 자동 반영'),
-      h('div', { class: 'card' }, divs.map(d => h('details', { class: 'y2-ind' }, [
-        h('summary', {}, [`${divNameWithCode(d)} — 지표 ${d.indicators.length}개`]),
-        d.indicators.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
-          h('thead', {}, [h('tr', {}, ['구분','지표명','기준값','’26 목표','’25 실적','’26 실적(누적)'].map(c => h('th', {}, [c])))]),
-          h('tbody', {}, d.indicators.map(i => h('tr', {}, [
-            h('td', {}, [i.group]),
-            h('td', {}, [i.name]),
-            h('td', { class: 'num' }, [String(i.base || '—')]),
-            h('td', { class: 'num' }, [String(i.target || '—')]),
-            h('td', { class: 'num' }, [String(i.prev || '—')]),
-            h('td', { class: 'num na' }, ['집계 대기'])
-          ])))
-        ])]) : h('div', { class: 'empty' }, ['지표 정보 없음'])
-      ])))
+      sectionHead('성과지표 현황 (’26)', '정본: 1차연도 종합연차보고서 pp.21-22 — 근거 프로그램은 카드의 지표매핑으로 자동 연결'),
+      h('div', { class: 'card' }, divs.map(d => {
+        const linkedTotal = d.indicators.reduce((a, i) => a + linkedPrograms(d, i.group).length, 0);
+        return h('details', { class: 'y2-ind' }, [
+          h('summary', {}, [`${divNameWithCode(d)} — 지표 ${d.indicators.length}개${linkedTotal ? ` · 연관 프로그램 ${linkedTotal}건` : ''}`]),
+          d.indicators.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+            h('thead', {}, [h('tr', {}, ['구분','지표명','단위','’25 목표','’25 실적','’25 달성도','’26 목표','’26 실적(누적)','근거 프로그램'].map(c => h('th', {}, [c])))]),
+            h('tbody', {}, d.indicators.map(i => {
+              const linked = linkedPrograms(d, i.group);
+              return h('tr', {}, [
+                h('td', {}, [i.group]),
+                h('td', {}, [i.name]),
+                h('td', {}, [i.unit || '—']),
+                h('td', { class: 'num' }, [String(i.target25 || '—')]),
+                h('td', { class: 'num' }, [String(i.actual25 || '—')]),
+                h('td', { class: 'num' }, [i.rate25 !== '' ? `${i.rate25}%` : '—']),
+                h('td', { class: 'num strong' }, [String(i.target || '—')]),
+                h('td', { class: 'num na' }, ['집계 대기']),
+                h('td', { class: 'y2-linkcell' }, [
+                  linked.length
+                    ? h('span', {}, linked.map(p => h('span', { class: 'y2-linkchip', title: p.name }, [p.name.length > 14 ? p.name.slice(0, 13) + '…' : p.name])))
+                    : h('span', { class: 'muted' }, ['—'])
+                ])
+              ]);
+            }))
+          ])]) : h('div', { class: 'empty' }, ['지표 정보 없음'])
+        ]);
+      }))
     ]));
 
     el.appendChild(h('div', { class: 'note' }, [
@@ -283,10 +431,44 @@
   }
 
   let _y2Chart = null;
+  let _y2Donut = null;
   function renderYear2Charts() {
     if (!window.Chart) return;
     const Y2 = y2Data();
     if (!Y2) return;
+
+    // TANKer 도넛: 집행액 기준 (전부 0이면 프로그램 건수 기준)
+    const donutCtx = document.getElementById('y2-tanker-donut');
+    if (donutCtx) {
+      if (_y2Donut) { _y2Donut.destroy(); _y2Donut = null; }
+      const progs = Y2.divisions.flatMap(d => d.programs);
+      const spends = Y2.divisions.flatMap(d => d.spending);
+      const amounts = TANKER_KEYS.map(k => spends.filter(s => s.tanker === k).reduce((a, s) => a + s.amount, 0));
+      const counts = TANKER_KEYS.map(k => progs.filter(p => p.tanker === k).length);
+      const useAmount = amounts.some(v => v > 0);
+      const data = useAmount ? amounts : counts;
+      _y2Donut = new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: TANKER_KEYS.map(k => `${k} ${TANKER[k]}`),
+          datasets: [{
+            data,
+            backgroundColor: ['#0a2540', '#1c7293', '#f5b700', '#f26b4f'],
+            borderColor: '#fff', borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '58%',
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (c) => useAmount
+              ? `${c.label}: ${Number(c.parsed).toLocaleString('ko-KR')}원`
+              : `${c.label}: ${c.parsed}건` } }
+          }
+        }
+      });
+    }
+
     const ctx = document.getElementById('y2-budget-chart');
     if (!ctx) return;
     if (_y2Chart) { _y2Chart.destroy(); _y2Chart = null; }

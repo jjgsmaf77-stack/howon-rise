@@ -46,9 +46,34 @@
     <div class="note">응답자수가 없으면 사업단 가중평균에서 제외됩니다(🔴 표시).</div>
   </fieldset>
 
-  <label>예산항목
-    <input name="budget_item" value="{{ p.budget_item if p else '' }}" placeholder="교육·연구 프로그램 개발·운영비" />
-  </label>
+  <fieldset class="span2 satis">
+    <legend>2축 분류 (예산항목 × TANKer)</legend>
+    <label>예산항목 (9종 — 인건비 없음)
+      <select name="budget_item">
+        <option value="">선택</option>
+        {% for b in BUDGET_ITEMS %}<option value="{{ b }}" {% if p and p.budget_item == b %}selected{% endif %}>{{ b }}{% if b == '간접비' %} (TANKer 제외){% endif %}</option>{% endfor %}
+      </select>
+    </label>
+    <label>TANKer 주분류
+      <select name="tanker">
+        <option value="">없음 (간접비만)</option>
+        {% for k, v in TANKER.items() %}<option value="{{ k }}" {% if p and p.tanker == k %}selected{% endif %}>{{ k }} — {{ v }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>TANKer 부분류 (참고용)
+      <select name="tanker_sub">
+        <option value="">없음</option>
+        {% for k, v in TANKER.items() %}<option value="{{ k }}" {% if p and p.tanker_sub == k %}selected{% endif %}>{{ k }} — {{ v }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>집행방식
+      <select name="exec_type">
+        <option value="">선택</option>
+        {% for e in EXEC_TYPES %}<option value="{{ e }}" {% if p and p.exec_type == e %}selected{% endif %}>{{ e }}</option>{% endfor %}
+      </select>
+    </label>
+    <div class="note">집계·매트릭스는 주분류 기준. 용역이면 수의계약/입찰을 구분해 선택.</div>
+  </fieldset>
   <label>내부결재
     <input name="approval_doc" value="{{ p.approval_doc if p else '' }}" placeholder="RISE사업팀-1355(2026.06.25)" />
   </label>

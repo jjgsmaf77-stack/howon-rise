@@ -13,6 +13,14 @@ PROGRAM_CATEGORIES = ["교육과정운영", "경연대회지도", "캠프", "특
                       "사회공헌·봉사", "행사·성과공유", "연구·조사", "인프라구축", "기타"]
 SPREAD_TAGS = ["초광역", "사업단연계", "MOU", "언론보도", "행사"]
 
+# 2축 분류 (설계 §12) — 축1: 예산항목 9종 (인건비 없음 — 단위과제 규칙 / 간접비는 TANKer 제외)
+BUDGET_ITEMS = ["장학금", "교육·연구 프로그램 운영·개발", "실험실습 장비·기자재",
+                "지역 연계 협업 지원", "기업지원 협력 활동", "성과 활용 확산",
+                "교육 연구 환경 개선", "기타운영", "간접비"]
+# 축2: TANKer — 주분류 1개(간접비 제외) + 부분류(참고용)
+TANKER = {"T": "지역인재육성", "A": "지역현장강화", "N": "지역기업연계", "K": "취창업 실현"}
+EXEC_TYPES = ["자체운영", "용역(수의계약)", "용역(입찰)"]
+
 
 class Division(SQLModel, table=True):
     key: str = Field(primary_key=True)          # 보건, 컬쳐, ...
@@ -31,9 +39,10 @@ class Indicator(SQLModel, table=True):
     grp: str = ""                                # 지자체➊, 자체➍ ...
     name: str = ""
     unit: str = ""
-    base: str = ""                               # 기준값
-    target26: str = ""                           # '26 목표(A)
-    prev25: str = ""                             # '25 실적(B)
+    target25: str = ""                           # '25 목표 (정본: 1차연도 종합연차보고서)
+    actual25: str = ""                           # '25 실적
+    rate25: str = ""                             # '25 달성도
+    target26: str = ""                           # '26 목표 — 수정 가능(변경 시 audit 기록)
     manual26: str = ""                           # '26 실적 수기 보정(비프로그램성) — 비우면 자동집계만
 
 
@@ -50,7 +59,10 @@ class Program(SQLModel, table=True):
     satisfaction_n: Optional[int] = None
     satisfaction_scale: int = 5
     budget_won: Optional[int] = None
-    budget_item: str = ""
+    budget_item: str = ""                        # BUDGET_ITEMS 9종
+    tanker: str = ""                             # TANKer 주분류 (T/A/N/K, 간접비는 공란)
+    tanker_sub: str = ""                         # 부분류 (참고용)
+    exec_type: str = ""                          # EXEC_TYPES: 자체운영/용역(수의계약)/용역(입찰)
     indicator_tags: str = ""                     # 쉼표구분: "지자체➊ 연계교육, 자체➋ 대회수상률"
     extra: str = ""                              # 기타실적 (자유기술)
     approval_doc: str = ""                       # 내부결재 번호
@@ -66,7 +78,9 @@ class Spending(SQLModel, table=True):
     division_key: str = Field(foreign_key="division.key", index=True)
     date: str = ""                               # 2026-06-25
     name: str = ""
-    budget_item: str = ""
+    budget_item: str = ""                        # BUDGET_ITEMS 9종
+    tanker: str = ""                             # TANKer 주분류 (간접비는 공란)
+    exec_type: str = ""                          # 자체운영/용역(수의계약)/용역(입찰)
     amount_won: int = 0                          # 음수(환수·정정) 허용
     doc: str = ""                                # 근거문서(내부결재)
     program_id: Optional[int] = Field(default=None, foreign_key="program.id")

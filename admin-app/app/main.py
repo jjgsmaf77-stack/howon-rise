@@ -16,7 +16,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from sqlmodel import SQLModel, Session, create_engine, select
 
 from .models import (Division, Indicator, Program, Spending, User, AuditLog,
-                     STATUS_FLOW, PROGRAM_CATEGORIES, now_utc)
+                     STATUS_FLOW, PROGRAM_CATEGORIES, BUDGET_ITEMS, TANKER, EXEC_TYPES, now_utc)
 from .auth import hash_password, verify_password
 from . import seed as seed_mod
 from . import aggregate as agg
@@ -57,7 +57,8 @@ app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
 
 STATUS_ICON = {"추출완료": "🔴", "검토완료": "🟡", "입력반영": "🟢"}
-templates.env.globals.update(STATUS_ICON=STATUS_ICON, STATUS_FLOW=STATUS_FLOW, CATEGORIES=PROGRAM_CATEGORIES)
+templates.env.globals.update(STATUS_ICON=STATUS_ICON, STATUS_FLOW=STATUS_FLOW, CATEGORIES=PROGRAM_CATEGORIES,
+                             BUDGET_ITEMS=BUDGET_ITEMS, TANKER=TANKER, EXEC_TYPES=EXEC_TYPES)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -186,6 +187,18 @@ def _num(v, label, *, is_int, min_val=None, max_val=None):
 
 def program_from_form(form) -> dict:
     scale = _num(form.get("satisfaction_scale"), "만족도 척도", is_int=True) or 5
+    budget_item = form.get("budget_item", "").strip()
+    tanker = form.get("tanker", "").strip()
+    if tanker and tanker not in TANKER:
+        raise HTTPException(422, f"TANKer 주분류는 T/A/N/K 중 하나여야 합니다 (입력값 '{tanker}')")
+    if budget_item == "간접비" and tanker:
+        raise HTTPException(422, "간접비는 TANKer 분류 제외입니다 — 주분류를 비워주세요")
+    tanker_sub = form.get("tanker_sub", "").strip()
+    if tanker_sub and tanker_sub not in TANKER:
+        raise HTTPException(422, "TANKer 부분류는 T/A/N/K 중 하나여야 합니다")
+    exec_type = form.get("exec_type", "").strip()
+    if exec_type and exec_type not in EXEC_TYPES:
+        raise HTTPException(422, "집행방식은 자체운영/용역(수의계약)/용역(입찰) 중 선택입니다")
     return dict(
         name=form.get("name", "").strip(),
         category=form.get("category", ""),
@@ -197,7 +210,10 @@ def program_from_form(form) -> dict:
         satisfaction_n=_num(form.get("satisfaction_n"), "응답자수", is_int=True, min_val=0),
         satisfaction_scale=scale,
         budget_won=_num(form.get("budget_won"), "소요예산", is_int=True, min_val=0),
-        budget_item=form.get("budget_item", "").strip(),
+        budget_item=budget_item,
+        tanker=tanker,
+        tanker_sub=tanker_sub,
+        exec_type=exec_type,
         indicator_tags=form.get("indicator_tags", "").strip(),
         extra=form.get("extra", "").strip(),
         approval_doc=form.get("approval_doc", "").strip(),
@@ -298,7 +314,8 @@ def program_delete(pid: int, request: Request, s: Session = Depends(db)):
 # ---------- 지출 CRUD (B안) ----------
 @app.post("/division/{key}/spending/new")
 def spending_create(key: str, request: Request, date: str = Form(""), name: str = Form(...),
-                    budget_item: str = Form(""), amount_won: str = Form(...), doc: str = Form(""),
+                    budget_item: str = Form(""), tanker: str = Form(""), exec_type: str = Form(""),
+                    amount_won: str = Form(...), doc: str = Form(""),
                     s: Session = Depends(db)):
     u = require_user(request, s)
     require_division(s, key)
@@ -310,8 +327,16 @@ def spending_create(key: str, request: Request, date: str = Form(""), name: str 
         raise HTTPException(422, "금액은 숫자여야 합니다")
     if amount == 0:
         raise HTTPException(422, "금액 0원은 기록할 수 없습니다")
+    tanker = tanker.strip()
+    if tanker and tanker not in TANKER:
+        raise HTTPException(422, "TANKer는 T/A/N/K 중 하나여야 합니다")
+    if budget_item.strip() == "간접비" and tanker:
+        raise HTTPException(422, "간접비는 TANKer 분류 제외입니다")
+    if exec_type.strip() and exec_type.strip() not in EXEC_TYPES:
+        raise HTTPException(422, "집행방식 값이 올바르지 않습니다")
     sp = Spending(division_key=key, date=date.strip(), name=name.strip(),
-                  budget_item=budget_item.strip(), amount_won=amount, doc=doc.strip())
+                  budget_item=budget_item.strip(), tanker=tanker, exec_type=exec_type.strip(),
+                  amount_won=amount, doc=doc.strip())
     s.add(sp)
     s.flush()
     audit(s, u, "create", "spending", sp.id, f"{key} · {sp.name} · {amount:,}원")
@@ -348,18 +373,26 @@ def spending_delete(sid: int, request: Request, s: Session = Depends(db)):
     return RedirectResponse(f"/division/{key}", status_code=303)
 
 
-# ---------- 지표 수기 보정 ----------
-@app.post("/indicator/{iid}/manual")
-def indicator_manual(iid: int, request: Request, manual26: str = Form(""), s: Session = Depends(db)):
+# ---------- 지표 수정 (’26 목표 + 실적 보정 — 변경은 전부 audit 기록) ----------
+@app.post("/indicator/{iid}/update")
+def indicator_update(iid: int, request: Request, target26: str = Form(None), manual26: str = Form(None),
+                     s: Session = Depends(db)):
     u = require_user(request, s)
     ind = s.get(Indicator, iid)
     if not ind:
         raise HTTPException(404)
     if not can_edit(u, ind.division_key):
         raise HTTPException(403)
-    audit(s, u, "update", "indicator", ind.id, f"{ind.name} 실적: {ind.manual26!r}→{manual26!r}")
-    ind.manual26 = manual26.strip()
-    s.commit()
+    changes = []
+    if target26 is not None and target26.strip() != ind.target26:
+        changes.append(f"’26목표: {ind.target26!r}→{target26.strip()!r}")
+        ind.target26 = target26.strip()
+    if manual26 is not None and manual26.strip() != ind.manual26:
+        changes.append(f"’26실적보정: {ind.manual26!r}→{manual26.strip()!r}")
+        ind.manual26 = manual26.strip()
+    if changes:
+        audit(s, u, "update", "indicator", ind.id, f"{ind.grp} {ind.name} — " + "; ".join(changes))
+        s.commit()
     return RedirectResponse(f"/division/{ind.division_key}", status_code=303)
 
 
@@ -439,15 +472,18 @@ def export_data2(request: Request, key: str = "", s: Session = Depends(db)):
                            students=p.students, hours=p.hours, satis=p.satisfaction,
                            satisN=p.satisfaction_n, satisScale=p.satisfaction_scale,
                            budget=p.budget_won, budgetItem=p.budget_item,
+                           tanker=p.tanker, tankerSub=p.tanker_sub, execType=p.exec_type,
                            indicators=[t.strip() for t in p.indicator_tags.split(",") if t.strip()],
                            status=p.status, approval=p.approval_doc) for p in sm["programs"]],
-            spending=[dict(date=x.date, name=x.name, item=x.budget_item, amount=x.amount_won,
+            spending=[dict(date=x.date, name=x.name, item=x.budget_item, tanker=x.tanker,
+                           execType=x.exec_type, amount=x.amount_won,
                            doc=x.doc, verified=x.verified) for x in sm["spendings"]],
             students=sm["students"],
             satisfaction=dict(avg=sm["satis_avg"], n=sm["satis_n"], scale=5, excluded=sm["satis_excluded"]),
             spread=sm["spread"], spreadPending=sm["spread_pending"],
-            indicators=[dict(group=i.grp, name=i.name, base=i.base, target=i.target26,
-                             prev=i.prev25, manual=i.manual26) for i in inds],
+            indicators=[dict(group=i.grp, name=i.name, unit=i.unit, target25=i.target25,
+                             actual25=i.actual25, rate25=i.rate25, target=i.target26,
+                             manual=i.manual26) for i in inds],
             unverified=sm["unverified"], status=sm["status"],
         ))
     totals = dict(

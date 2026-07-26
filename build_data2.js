@@ -12,6 +12,40 @@ const OUT = path.join(__dirname, 'data2.js');
 const DIVISIONS = ['보건', '컬쳐', 'JB집', '성인', '드론', '축제', '맛잡고', '늘봄'];
 const WARN = []; // 파싱 중 무시/탈락된 항목 — 침묵 탈락 금지
 
+// ---------- 2축 분류 체계 (설계문서 §12, 2026-07-26 확정) ----------
+// 축1: 예산항목 표준 9종 (인건비 없음 — 단위과제 규칙 / 간접비는 TANKer 제외)
+const BUDGET_ITEMS = ['장학금', '교육·연구 프로그램 운영·개발', '실험실습 장비·기자재',
+  '지역 연계 협업 지원', '기업지원 협력 활동', '성과 활용 확산', '교육 연구 환경 개선', '기타운영', '간접비'];
+const LEGACY_ITEM_MAP = {
+  '교육·연구 프로그램 개발·운영비': '교육·연구 프로그램 운영·개발',
+  '지역 연계·협업 지원비': '지역 연계 협업 지원',
+  '성과 활용·확산 지원비': '성과 활용 확산',
+  '실험·실습장비 및 기자재 구입·운영비': '실험실습 장비·기자재',
+  '교육·연구 환경 개선비': '교육 연구 환경 개선',
+  '그 밖의 사업운영 경비': '기타운영',
+};
+// 축2: TANKer — 주분류 1개 필수(간접비 제외) + 부분류(참고용)
+const TANKER = { T: '지역인재육성', A: '지역현장강화', N: '지역기업연계', K: '취창업 실현' };
+const EXEC_TYPES = ['자체운영', '용역(수의계약)', '용역(입찰)'];
+
+function normItem(s, ctx) {
+  s = (s || '').trim();
+  if (!s) return '';
+  if (BUDGET_ITEMS.includes(s)) return s;
+  if (LEGACY_ITEM_MAP[s]) return LEGACY_ITEM_MAP[s];
+  WARN.push(`${ctx}: 표준 예산항목(9종)이 아님 — "${s}"`);
+  return s;
+}
+function checkTanker(tanker, item, ctx) {
+  if (item === '간접비') {
+    if (tanker) WARN.push(`${ctx}: 간접비는 TANKer 분류 제외인데 "${tanker}" 지정됨`);
+    return '';
+  }
+  if (tanker && !TANKER[tanker]) { WARN.push(`${ctx}: TANKer 값 오류 — "${tanker}" (T/A/N/K)`); return ''; }
+  if (!tanker && item) WARN.push(`${ctx}: TANKer 주분류 미지정 🔴`);
+  return tanker || '';
+}
+
 // ---------- helpers ----------
 function readIf(p) {
   try { return fs.readFileSync(p, 'utf8'); } catch { return null; }
@@ -84,7 +118,10 @@ function loadCards(div) {
       satisN: typeof fm['만족도_응답자수'] === 'number' ? fm['만족도_응답자수'] : null,
       satisScale: typeof fm['만족도_척도'] === 'number' ? fm['만족도_척도'] : 5,
       budget: typeof fm['소요예산'] === 'number' ? fm['소요예산'] : null,
-      budgetItem: fm['예산항목'] || '',
+      budgetItem: normItem(fm['예산항목'], `${div}/${f}`),
+      tanker: checkTanker(String(fm['TANKer'] || '').trim(), normItem(fm['예산항목'], ''), `${div}/${f}`),
+      tankerSub: String(fm['TANKer_부분류'] || '').trim(),
+      execType: String(fm['집행방식'] || '').trim(),
       indicators: Array.isArray(fm['지표매핑']) ? fm['지표매핑'] : [],
       status: fm['상태'] || '추출완료',
       approval: fm['내부결재'] || '',
@@ -108,13 +145,17 @@ function loadSpending(div) {
       if (name && !/합계|총계|누적/.test(name)) WARN.push(`${div} 지출대장: 금액 해석 불가로 제외된 행 — "${name}"`);
       continue;
     }
+    const cell = k => idx(k) >= 0 ? (r[idx(k)] || '') : '';
+    const item = normItem(cell('예산항목'), `${div} 지출대장`);
     rows.push({
-      date: r[idx('일자')] || '',
-      name: r[idx('지출건명')] || '',
-      item: r[idx('예산항목')] || '',
+      date: cell('일자'),
+      name: cell('지출건명'),
+      item,
+      tanker: checkTanker(cell('TANKer').trim(), item, `${div} 지출대장/${cell('지출건명')}`),
+      execType: cell('집행방식').trim(),
       amount, // 음수(환수·정정)도 그대로 합산
-      doc: (r[idx('근거문서(내부결재)')] || '').replace(/\[\[|\]\]/g, ''),
-      verified: /🟢/.test(r[idx('검증')] || ''),
+      doc: cell('근거문서(내부결재)').replace(/\[\[|\]\]/g, ''),
+      verified: /🟢/.test(cell('검증')),
     });
   }
   return rows;
@@ -126,12 +167,17 @@ function loadLedger(div) {
   if (!src) return null;
   const fm = parseFrontmatter(src);
   const t = parseTables(src).find(t => t.header.includes('지표명') && t.header.some(h => h.includes('목표')));
+  // 정본 표 헤더: 구분|지표명|단위|’25 목표|’25 실적|’25 달성도|’26 목표|’26 실적(누적)|달성률|근거 프로그램
+  const col = name => t ? t.header.findIndex(h => h.replace(/[’']/g, '').includes(name)) : -1;
+  const pick = (r, i) => (i >= 0 && r[i] != null && r[i] !== '-') ? r[i] : '';
   const indicators = t ? t.rows.map(r => ({
-    group: r[0] || '',
-    name: r[1] || '',
-    base: r[2] ?? '',
-    target: r[3] ?? '',
-    prev: r[4] ?? '',
+    group: pick(r, col('구분')) || r[0] || '',
+    name: pick(r, col('지표명')),
+    unit: pick(r, col('단위')),
+    target25: pick(r, col('25 목표')),
+    actual25: pick(r, col('25 실적')),
+    rate25: pick(r, col('25 달성도')),
+    target: pick(r, col('26 목표')),
   })).filter(i => i.name) : [];
   return {
     code: fm['과제코드'] || '',

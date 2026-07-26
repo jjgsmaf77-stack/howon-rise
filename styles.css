@@ -2821,3 +2821,80 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .y2-rate-bar .bar.muted i { background: #c9d6df; }
 .y2-rate-bar .val { text-align: right; font-weight: 700; font-size: 12.5px; color: var(--g-800); }
 .y2-divcell { font-size: 11.5px; line-height: 1.35; min-width: 180px; color: var(--ink-600, #47555f); }
+
+/* ---------- 2축 매트릭스 · 지표 연관 ---------- */
+.y2-matrix th { font-size: 10.5px; }
+.y2-matrix td { font-size: 12px; }
+.y2-indirect td { background: #f6f8fa; color: var(--ink-500); }
+.y2-excluded { text-align: center !important; font-size: 11.5px; color: var(--ink-500); }
+.y2-tanker-dist .bar-row { grid-template-columns: 118px 1fr 52px; }
+.y2-exec { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; }
+.y2-tk {
+  display: inline-block; font-weight: 800; font-size: 12px; color: var(--g-600);
+  background: #e5f1f7; border-radius: 6px; padding: 2px 8px; letter-spacing: .04em;
+}
+.y2-linkcell { max-width: 220px; }
+.y2-linkchip {
+  display: inline-block; font-size: 10.5px; background: var(--br-50); color: #8a6d00;
+  border: 1px solid #f0e2b0; border-radius: 999px; padding: 1px 8px; margin: 1px 2px; white-space: nowrap;
+}
+.divider { height: 1px; background: var(--ink-100, #e8edf2); margin: 14px 0; }
+
+/* ---------- TANKer ON 특성화 체계 배너 ---------- */
+.y2-tkbanner { background: linear-gradient(125deg, #0a2540 0%, #102e55 55%, #16548c 100%); color: #fff; border: 0; }
+.tkb-top { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+.tkb-kicker {
+  background: var(--br-400); color: #0a2540; font-weight: 800; font-size: 11.5px;
+  border-radius: 999px; padding: 4px 13px; letter-spacing: .04em; white-space: nowrap;
+}
+.tkb-headline { font-size: 17px; font-weight: 800; letter-spacing: .01em; }
+.tkb-flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tkb-tiles { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tkb-tile {
+  background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18);
+  border-radius: 12px; padding: 10px 14px 9px; text-align: center; min-width: 96px;
+}
+.tkb-letter { font-size: 30px; font-weight: 900; color: var(--br-300, #ffc93c); line-height: 1.05; }
+.tkb-en { font-size: 12px; font-weight: 700; margin-top: 2px; }
+.tkb-kr { font-size: 10.5px; opacity: .8; margin-top: 1px; }
+.tkb-plus { font-size: 18px; font-weight: 800; opacity: .55; }
+.tkb-anchor {
+  border: 1px dashed rgba(255,255,255,.4); border-radius: 12px; padding: 10px 16px 9px; text-align: center;
+}
+.tkb-anchor-badge {
+  display: inline-block; background: rgba(255,255,255,.14); font-size: 10px; font-weight: 700;
+  border-radius: 999px; padding: 1px 9px; letter-spacing: .2em;
+}
+.tkb-anchor-name { font-size: 19px; font-weight: 800; margin-top: 2px; }
+.tkb-anchor-sub { font-size: 10.5px; opacity: .75; margin-top: 1px; }
+.tkb-arrow { font-size: 22px; color: var(--br-300, #ffc93c); }
+.tkb-result { text-align: center; padding: 4px 6px; }
+.tkb-result-kicker { font-size: 12px; font-weight: 700; opacity: .9; }
+.tkb-result-name { font-size: 27px; font-weight: 900; letter-spacing: .01em; line-height: 1.1; }
+.tkb-result-name .on { color: var(--br-300, #ffc93c); }
+.tkb-result-sub {
+  display: inline-block; background: var(--br-400); color: #0a2540; font-size: 11px; font-weight: 800;
+  border-radius: 999px; padding: 2px 12px; margin-top: 4px;
+}
+.tkb-result-formula { font-size: 10.5px; opacity: .75; margin-top: 4px; }
+.tkb-foot {
+  margin-top: 16px; text-align: center; background: rgba(0,0,0,.28);
+  border-radius: 9px; padding: 8px; font-size: 13px; font-weight: 800; letter-spacing: .05em;
+}
+@media (max-width: 880px) {
+  .tkb-flow { justify-content: center; }
+  .tkb-arrow { transform: rotate(90deg); width: 100%; text-align: center; }
+}
+
+/* 로고 · 도넛 · 링 */
+.logo-hu { width: 92px; height: auto; display: block; margin-bottom: 10px; }
+.y2-donut-wrap { height: 190px; margin-bottom: 10px; }
+.y2-ringrow { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+.y2-ring {
+  width: 92px; height: 92px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.y2-ring::before { content: ''; position: absolute; inset: 10px; background: #fff; border-radius: 50%; }
+.y2-ring span { position: relative; font-weight: 800; font-size: 15px; color: var(--g-800); }
+.y2-ring-meta { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--ink-500); }
+.y2-ring-meta b { font-size: 13.5px; color: var(--g-900); }
