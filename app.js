@@ -1,10 +1,7 @@
+// 호원 앵커(RISE) 성과관리 플랫폼 — 2차년도(2026) 대시보드
+// 데이터 원천: 옵시디언 성과관리 볼트 → build_data2.js → data2.js (window.__RISE2__)
+// 1차년도(2025) 뷰·데이터(data.js)는 2026-07 개편으로 제거됨 — git 이력에서 복원 가능.
 (() => {
-  const { META, PROJECTS, COMMON_INDICATORS, SELF_INDICES,
-          PROJECT_PERFORMANCE_COLUMNS, PROJECT_PERFORMANCE_ROWS,
-          INFRASTRUCTURE, COMMUNITY, PERFORMANCE_SCORES = [],
-          EVALUATION = { criteria: [], grades: [], results: [] },
-          SANGSAENG_PROJECTS = [] } = window.__RISE__;
-
   // ---------- helpers ----------
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
@@ -23,553 +20,7 @@
     return el;
   };
   const fmtN = v => (v == null || v === '') ? '—' : Number(v).toLocaleString('ko-KR');
-  const deepClone = (o) => JSON.parse(JSON.stringify(o));
 
-  // ---------- store ----------
-  const STORE_KEY = 'rise.platform.v1';
-  const Store = {
-    state: null,
-    listeners: new Set(),
-    init() {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (raw) {
-        try { this.state = this.migrate(JSON.parse(raw)); return; } catch {}
-      }
-      this.state = this.seed();
-    },
-    seed() {
-      return {
-        common: COMMON_INDICATORS.map(i => ({ name: i.name, unit: i.unit, data: { ...i.data } })),
-        self: SELF_INDICES.map(s => ({
-          name: s.name, desc: s.desc,
-          items: s.items.map(it => ({
-            name: it.name, project: it.project, rows: it.rows,
-            subItems: (it.subItems || []).map(x => ({ ...x })),
-            목표: null, 실적: null, 단위: ''
-          }))
-        })),
-        projects: PROJECT_PERFORMANCE_ROWS.map(r => deepClone(r)),
-        infra: { groups: INFRASTRUCTURE.groups.map(g => ({ name: g.name, items: g.items.map(it => ({ ...it })) })) },
-        community: {
-          students:  COMMUNITY.students.map(p => ({ ...p })),
-          companies: COMMUNITY.companies.map(p => ({ ...p })),
-          corpPosts: COMMUNITY.corpPosts.map(p => ({ ...p })),
-          stats:     { ...COMMUNITY.stats }
-        }
-      };
-    },
-    migrate(s) {
-      // Ensure shape is present, merge with seed where missing
-      const base = this.seed();
-      base.common = (s.common && s.common.length === base.common.length) ? s.common : base.common;
-      base.self = (s.self && s.self.length === base.self.length)
-        ? s.self.map((g, i) => ({
-            ...base.self[i],
-            items: g.items.map((it, j) => ({ ...base.self[i].items[j], ...it }))
-          }))
-        : base.self;
-      base.projects = (s.projects && s.projects.length === base.projects.length) ? s.projects : base.projects;
-      base.infra = s.infra || base.infra;
-      base.community = s.community && s.community.students ? s.community : base.community;
-      return base;
-    },
-    save() {
-      localStorage.setItem(STORE_KEY, JSON.stringify(this.state));
-      pingSaveIndicator();
-      this.listeners.forEach(fn => fn());
-    },
-    reset() {
-      localStorage.removeItem(STORE_KEY);
-      this.state = this.seed();
-      this.save();
-    },
-    exportJson() {
-      const blob = new Blob([JSON.stringify(this.state, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `RISE_성과데이터_${new Date().toISOString().slice(0,10)}.json`;
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    },
-    importJson(obj) {
-      this.state = this.migrate(obj);
-      this.save();
-    },
-    onChange(fn) { this.listeners.add(fn); }
-  };
-
-  // ---------- KPI computed from store ----------
-  function getKpi() {
-    const sum = (name) => {
-      const ind = Store.state.common.find(i => i.name === name);
-      if (!ind) return 0;
-      return Object.values(ind.data).reduce((a, b) => a + (b || 0), 0);
-    };
-    return {
-      totalMOU: sum('MOU 건수'),
-      totalPress: sum('언론보도 건수'),
-      totalEvents: sum('행사 운영 건수'),
-      totalCrossRegion: sum('초광역 지산학 연계 건수'),
-      totalCrossProject: sum('사업단 연계 건수'),
-      projectCount: PROJECTS.length,
-      indexCount: SELF_INDICES.length,
-      subIndicatorCount: SELF_INDICES.reduce((a, b) => a + b.items.length, 0)
-    };
-  }
-
-  // ---------- edit primitives ----------
-  // parseNum: "" → null, else Number
-  const parseNum = (s) => {
-    if (s == null) return null;
-    const str = String(s).trim().replace(/,/g, '');
-    if (str === '') return null;
-    const n = Number(str);
-    return isNaN(n) ? null : n;
-  };
-
-  // numeric inline-edit field
-  function numEdit(getVal, setVal, opts = {}) {
-    const input = h('input', {
-      type: 'text',
-      class: 'edit-num',
-      inputmode: 'decimal',
-      placeholder: opts.placeholder || '—',
-      value: getVal() == null ? '' : String(getVal())
-    });
-    input.addEventListener('blur', () => {
-      const v = parseNum(input.value);
-      setVal(v);
-      input.value = v == null ? '' : String(v);
-      Store.save();
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') input.blur();
-      if (e.key === 'Escape') { input.value = getVal() == null ? '' : String(getVal()); input.blur(); }
-    });
-    return input;
-  }
-
-  // text inline-edit field (single line)
-  function txtEdit(getVal, setVal, opts = {}) {
-    const input = h('input', {
-      type: 'text',
-      class: 'edit-txt',
-      placeholder: opts.placeholder || '—',
-      value: getVal() || ''
-    });
-    input.addEventListener('blur', () => {
-      const v = input.value.trim();
-      setVal(v || '');
-      Store.save();
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') input.blur();
-      if (e.key === 'Escape') { input.value = getVal() || ''; input.blur(); }
-    });
-    return input;
-  }
-
-  // multiline text edit (textarea)
-  function txtAreaEdit(getVal, setVal, opts = {}) {
-    const ta = h('textarea', {
-      class: 'edit-txtarea',
-      rows: opts.rows || 2,
-      placeholder: opts.placeholder || '—'
-    });
-    ta.value = getVal() || '';
-    ta.addEventListener('blur', () => {
-      const v = ta.value.trim();
-      setVal(v || '');
-      Store.save();
-    });
-    return ta;
-  }
-
-  // ---------- save indicator ----------
-  let saveTimer = null;
-  function pingSaveIndicator() {
-    const el = $('#save-indicator');
-    if (!el) return;
-    el.classList.remove('saved');
-    el.classList.add('saving');
-    el.textContent = '저장 중';
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      el.classList.remove('saving');
-      el.classList.add('saved');
-      el.textContent = '저장됨';
-    }, 280);
-  }
-
-  // ---------- navigation ----------
-  const VIEWS = [
-    { id: 'overview',   label: '개요',             desc: '성과 종합' },
-    { id: 'year2',      label: '2차년도 현황',     desc: '2026 실적·예산 집행' },
-    { id: 'common',     label: '공통지표',         desc: '교육부 공통지표' },
-    { id: 'self',       label: '대학자체지표',     desc: '5대 지수 체계' },
-    { id: 'project',    label: '과제별 성과',      desc: '8개 과제' },
-    { id: 'sangsaeng',  label: '상생사업',         desc: '4개 상생사업 과제' },
-    { id: 'evaluation', label: '사업단 평가',      desc: '5개 항목 종합 평가' },
-    { id: 'infra',      label: '기타 구축',         desc: '거버넌스·인프라' },
-    { id: 'community',  label: '커뮤니티',         desc: '학생 · 기업체' },
-    { id: 'formula',    label: '산식·정의',         desc: '지표 방법론' }
-  ];
-
-  // ---------- password-protected views ----------
-  const PROTECTED_VIEWS = new Set(['formula']);
-  const PW_HASH = 'a069a4137161ad159f43df3bb9342d0637eeebcafefbe01a64b9d69ac338eb25';
-  const LOCK_KEY = 'rise.unlocked.v1';
-
-  async function sha256Hex(text) {
-    const buf = new TextEncoder().encode(text);
-    const digest = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2,'0')).join('');
-  }
-  function isUnlocked(viewId) {
-    if (!PROTECTED_VIEWS.has(viewId)) return true;
-    try { return sessionStorage.getItem(LOCK_KEY) === '1'; } catch { return false; }
-  }
-  function promptPassword() {
-    return new Promise((resolve) => {
-      const modal = h('div', { class: 'pw-modal', role: 'dialog', 'aria-modal': 'true' }, [
-        h('div', { class: 'pw-card' }, [
-          h('div', { class: 'pw-icon' }),
-          h('h3', {}, ['접근 제한']),
-          h('p', {}, ['산식·정의 영역은 인증된 관리자만 열람할 수 있습니다. 비밀번호를 입력하세요.']),
-          h('input', { type: 'password', class: 'pw-input', placeholder: '비밀번호', autocomplete: 'off' }),
-          h('div', { class: 'pw-err', 'aria-live': 'polite' }, ['']),
-          h('div', { class: 'pw-actions' }, [
-            h('button', { class: 'tb-btn', 'data-role': 'cancel' }, ['취소']),
-            h('button', { class: 'tb-btn primary', 'data-role': 'ok' }, ['확인'])
-          ])
-        ])
-      ]);
-      document.body.appendChild(modal);
-      const input = modal.querySelector('.pw-input');
-      const err = modal.querySelector('.pw-err');
-      const close = (ok) => { modal.remove(); resolve(ok); };
-      const submit = async () => {
-        err.textContent = '';
-        const v = input.value;
-        if (!v) { err.textContent = '비밀번호를 입력해 주세요.'; input.focus(); return; }
-        const hash = await sha256Hex(v);
-        if (hash === PW_HASH) {
-          try { sessionStorage.setItem(LOCK_KEY, '1'); } catch {}
-          close(true);
-        } else {
-          err.textContent = '비밀번호가 일치하지 않습니다.';
-          input.value = ''; input.focus();
-          modal.querySelector('.pw-card').classList.remove('shake');
-          // reflow then re-add
-          void modal.offsetWidth;
-          modal.querySelector('.pw-card').classList.add('shake');
-        }
-      };
-      modal.querySelector('[data-role="ok"]').addEventListener('click', submit);
-      modal.querySelector('[data-role="cancel"]').addEventListener('click', () => close(false));
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); submit(); }
-        if (e.key === 'Escape') close(false);
-      });
-      setTimeout(() => input.focus(), 30);
-    });
-  }
-
-  let _currentView = 'overview';
-  async function setView(id) {
-    // Scroll-nav mode: all views visible. Only formula still gates on password.
-    if (id === 'formula' && !isUnlocked(id)) {
-      const ok = await promptPassword();
-      if (!ok) return;
-      buildFormula();   // reveal content after unlock
-      buildSidebar();
-    }
-    _currentView = id;
-    $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
-    $$('#mobile-quicknav .q').forEach(b => b.classList.toggle('active', b.dataset.view === id));
-    const v = VIEWS.find(x => x.id === id);
-    $('#crumb').innerHTML = `호원RISE · <strong>${v.label}</strong> · ${v.desc}`;
-
-    const target = document.getElementById(`view-${id}`);
-    if (!target) return;
-
-    // Compute final scroll position with sticky-bar offset and jump directly.
-    // Instant scrollTo is the most reliable across mobile browsers; smooth can be
-    // interrupted by touch gestures or by the chip's own scrollIntoView.
-    const isMobile = window.matchMedia('(max-width: 880px)').matches;
-    const topbarH = document.querySelector('.topbar')?.offsetHeight || 0;
-    const qnH = isMobile ? (document.getElementById('mobile-quicknav')?.offsetHeight || 0) : 0;
-    const rect = target.getBoundingClientRect();
-    const y = Math.max(0, rect.top + window.scrollY - (topbarH + qnH + 8));
-
-    window.scrollTo({ top: y, behavior: isMobile ? 'auto' : 'smooth' });
-
-    if (isMobile) {
-      // Center active chip in horizontal quicknav scroll (independent of window scroll)
-      const chipBar = document.getElementById('mobile-quicknav');
-      const activeChip = chipBar?.querySelector(`.q[data-view="${id}"]`);
-      if (chipBar && activeChip) {
-        const targetLeft = activeChip.offsetLeft - (chipBar.clientWidth - activeChip.offsetWidth) / 2;
-        chipBar.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
-      }
-    }
-  }
-
-  // ---------- mobile quick nav ----------
-  function buildMobileQuickNav() {
-    const host = $('#mobile-quicknav');
-    if (!host) return;
-    host.innerHTML = '';
-    VIEWS.forEach(v => {
-      const btn = h('button', {
-        class: 'q',
-        'data-view': v.id,
-        onclick: () => setView(v.id)
-      }, [v.label]);
-      if (v.id === _currentView) btn.classList.add('active');
-      host.appendChild(btn);
-    });
-  }
-
-  // ---------- sidebar ----------
-  function buildSidebar() {
-    const nav = $('#nav');
-    nav.innerHTML = '';
-    const kpi = getKpi();
-    const counts = {
-      overview: '',
-      year2: (window.__RISE2__ && window.__RISE2__.totals) ? window.__RISE2__.totals.programs : '',
-      common: Store.state.common.length,
-      self: kpi.subIndicatorCount,
-      project: Store.state.projects.length,
-      sangsaeng: SANGSAENG_PROJECTS.length,
-      evaluation: EVALUATION.results.length,
-      infra: Store.state.infra.groups.reduce((a,b) => a + b.items.length, 0),
-      community: (Store.state.community?.students?.length || 0) + (Store.state.community?.companies?.length || 0),
-      formula: ''
-    };
-    VIEWS.forEach(v => {
-      const btn = h('button', { 'data-view': v.id, onclick: () => setView(v.id) }, [
-        h('span', { class: 'dot' }),
-        document.createTextNode(v.label),
-        counts[v.id] !== '' ? h('span', { class: 'count' }, [String(counts[v.id])]) : null
-      ]);
-      if (v.id === _currentView) btn.classList.add('active');
-      if (PROTECTED_VIEWS.has(v.id)) {
-        btn.classList.add('protected');
-        if (isUnlocked(v.id)) btn.classList.add('unlocked');
-      }
-      nav.appendChild(btn);
-    });
-  }
-
-  // ---------- overview ----------
-  function buildOverview() {
-    const el = $('#view-overview');
-    el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['개요 · 성과 종합']));
-    el.appendChild(renderTicker(overviewTickerItems(), 'LIVE FEED'));
-    const KPI = getKpi();
-
-    const hero = h('section', { class: 'hero' }, [
-      h('div', { class: 'kicker' }, ['HOWON UNIVERSITY · RISE PROGRAM']),
-      h('h1', {}, [META.title]),
-      h('p', { class: 'lead' }, [`목표 — ${META.goal}`]),
-      h('p', { class: 'lead', style: 'margin-top:-14px' }, [`비전 — ${META.vision}`]),
-      h('div', { class: 'hero-grid' }, [
-        kpiInHero('과제 수',        KPI.projectCount, '개 과제'),
-        kpiInHero('자체지표 체계',  KPI.indexCount,   '대 지수'),
-        kpiInHero('세부 지표',       KPI.subIndicatorCount, '개 항목'),
-        kpiInHero('외부 파급',       KPI.totalMOU + KPI.totalPress + KPI.totalEvents, '건 누적')
-      ])
-    ]);
-    el.appendChild(hero);
-
-    const kpiSec = h('section', { class: 'section' }, [
-      sectionHead('성과확산도 현황', '공통지표 중 외부 확산·연계 실적 5종 (A3 지표 구성)'),
-      h('div', { class: 'grid-4' }, [
-        kpiCard('초광역 지산학 연계', KPI.totalCrossRegion, '건', '타 지역·권역 기관과의 연계·협력 활동'),
-        kpiCard('사업단 연계',         KPI.totalCrossProject, '건', 'RISE 사업단 간 공동 추진 실적'),
-        kpiCard('MOU 체결',            KPI.totalMOU, '건', '대내외 협력기관 간 업무협약'),
-        kpiCard('언론보도',            KPI.totalPress, '건', '외부 언론매체 보도 실적'),
-        kpiCard('공식 행사 운영',      KPI.totalEvents, '건', '포럼·워크숍·성과공유회·설명회 등'),
-        kpiCard('과제 규모',            KPI.projectCount, '개', '8대 핵심 과제 추진 중'),
-        kpiCard('자체지표 체계',        KPI.indexCount, '대', '5대 지수 × 하위 24종 지표'),
-        kpiCard('세부 지표',             KPI.subIndicatorCount, '개', '지수별 세부 측정 항목')
-      ])
-    ]);
-    el.appendChild(kpiSec);
-
-    // 사업단별 종합 카드 (8개 과제) — 한눈에 핵심 데이터
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('사업단별 종합 데이터', '8개 과제별 공통지표 · 자체지표 · 추진과제 · 인프라 · 산출점수 통합'),
-      h('div', { class: 'grid-4 unit-grid' },
-        PROJECTS.map(p => unitCard(p))
-      )
-    ]));
-
-    // 과제별 공통지표 종합 (A1·A2·A3) + 미래 목표
-    if (PERFORMANCE_SCORES && PERFORMANCE_SCORES.length) {
-      const yearAvg = META.yearAvg || {};
-      const avg2025 = PERFORMANCE_SCORES.reduce((a,b)=>a+(b.score2025||0),0) / PERFORMANCE_SCORES.length;
-      const scoreSec = h('section', { class: 'section' }, [
-        sectionHead('과제별 공통지표 종합 — A1·A2·A3 산출',
-          `2025년 평균 ${avg2025.toFixed(1)}점 → 2029년 목표 ${yearAvg[2029] || 94}점 (산식: A1×0.4 + A2×0.4 + A3×0.2)`),
-        h('div', { style: 'overflow-x:auto;' }, [(() => {
-          const tbl = h('table', { class: 'tbl' });
-          tbl.appendChild(h('thead', {}, [h('tr', {}, [
-            h('th', {}, ['과제']),
-            h('th', { style:'text-align:right' }, ['A1 달성률']),
-            h('th', { style:'text-align:right' }, ['A2 만족도']),
-            h('th', { style:'text-align:right' }, ['A3 확산도']),
-            h('th', { style:'text-align:right' }, ['2025 종합']),
-            h('th', { style:'text-align:right' }, ['2026 목표']),
-            h('th', { style:'text-align:right' }, ['2027 목표']),
-            h('th', { style:'text-align:right' }, ['2028 목표']),
-            h('th', { style:'text-align:right' }, ['2029 목표'])
-          ])]));
-          const tb = h('tbody');
-          PERFORMANCE_SCORES.forEach(p => {
-            tb.appendChild(h('tr', {}, [
-              h('td', {}, [h('span', { class:'chip dark' }, [p.project])]),
-              h('td', { class:'num' }, [fmtN(p.A1)]),
-              h('td', { class:'num' }, [fmtN(p.A2)]),
-              h('td', { class:'num' }, [fmtN(p.A3)]),
-              h('td', { class:'num', style:'color:var(--g-700); font-weight:800;' }, [fmtN(p.score2025)]),
-              h('td', { class:'num' }, [fmtN(p.futures[2026])]),
-              h('td', { class:'num' }, [fmtN(p.futures[2027])]),
-              h('td', { class:'num' }, [fmtN(p.futures[2028])]),
-              h('td', { class:'num' }, [fmtN(p.futures[2029])])
-            ]));
-          });
-          // 평균 row
-          if (yearAvg[2025]) {
-            tb.appendChild(h('tr', { style:'background:var(--g-50); font-weight:700;' }, [
-              h('td', {}, ['평균']),
-              h('td', { class:'num' }, ['—']),
-              h('td', { class:'num' }, ['—']),
-              h('td', { class:'num' }, ['—']),
-              h('td', { class:'num', style:'color:var(--g-800);' }, [String(yearAvg[2025])]),
-              h('td', { class:'num' }, [String(yearAvg[2026])]),
-              h('td', { class:'num' }, [String(yearAvg[2027])]),
-              h('td', { class:'num' }, [String(yearAvg[2028])]),
-              h('td', { class:'num' }, [String(yearAvg[2029])])
-            ]));
-          }
-          tbl.appendChild(tb);
-          return tbl;
-        })()])
-      ]);
-      el.appendChild(scoreSec);
-    }
-
-    const distSec = h('section', { class: 'section' }, [
-      sectionHead('과제별 성과확산 분포', 'MOU · 언론보도 · 행사 · 연계 건수의 과제별 분포'),
-      h('div', { class: 'grid-2' }, [
-        h('div', { class: 'card' }, [
-          h('div', { class: 'h3-row' }, [h('h3', {}, ['과제별 MOU 체결']), h('span', { class: 'aux' }, [`총 ${KPI.totalMOU}건`])]),
-          barList(indData('MOU 건수'))
-        ]),
-        h('div', { class: 'card' }, [
-          h('div', { class: 'h3-row' }, [h('h3', {}, ['과제별 언론보도']), h('span', { class: 'aux' }, [`총 ${KPI.totalPress}건`])]),
-          barList(indData('언론보도 건수'))
-        ]),
-        h('div', { class: 'card' }, [
-          h('div', { class: 'h3-row' }, [h('h3', {}, ['과제별 공식 행사']), h('span', { class: 'aux' }, [`총 ${KPI.totalEvents}건`])]),
-          barList(indData('행사 운영 건수'))
-        ]),
-        h('div', { class: 'card' }, [
-          h('div', { class: 'h3-row' }, [h('h3', {}, ['과제별 초광역·사업단 연계']),
-            h('span', { class: 'aux' }, [`총 ${KPI.totalCrossRegion + KPI.totalCrossProject}건`])]),
-          stackedLinkList()
-        ])
-      ])
-    ]);
-    el.appendChild(distSec);
-
-    const chartSec = h('section', { class: 'section' }, [
-      sectionHead('과제별 종합 성과 레이더', '5대 성과확산 지표의 과제별 현황 (표준화 지수)'),
-      h('div', { class: 'card' }, [ h('div', { class: 'chart-wrap tall' }, [h('canvas', { id: 'radar-overview' })]) ])
-    ]);
-    el.appendChild(chartSec);
-  }
-
-  function indData(name) { return Store.state.common.find(i => i.name === name).data; }
-
-  // 사업단별 종합 카드 — 모든 데이터 소스 결합
-  function unitCard(p) {
-    const d = (name) => {
-      const ind = Store.state.common.find(i => i.name === name);
-      return ind ? ind.data[p.key] : null;
-    };
-    const score = PERFORMANCE_SCORES.find(s => s.project === p.key);
-    const projRows = Store.state.projects.filter(r => r.과제명 === p.key);
-    const rates = projRows.map(r => r.달성률).filter(v => v != null);
-    const avgRate = rates.length ? Math.round(rates.reduce((a,b)=>a+b,0) / rates.length) : null;
-    const selfCount = Store.state.self.reduce((a, g) => a + g.items.filter(it => it.project === p.key).length, 0);
-    const infraCount = (window.__RISE__.INFRASTRUCTURE.perProject || []).filter(x => x.과제 === p.key).length;
-    const infraTotal = (window.__RISE__.INFRASTRUCTURE.perProject || [])
-      .filter(x => x.과제 === p.key).reduce((a,b)=>a+(b.count||0),0);
-
-    return h('div', { class: 'unit-card' }, [
-      h('div', { class: 'uc-head' }, [
-        h('span', { class: 'chip dark' }, [p.short]),
-        h('div', { class: 'uc-theme' }, [p.theme])
-      ]),
-      h('div', { class: 'uc-full' }, [p.full]),
-
-      // Score block
-      score ? h('div', { class: 'uc-score' }, [
-        h('div', { class: 'uc-score-main' }, [
-          h('span', { class: 'uc-score-v' }, [String(score.score2025 != null ? score.score2025 : '—')]),
-          h('span', { class: 'uc-score-u' }, ['점'])
-        ]),
-        h('div', { class: 'uc-score-meta' }, [
-          h('span', {}, [`A1 ${score.A1 ?? '—'}`]),
-          h('span', {}, [`A2 ${score.A2 ?? '—'}`]),
-          h('span', {}, [`A3 ${score.A3 ?? '—'}`])
-        ])
-      ]) : null,
-
-      // Stats grid
-      h('div', { class: 'uc-stats' }, [
-        ucStat('MOU', d('MOU 건수'), '건'),
-        ucStat('언론', d('언론보도 건수'), '건'),
-        ucStat('행사', d('행사 운영 건수'), '건'),
-        ucStat('만족도', d('통합 만족도(100점 환산)'), '점'),
-        ucStat('추진과제', projRows.length, '건'),
-        ucStat('자체지표', selfCount, '개'),
-        ucStat('인프라', infraTotal, '건'),
-        ucStat('평균달성', avgRate, '%')
-      ]),
-
-      // Future targets mini
-      score ? h('div', { class: 'uc-future' }, [
-        h('span', { class: 'uc-future-l' }, ['목표 추세']),
-        h('span', { class: 'uc-future-v' }, [
-          `'25 ${score.score2025} → '26 ${score.futures[2026]} → '27 ${score.futures[2027]} → '28 ${score.futures[2028]} → '29 ${score.futures[2029]}`
-        ])
-      ]) : null
-    ]);
-  }
-  function ucStat(label, value, unit) {
-    const v = value == null ? '—' : value;
-    return h('div', { class: 'uc-stat' }, [
-      h('span', { class: 'uc-stat-l' }, [label]),
-      h('span', { class: 'uc-stat-v' }, [
-        String(v),
-        v !== '—' ? h('span', { class: 'uc-stat-u' }, [unit]) : null
-      ])
-    ]);
-  }
-
-  function kpiInHero(label, value, unit) {
-    return h('div', { class: 'stat' }, [
-      h('div', { class: 'k' }, [label]),
-      h('div', { class: 'v' }, [String(fmtN(value)), h('span', { class: 'u' }, [unit])])
-    ]);
-  }
   function kpiCard(label, value, unit, foot) {
     return h('div', { class: 'kpi' }, [
       h('div', { class: 'label' }, [label]),
@@ -586,1677 +37,81 @@
       right ? h('div', { class: 'right' }, right) : null
     ]);
   }
-  function barList(dataObj) {
-    const values = Object.values(dataObj).filter(v => v != null);
-    const max = values.length ? Math.max(...values, 1) : 1;
-    const wrap = h('div', {});
-    PROJECTS.forEach(p => {
-      const v = dataObj[p.key];
-      const pct = (v == null ? 0 : (v / max) * 100);
-      wrap.appendChild(h('div', { class: 'bar-row' }, [
-        h('div', { class: 'lbl' }, [p.short]),
-        h('div', { class: 'bar' }, [ h('i', { style: `width:${pct.toFixed(1)}%` }) ]),
-        h('div', { class: `val ${v == null ? 'na' : ''}` }, [v == null ? '—' : fmtN(v)])
-      ]));
-    });
-    return wrap;
-  }
-  function stackedLinkList() {
-    const cross = indData('초광역 지산학 연계 건수');
-    const inner = indData('사업단 연계 건수');
-    const max = Math.max(...PROJECTS.map(p => (cross[p.key] || 0) + (inner[p.key] || 0)), 1);
-    const wrap = h('div', {});
-    PROJECTS.forEach(p => {
-      const a = cross[p.key] || 0, b = inner[p.key] || 0, tot = a + b;
-      const pa = (a / max) * 100, pb = (b / max) * 100;
-      const hasAny = cross[p.key] != null || inner[p.key] != null;
-      wrap.appendChild(h('div', { class: 'bar-row' }, [
-        h('div', { class: 'lbl' }, [p.short]),
-        h('div', { class: 'bar' }, [
-          h('i', { style: `width:${(pa+pb).toFixed(1)}%; background:linear-gradient(90deg,#0a2540,#2a93b6);` })
-        ]),
-        h('div', { class: `val ${!hasAny ? 'na' : ''}` }, [!hasAny ? '—' : fmtN(tot)])
-      ]));
-    });
-    return wrap;
+
+  // ---------- navigation ----------
+  const VIEWS = [
+    { id: 'year2', label: '2차년도 현황', desc: '2026 실적·예산 집행' }
+  ];
+  let _currentView = 'year2';
+
+  function crumbHtml(v) {
+    return `호원 앵커(RISE) · <strong>${v.label}</strong> · ${v.desc}`;
   }
 
-  let _radarChart = null;
-  function renderOverviewCharts() {
-    const c = document.getElementById('radar-overview');
-    if (!c || !window.Chart) return;
-    if (_radarChart) _radarChart.destroy();
-    const metrics = ['MOU 건수', '언론보도 건수', '행사 운영 건수', '초광역 지산학 연계 건수', '사업단 연계 건수'];
-    const maxes = metrics.map(m => {
-      const d = indData(m);
-      return Math.max(...Object.values(d).filter(v => v != null), 1);
-    });
-    // Tanker palette — Navy · Teal · Gold + slate
-    const palette = [
-      'rgba(10,37,64,0.18)',   'rgba(23,58,107,0.18)', 'rgba(28,114,147,0.18)', 'rgba(42,147,182,0.20)',
-      'rgba(255,201,60,0.24)', 'rgba(242,107,79,0.20)', 'rgba(46,196,182,0.20)', 'rgba(107,120,134,0.22)'
-    ];
-    const borders = ['#0a2540','#173a6b','#1c7293','#2a93b6','#f5b700','#f26b4f','#2ec4b6','#6b7886'];
-    const datasets = PROJECTS.map((p, i) => ({
-      label: p.short,
-      data: metrics.map((m, idx) => { const v = indData(m)[p.key]; return v == null ? 0 : (v / maxes[idx]) * 100; }),
-      backgroundColor: palette[i], borderColor: borders[i], borderWidth: 1.6,
-      pointBackgroundColor: borders[i], pointRadius: 2.6
-    }));
-    _radarChart = new Chart(c, {
-      type: 'radar',
-      data: { labels: ['MOU','언론보도','행사','초광역연계','사업단연계'], datasets },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 11 }, boxWidth: 10, padding: 14 } },
-          tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toFixed(1)} (지수)` } }
-        },
-        scales: {
-          r: {
-            min: 0, max: 100,
-            grid: { color: 'rgba(10,37,64,0.10)' },
-            angleLines: { color: 'rgba(10,37,64,0.08)' },
-            pointLabels: { color: '#173a6b', font: { size: 11, weight: '600' } },
-            ticks: { color: '#6b7886', backdropColor: 'transparent', font: { size: 9 } }
-          }
-        }
-      }
-    });
+  async function setView(id) {
+    _currentView = id;
+    $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+    $$('#mobile-quicknav .q').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+    const v = VIEWS.find(x => x.id === id);
+    if (v) $('#crumb').innerHTML = crumbHtml(v);
+    const target = $(`#view-${id}`);
+    if (target) {
+      const topbar = $('.topbar');
+      const quick = $('#mobile-quicknav');
+      const offset = (topbar ? topbar.offsetHeight : 0) + (quick && getComputedStyle(quick).display !== 'none' ? quick.offsetHeight : 0) + 8;
+      const y = target.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    }
+    document.body.classList.remove('nav-open');
   }
 
-  // ---------- common ----------
-  let _commonProject = 'all';
-  let _commonChart = null;
-
-  function buildCommon() {
-    const el = $('#view-common');
-    el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['공통지표 · 교육부 공통지표']));
-    el.appendChild(renderTicker(commonTickerItems(), 'LIVE FEED'));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('공통지표 현황', '교육부 공통지표 및 지자체 자율지표를 제외한 대학자체 공통 지표. 값을 직접 입력할 수 있습니다.',
-        [filterBar()]),
-      h('div', { class: 'card' }, [ h('div', { class: 'chart-wrap tall' }, [h('canvas', { id: 'common-chart' })]) ])
-    ]));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('과제 × 지표 매트릭스 · 직접 입력', '셀을 클릭해 값을 입력하면 자동 저장되고 차트·KPI가 갱신됩니다.'),
-      h('div', { class: 'card matrix-card' }, [h('div', { class: 'matrix-scroll' }, [matrixEditGrid()])])
-    ]));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('공통지표 원자료', '엑셀 성과양식의 공통지표 전체 원자료 (편집 가능).'),
-      h('div', { class: 'y2-tblwrap' }, [commonFullTable()])
-    ]));
-
-    renderCommonChart();
-  }
-
-  function filterBar() {
-    const bar = h('div', { class: 'filter-bar' });
-    const mk = (key, label) => {
-      const btn = h('button', { 'data-p': key, onclick: () => {
-        _commonProject = key;
-        $$('.filter-bar button').forEach(b => b.classList.toggle('active', b.dataset.p === key));
-        renderCommonChart();
-      }}, [label]);
-      if (key === _commonProject) btn.classList.add('active');
-      return btn;
+  function buildSidebar() {
+    const nav = $('#nav');
+    if (!nav) return;
+    nav.innerHTML = '';
+    const counts = {
+      year2: (window.__RISE2__ && window.__RISE2__.totals) ? window.__RISE2__.totals.programs : ''
     };
-    bar.appendChild(mk('all', '전체'));
-    PROJECTS.forEach(p => bar.appendChild(mk(p.key, p.short)));
-    return bar;
-  }
-
-  function matrixEditGrid() {
-    const wrap = h('div', {});
-    wrap.appendChild(h('div', { class: 'project-row head' }, [
-      h('div', {}, ['지표']),
-      ...PROJECTS.map(p => h('div', { style: 'text-align:center' }, [p.short]))
-    ]));
-    Store.state.common.forEach((ind) => {
-      const row = h('div', { class: 'project-row' }, [ h('div', { class: 'ind-name' }, [ind.name]) ]);
-      PROJECTS.forEach(p => {
-        const cell = h('div', { class: 'cell edit-cell' }, [
-          numEdit(
-            () => ind.data[p.key],
-            (v) => { ind.data[p.key] = v; queueRerender(); }
-          )
-        ]);
-        row.appendChild(cell);
-      });
-      wrap.appendChild(row);
-    });
-    return wrap;
-  }
-
-  function commonFullTable() {
-    const tbl = h('table', { class: 'tbl' });
-    tbl.appendChild(h('thead', {}, [
-      h('tr', {}, [h('th', {}, ['지표명']), h('th', {}, ['단위']),
-        ...PROJECTS.map(p => h('th', { style: 'text-align:right' }, [p.short])),
-        h('th', { style: 'text-align:right' }, ['합계'])])
-    ]));
-    const tbody = h('tbody');
-    Store.state.common.forEach(ind => {
-      const tr = h('tr');
-      tr.appendChild(h('td', {}, [ind.name]));
-      tr.appendChild(h('td', {}, [ind.unit]));
-      PROJECTS.forEach(p => {
-        const td = h('td', { class: 'num edit-td' }, [
-          numEdit(() => ind.data[p.key], (v) => { ind.data[p.key] = v; queueRerender(); })
-        ]);
-        tr.appendChild(td);
-      });
-      const sum = PROJECTS.map(p => ind.data[p.key] || 0).reduce((a,b) => a+b, 0);
-      const hasAny = PROJECTS.some(p => ind.data[p.key] != null);
-      tr.appendChild(h('td', { class: `num ${!hasAny ? 'na' : ''}` }, [hasAny ? fmtN(sum) : '—']));
-      tbody.appendChild(tr);
-    });
-    tbl.appendChild(tbody);
-    return tbl;
-  }
-
-  function renderCommonChart() {
-    const c = document.getElementById('common-chart');
-    if (!c || !window.Chart) return;
-    if (_commonChart) _commonChart.destroy();
-    const countInds = Store.state.common.filter(i =>
-      ['초광역 지산학 연계 건수','사업단 연계 건수','MOU 건수','언론보도 건수','행사 운영 건수'].includes(i.name));
-    let labels, datasets;
-    const makeGradient = (ctx) => {
-      const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 280);
-      g.addColorStop(0, 'rgba(10,37,64,0.95)'); g.addColorStop(1, 'rgba(255,201,60,0.60)');
-      return g;
-    };
-    if (_commonProject === 'all') {
-      labels = PROJECTS.map(p => p.short);
-      datasets = countInds.map((ind, idx) => ({
-        label: ind.name,
-        data: PROJECTS.map(p => ind.data[p.key] || 0),
-        backgroundColor: ['#0a2540','#173a6b','#1c7293','#2a93b6','#f5b700'][idx],
-        borderRadius: 8, barThickness: 18
-      }));
-    } else {
-      labels = countInds.map(i => i.name.replace(' 건수',''));
-      datasets = [{
-        label: `${_commonProject} 사업단`,
-        data: countInds.map(i => i.data[_commonProject] || 0),
-        backgroundColor: (ctx) => makeGradient(ctx),
-        borderRadius: 8, barThickness: 42
-      }];
-    }
-    _commonChart = new Chart(c, {
-      type: 'bar', data: { labels, datasets },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 11 }, boxWidth: 10, padding: 14 } },
-          tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}건` } }
-        },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: '#2c3a4b', font: { size: 11 } } },
-          y: { grid: { color: 'rgba(10,37,64,0.06)' }, ticks: { color: '#6b7886', font: { size: 10 } }, beginAtZero: true }
-        }
-      }
-    });
-  }
-
-  // ---------- self indicators ----------
-  function buildSelf() {
-    const el = $('#view-self');
-    el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['대학자체지표 · 5대 지수 체계']));
-    el.appendChild(renderTicker(selfTickerItems(), 'LIVE FEED'));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('대학자체지표 · 5대 지수 체계',
-        '5대 성과지수와 24개 세부지표. 각 항목별 목표/실적을 입력하면 달성률이 자동 계산됩니다.')
-    ]));
-
-    const grid = h('div', { class: 'grid-2' });
-    Store.state.self.forEach((idx, i) => {
-      const card = h('div', { class: 'index-group' }, [
-        h('div', { class: 'head' }, [
-          h('div', { class: 'num' }, [String(i + 1)]),
-          h('div', {}, [
-            h('h3', {}, [idx.name]),
-            h('p', {}, [idx.desc])
-          ])
-        ]),
-        h('div', { class: 'sub-list' },
-          idx.items.map((it) => h('div', { class: 'sub-item edit' }, [
-            h('div', { class: 'name' }, [it.name]),
-            h('span', { class: 'chip ghost' }, [it.project]),
-            // 엑셀 측정 sub-rows 자동 표시 (증빙 보유 시 ✓ 마크)
-            it.subItems && it.subItems.length ? h('div', {
-              style: 'grid-column:1/-1; display:flex; flex-direction:column; gap:4px; padding:8px 10px; background:var(--g-50); border-radius:8px; border-left:2px solid var(--g-500);'
-            }, it.subItems.map(s => h('div', {
-              style: 'display:flex; justify-content:space-between; gap:10px; font-size:12px; align-items:center;'
-            }, [
-              h('span', { style: 'color:var(--ink-700);' }, ['◦ ' + s.label]),
-              h('div', { style: 'display:flex; gap:6px; align-items:center; flex-shrink:0;' }, [
-                s.evidence ? h('span', { style: 'font-size:10px; color:var(--g-700); font-weight:800;', title: '증빙 보유' }, ['✓']) : null,
-                h('b', { style: 'color:var(--g-800); font-variant-numeric:tabular-nums;' },
-                  [s.rawValue != null && s.rawValue !== '' ? s.rawValue : (s.value != null ? String(s.value) : '—')])
-              ])
-            ]))) : null,
-            h('div', { class: 'edit-fields' }, [
-              h('label', {}, [
-                h('span', { class: 'lbl' }, ['목표']),
-                numEdit(() => it.목표, (v) => { it.목표 = v; updateAchRate(it); queueRerender(); })
-              ]),
-              h('label', {}, [
-                h('span', { class: 'lbl' }, ['실적']),
-                numEdit(() => it.실적, (v) => { it.실적 = v; updateAchRate(it); queueRerender(); })
-              ]),
-              h('label', {}, [
-                h('span', { class: 'lbl' }, ['단위']),
-                txtEdit(() => it.단위, (v) => { it.단위 = v; }, { placeholder: '건/점/%' })
-              ]),
-              h('div', { class: 'rate' }, [
-                h('span', { class: 'lbl' }, ['달성률']),
-                h('b', {}, [it.목표 && it.실적 != null
-                  ? `${Math.round((it.실적 / it.목표) * 100)}%`
-                  : '—'])
-              ])
-            ])
-          ]))
-        )
-      ]);
-      grid.appendChild(card);
-    });
-    el.appendChild(grid);
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('지수별 세부지표 수', '5대 지수에 속한 세부 측정항목 수 비교'),
-      h('div', { class: 'card' }, [ h('div', { class: 'chart-wrap' }, [h('canvas', { id: 'self-chart' })]) ])
-    ]));
-
-    setTimeout(renderSelfChart, 0);
-  }
-
-  function updateAchRate(it) { /* noop — rate is derived; handled on re-render */ }
-
-  let _selfChart = null;
-  function renderSelfChart() {
-    const c = document.getElementById('self-chart');
-    if (!c || !window.Chart) return;
-    if (_selfChart) _selfChart.destroy();
-    const labels = Store.state.self.map(s => s.name);
-    const data = Store.state.self.map(s => s.items.length);
-    _selfChart = new Chart(c, {
-      type: 'bar',
-      data: { labels, datasets: [{
-        label: '세부 지표 수', data,
-        backgroundColor: (ctx) => {
-          const g = ctx.chart.ctx.createLinearGradient(0,0,ctx.chart.width,0);
-          g.addColorStop(0,'#0a2540'); g.addColorStop(0.55,'#1c7293'); g.addColorStop(1,'#ffc93c');
-          return g;
-        },
-        borderRadius: 10, barThickness: 36
-      }]},
-      options: {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${ctx.raw}개 항목` } } },
-        scales: {
-          x: { grid: { color: 'rgba(10,37,64,0.06)' }, ticks: { color: '#6b7886', font: { size: 10 } }, beginAtZero: true, precision: 0 },
-          y: { grid: { display: false }, ticks: { color: '#2c3a4b', font: { size: 12, weight: '600' } } }
-        }
-      }
-    });
-  }
-
-  // ---------- project performance ----------
-  let _projectExpanded = new Set(); // expanded project keys
-
-  function buildProject() {
-    const el = $('#view-project');
-    el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['과제별 성과 · 8개 과제 · 146개 추진과제']));
-    el.appendChild(renderTicker(projectTickerItems(), 'LIVE FEED'));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('과제별 사업 성과 — 그룹별 카드',
-        '8개 과제별로 모든 추진과제를 그룹핑. 카드를 클릭하면 세부 추진과제·실적·달성률을 펼쳐 볼 수 있습니다.')
-    ]));
-
-    // Group rows by 과제명
-    const groups = {};
-    Store.state.projects.forEach((r, i) => {
-      r.__idx = i; // remember original index for edits
-      if (!groups[r.과제명]) groups[r.과제명] = [];
-      groups[r.과제명].push(r);
-    });
-
-    const grid = h('div', { class: 'grid-2' });
-    PROJECTS.forEach(p => {
-      const rows = groups[p.key] || [];
-      const rateVals = rows.map(r => r.달성률).filter(v => v != null);
-      const avg = rateVals.length ? Math.round(rateVals.reduce((a,b)=>a+b,0) / rateVals.length) : null;
-      const indexCounts = {};
-      rows.forEach(r => { if (r.지수) indexCounts[r.지수] = (indexCounts[r.지수]||0) + 1; });
-      const expanded = _projectExpanded.has(p.key);
-
-      const card = h('div', { class: 'card flat proj-card' }, [
-        h('div', {
-          class: 'proj-card-head',
-          style: 'cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;',
-          onclick: () => {
-            if (_projectExpanded.has(p.key)) _projectExpanded.delete(p.key);
-            else _projectExpanded.add(p.key);
-            buildProject();
-          }
-        }, [
-          h('div', { style: 'display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; flex:1;' }, [
-            h('span', { class: 'chip dark' }, [p.short]),
-            h('h3', { style: 'margin:0; font-size:15px;' }, [p.full]),
-            h('span', { class: 'chip ghost' }, [`${rows.length}건`])
-          ]),
-          h('div', { style: 'display:flex; align-items:center; gap:10px;' }, [
-            h('div', { class: 'rate-wrap' }, [
-              h('span', { class: 'aux' }, ['평균 달성률']),
-              h('b', { style: 'color:var(--g-700); font-size:15px; font-variant-numeric:tabular-nums;' },
-                [avg != null ? `${avg}%` : '—'])
-            ]),
-            h('span', { style: 'font-size:14px; color:var(--ink-500); transform:' + (expanded ? 'rotate(180deg)' : 'rotate(0)') + '; transition:transform .2s;' }, ['▾'])
-          ])
-        ]),
-        h('div', { style: 'display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;' },
-          Object.entries(indexCounts).map(([k, c]) =>
-            h('span', { class: 'chip', style: 'font-size:10.5px;' }, [`${k.slice(0, 12)} · ${c}건`])
-          )
-        ),
-        expanded ? h('div', { class: 'proj-sub-list', style: 'margin-top:14px; display:flex; flex-direction:column; gap:8px;' },
-          rows.map((r, idx) => h('div', {
-            class: 'proj-sub',
-            style: 'background:var(--cream-100); border:1px solid var(--ink-100); border-radius:10px; padding:12px 14px;'
-          }, [
-            h('div', { style: 'display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;' }, [
-              h('span', { class: 'chip', style: 'font-size:10px;' }, [`#${idx+1}`]),
-              h('span', { class: 'chip ghost', style: 'font-size:10.5px;' }, [r.지수 || '—']),
-              r.달성률 != null ? h('span', { class: 'chip dark', style: 'font-size:10.5px;' }, [`달성 ${r.달성률}%`]) : null,
-              r.페이지 ? h('span', { style: 'font-size:10.5px; color:var(--ink-500);' }, [`p.${r.페이지}`]) : null,
-              r.증빙 === 'O' ? h('span', { style: 'font-size:10px; color:var(--g-700); font-weight:800; padding:2px 7px; background:var(--g-50); border:1px solid var(--g-200); border-radius:6px;' }, ['증빙 ✓']) : null,
-              r.증빙 === 'X' ? h('span', { style: 'font-size:10px; color:#a13a3a; font-weight:800; padding:2px 7px; background:#fcf4f4; border:1px solid #e8c5c5; border-radius:6px;' }, ['미수행']) : null
-            ]),
-            r.전략 ? h('div', { style: 'font-size:13px; font-weight:700; color:var(--ink-900); margin-bottom:4px;' }, [r.전략]) : null,
-            r.과제 ? h('div', { style: 'font-size:12.5px; color:var(--ink-700); margin-bottom:4px;' }, ['◦ ', r.과제]) : null,
-            r.계획 ? h('div', { style: 'font-size:12px; color:var(--ink-600); margin-bottom:6px;' }, ['📋 계획: ', r.계획]) : null,
-            r.실적 && r.실적 !== '-' ? h('div', { style: 'font-size:12px; color:var(--g-700); white-space:pre-wrap; padding:8px 10px; background:var(--g-50); border-radius:8px; border-left:2px solid var(--g-500);' }, [r.실적]) : null
-          ]))
-        ) : null
-      ]);
-      grid.appendChild(card);
-    });
-    el.appendChild(grid);
-
-    // Quick search + table
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('통합 테이블 · 146개 추진과제', '검색 가능. 클릭해서 정렬 가능 (과제명/지수/달성률).'),
-      projectTable()
-    ]));
-  }
-
-  // ---------- 상생사업 ----------
-  function buildSangsaeng() {
-    const el = $('#view-sangsaeng');
-    if (!el) return;
-    el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['상생사업 · 4개 과제']));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('호원대학교 RISE 상생사업',
-        '전북지역 K-컬처·로컬콘텐츠·관광·문화 산업과 상생 성장을 견인하는 4개 과제')
-    ]));
-
-    const grid = h('div', { class: 'grid-2 sangsaeng-grid' },
-      SANGSAENG_PROJECTS.map(p => h('div', { class: 'card flat sangsaeng-card' }, [
-        h('div', { class: 'sangsaeng-head' }, [
-          h('span', { class: 'chip dark' }, [p.no]),
-          h('span', { class: 'chip ghost' }, [p.theme])
-        ]),
-        h('h3', { class: 'sangsaeng-title' }, [p.full]),
-        p.desc ? h('p', { class: 'sangsaeng-desc' }, [p.desc]) : null,
-        h('div', { class: 'sangsaeng-foot' }, [
-          h('span', { class: 'aux' }, ['약칭']),
-          h('b', {}, [p.short])
-        ])
-      ]))
-    );
-    el.appendChild(grid);
-  }
-
-  let _projectFilter = '';
-  let _projectFilterProj = 'all';
-
-  function projectTable() {
-    const wrap = h('div', {});
-    // toolbar
-    wrap.appendChild(h('div', { class: 'community-toolbar', style: 'margin-bottom:12px;' }, [
-      h('div', { class: 'search-input' }, [
-        h('input', {
-          type: 'text',
-          placeholder: '추진전략·과제·실적·지수 검색',
-          value: _projectFilter,
-          oninput: (e) => { _projectFilter = e.target.value; const old = $('#proj-table-host'); if (old) old.replaceWith(buildProjTableInner()); }
-        })
-      ]),
-      h('div', { class: 'category-chips' }, [
-        (() => { const b = h('button', { onclick: () => { _projectFilterProj = 'all'; const old = $('#proj-table-host'); if (old) old.replaceWith(buildProjTableInner()); } }, ['전체']); if (_projectFilterProj === 'all') b.classList.add('active'); return b; })(),
-        ...PROJECTS.map(p => { const b = h('button', { onclick: () => { _projectFilterProj = p.key; const old = $('#proj-table-host'); if (old) old.replaceWith(buildProjTableInner()); } }, [p.short]); if (_projectFilterProj === p.key) b.classList.add('active'); return b; })
-      ])
-    ]));
-    wrap.appendChild(buildProjTableInner());
-    return wrap;
-  }
-
-  function buildProjTableInner() {
-    const host = h('div', { id: 'proj-table-host', style: 'overflow-x:auto;' });
-    const filtered = Store.state.projects.filter(r => {
-      if (_projectFilterProj !== 'all' && r.과제명 !== _projectFilterProj) return false;
-      if (_projectFilter.trim()) {
-        const q = _projectFilter.toLowerCase();
-        return ['전략','과제','계획','실적','지수'].some(f => String(r[f]||'').toLowerCase().includes(q));
-      }
-      return true;
-    });
-    const tbl = h('table', { class: 'tbl' });
-    tbl.appendChild(h('thead', {}, [ h('tr', {}, PROJECT_PERFORMANCE_COLUMNS.map(c => h('th', {}, [c]))) ]));
-    const tb = h('tbody');
-    if (!filtered.length) {
-      tb.appendChild(h('tr', {}, [h('td', { colspan: 8, style: 'text-align:center; color:var(--ink-500); padding:20px;' }, ['검색 결과가 없습니다.'])]));
-    }
-    filtered.forEach(r => {
-      const tr = h('tr', {}, [
-        h('td', {}, [h('span', { class: 'chip' }, [r.과제명])]),
-        h('td', { style: 'font-size:11.5px;' }, [r.지수]),
-        h('td', { class: 'edit-td' }, [ txtEdit(() => r.전략, v => { r.전략 = v; Store.save(); }) ]),
-        h('td', { class: 'edit-td' }, [ txtEdit(() => r.과제, v => { r.과제 = v; Store.save(); }) ]),
-        h('td', { class: 'edit-td' }, [ txtEdit(() => r.계획, v => { r.계획 = v; Store.save(); }) ]),
-        h('td', { class: 'edit-td' }, [ txtEdit(() => (r.실적 === '-' ? '' : r.실적), v => { r.실적 = v; Store.save(); }) ]),
-        h('td', { class: 'num edit-td' }, [ numEdit(() => r.달성률, v => { r.달성률 = v; Store.save(); }, { placeholder: '%' }) ]),
-        h('td', { class: 'edit-td', style: 'min-width:50px;' }, [ txtEdit(() => r.페이지, v => { r.페이지 = v; Store.save(); }) ]),
-        h('td', { style: 'text-align:center; font-weight:700; color:' + (r.증빙 === 'O' ? 'var(--g-700)' : r.증빙 === 'X' ? '#a13a3a' : 'var(--ink-300)') }, [r.증빙 || '—'])
-      ]);
-      tb.appendChild(tr);
-    });
-    tbl.appendChild(tb);
-    host.appendChild(tbl);
-    return host;
-  }
-  function liEdit(label, get, set, area = false) {
-    return h('li', {}, [
-      h('span', { class: 'k' }, [label]),
-      h('span', { class: 'v' }, [
-        area
-          ? txtAreaEdit(get, v => { set(v); Store.save(); })
-          : txtEdit(get, v => { set(v); Store.save(); })
-      ])
-    ]);
-  }
-
-  // ---------- 사업단 평가 (evaluation) ----------
-  function gradeOf(total) {
-    const g = (EVALUATION.grades || []).find(x => total >= x.min && total <= x.max);
-    return g || { label: '-', desc: '미부여', range: '' };
-  }
-  // 등급별 브랜드 컬러 매핑 (Tanker palette)
-  const GRADE_COLOR = {
-    A: { fill: 'rgba(10,37,64,0.85)',  border: '#0a2540', soft: 'rgba(10,37,64,0.15)'  },
-    B: { fill: 'rgba(28,114,147,0.85)', border: '#1c7293', soft: 'rgba(28,114,147,0.15)' },
-    C: { fill: 'rgba(245,183,0,0.85)',  border: '#f5b700', soft: 'rgba(245,183,0,0.18)' }
-  };
-  // 5개 평가항목별 색상
-  const CRIT_COLORS = ['#0a2540', '#173a6b', '#1c7293', '#2a93b6', '#f5b700'];
-
-  // 히트맵 셀 색강도 계산 (0~1 → 흰색 → 네이비)
-  function heatColor(score, max) {
-    const t = max ? Math.max(0, Math.min(1, score / max)) : 0;
-    // 흰색 (255,255,255) → 네이비 (10,37,64) 보간
-    const r = Math.round(255 + (10 - 255) * t);
-    const g = Math.round(255 + (37 - 255) * t);
-    const b = Math.round(255 + (64 - 255) * t);
-    return `rgb(${r},${g},${b})`;
-  }
-  function heatTextColor(score, max) {
-    return (score / max) > 0.55 ? '#ffffff' : '#0a2540';
-  }
-
-  function renderEvalHeatmap() {
-    const criteria = EVALUATION.criteria || [];
-    const results = (EVALUATION.results || []).slice().sort((a,b) => b.total - a.total);
-    const wrap = h('div', { class: 'eval-heatmap' });
-    const tbl = h('table', { class: 'eval-heatmap-tbl' });
-    const thead = h('thead');
-    const headRow = h('tr', {}, [
-      h('th', { class: 'lbl' }, ['사업단 \\ 항목']),
-      ...criteria.map(c => h('th', {}, [c.name])),
-      h('th', { class: 'tot' }, ['총점'])
-    ]);
-    thead.appendChild(headRow);
-    tbl.appendChild(thead);
-    const tbody = h('tbody');
-    results.forEach(r => {
-      const grade = gradeOf(r.total);
-      const row = h('tr', {}, [
-        h('td', { class: 'lbl' }, [
-          h('span', { class: 'eval-tbl-key' }, [r.key]),
-          h('span', { class: `eval-pill eval-pill-${grade.label.toLowerCase()}` }, [grade.label])
-        ]),
-        ...r.scores.map((s, i) => {
-          const max = criteria[i].max;
-          return h('td', {
-            class: 'cell',
-            style: `background:${heatColor(s, max)}; color:${heatTextColor(s, max)};`
-          }, [String(s)]);
-        }),
-        h('td', { class: 'tot', style: `background:${heatColor(r.total, 100)}; color:${heatTextColor(r.total, 100)};` }, [String(r.total)])
-      ]);
-      tbody.appendChild(row);
-    });
-    tbl.appendChild(tbody);
-    wrap.appendChild(tbl);
-    return wrap;
-  }
-
-  // Chart.js 인스턴스 캐시
-  const _evalCharts = { radar: null, rank: null, donut: null, stack: null };
-
-  function renderEvaluationCharts() {
-    if (!window.Chart) return;
-    const criteria = EVALUATION.criteria || [];
-    const results = (EVALUATION.results || []).slice();
-    const sorted = results.slice().sort((a,b) => b.total - a.total);
-
-    // 1) Radar — 8 datasets × 5 axes
-    const radarEl = document.getElementById('eval-radar');
-    if (radarEl) {
-      if (_evalCharts.radar) _evalCharts.radar.destroy();
-      const palette = [
-        'rgba(10,37,64,0.18)', 'rgba(23,58,107,0.18)', 'rgba(28,114,147,0.18)', 'rgba(42,147,182,0.20)',
-        'rgba(245,183,0,0.22)', 'rgba(242,107,79,0.20)', 'rgba(46,196,182,0.20)', 'rgba(107,120,134,0.22)'
-      ];
-      const borders = ['#0a2540','#173a6b','#1c7293','#2a93b6','#f5b700','#f26b4f','#2ec4b6','#6b7886'];
-      const datasets = results.map((r, i) => ({
-        label: r.key,
-        data: r.scores.map((s, j) => (s / criteria[j].max) * 100),
-        backgroundColor: palette[i % palette.length],
-        borderColor: borders[i % borders.length],
-        borderWidth: 1.6,
-        pointBackgroundColor: borders[i % borders.length],
-        pointRadius: 2.4
-      }));
-      _evalCharts.radar = new Chart(radarEl, {
-        type: 'radar',
-        data: { labels: criteria.map(c => c.name.replace(' ', '\n')), datasets },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 11 }, boxWidth: 10, padding: 12 } },
-            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toFixed(0)}%` } }
-          },
-          scales: {
-            r: {
-              min: 0, max: 100,
-              grid: { color: 'rgba(10,37,64,0.10)' },
-              angleLines: { color: 'rgba(10,37,64,0.08)' },
-              pointLabels: { color: '#173a6b', font: { size: 11, weight: '600' } },
-              ticks: { color: '#6b7886', backdropColor: 'transparent', font: { size: 9 }, stepSize: 25 }
-            }
-          }
-        }
-      });
-    }
-
-    // 2) Ranked horizontal bar — 총점, 등급 색상
-    const rankEl = document.getElementById('eval-rank');
-    if (rankEl) {
-      if (_evalCharts.rank) _evalCharts.rank.destroy();
-      _evalCharts.rank = new Chart(rankEl, {
-        type: 'bar',
-        data: {
-          labels: sorted.map(r => r.key),
-          datasets: [{
-            label: '총점',
-            data: sorted.map(r => r.total),
-            backgroundColor: sorted.map(r => GRADE_COLOR[gradeOf(r.total).label]?.fill || 'rgba(107,120,134,0.6)'),
-            borderColor: sorted.map(r => GRADE_COLOR[gradeOf(r.total).label]?.border || '#6b7886'),
-            borderWidth: 1.5,
-            borderRadius: 6,
-            barThickness: 22
-          }]
-        },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => {
-                  const r = sorted[ctx.dataIndex];
-                  return ` ${r.unit}: ${r.total}점 (${gradeOf(r.total).label}등급)`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              min: 60, max: 100,
-              grid: { color: 'rgba(10,37,64,0.06)' },
-              ticks: { color: '#6b7886', font: { size: 10 } }
-            },
-            y: { grid: { display: false }, ticks: { color: '#2c3a4b', font: { size: 12, weight: '600' } } }
-          }
-        }
-      });
-    }
-
-    // 3) Doughnut — 등급 분포
-    const donutEl = document.getElementById('eval-donut');
-    if (donutEl) {
-      if (_evalCharts.donut) _evalCharts.donut.destroy();
-      const grades = EVALUATION.grades || [];
-      const counts = grades.map(g => results.filter(r => r.total >= g.min && r.total <= g.max).length);
-      const labels = grades.map(g => `${g.label}등급 (${g.range})`);
-      _evalCharts.donut = new Chart(donutEl, {
-        type: 'doughnut',
-        data: {
-          labels,
-          datasets: [{
-            data: counts,
-            backgroundColor: grades.map(g => GRADE_COLOR[g.label]?.border || '#6b7886'),
-            borderColor: '#ffffff',
-            borderWidth: 3,
-            hoverOffset: 8
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          cutout: '62%',
-          plugins: {
-            legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 11 }, boxWidth: 12, padding: 12 } },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ` ${ctx.label}: ${ctx.raw}개 사업단`
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // 4) Stacked bar — 항목별 기여도
-    const stackEl = document.getElementById('eval-stack');
-    if (stackEl) {
-      if (_evalCharts.stack) _evalCharts.stack.destroy();
-      const datasets = criteria.map((c, i) => ({
-        label: c.name,
-        data: sorted.map(r => r.scores[i]),
-        backgroundColor: CRIT_COLORS[i % CRIT_COLORS.length],
-        borderColor: '#ffffff',
-        borderWidth: 1,
-        barThickness: 28,
-        borderRadius: { topLeft: i === criteria.length - 1 ? 6 : 0, topRight: i === criteria.length - 1 ? 6 : 0 }
-      }));
-      _evalCharts.stack = new Chart(stackEl, {
-        type: 'bar',
-        data: { labels: sorted.map(r => r.key), datasets },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom', labels: { color: '#2c3a4b', font: { size: 10.5 }, boxWidth: 10, padding: 10 } },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}점 / 20`,
-                footer: (items) => {
-                  const total = items.reduce((a, it) => a + (it.raw || 0), 0);
-                  return `합계: ${total}점`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: { stacked: true, grid: { display: false }, ticks: { color: '#2c3a4b', font: { size: 11, weight: '600' } } },
-            y: { stacked: true, max: 100, grid: { color: 'rgba(10,37,64,0.06)' }, ticks: { color: '#6b7886', font: { size: 10 } } }
-          }
-        }
-      });
-    }
-  }
-
-  function buildEvaluation() {
-    const el = $('#view-evaluation');
-    if (!el) return;
-    el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['사업단 평가 · 5개 항목 종합 평가']));
-
-    const results = EVALUATION.results || [];
-    const criteria = EVALUATION.criteria || [];
-    const grades = EVALUATION.grades || [];
-
-    // ---------- 요약 KPI ----------
-    const totals = results.map(r => r.total);
-    const avg = totals.length ? (totals.reduce((a,b)=>a+b,0) / totals.length) : 0;
-    const top = results.slice().sort((a,b)=>b.total-a.total)[0];
-    const bot = results.slice().sort((a,b)=>a.total-b.total)[0];
-    const counts = grades.map(g => ({
-      g, n: results.filter(r => r.total >= g.min && r.total <= g.max).length
-    }));
-
-    el.appendChild(h('div', { class: 'eval-kpi' }, [
-      h('div', { class: 'eval-kpi-card' }, [
-        h('div', { class: 'eval-kpi-label' }, ['평가 사업단 수']),
-        h('div', { class: 'eval-kpi-val' }, [String(results.length), h('span', { class: 'u' }, ['개'])])
-      ]),
-      h('div', { class: 'eval-kpi-card' }, [
-        h('div', { class: 'eval-kpi-label' }, ['평균 총점']),
-        h('div', { class: 'eval-kpi-val' }, [avg.toFixed(1), h('span', { class: 'u' }, ['/100'])])
-      ]),
-      h('div', { class: 'eval-kpi-card' }, [
-        h('div', { class: 'eval-kpi-label' }, ['최고 점수']),
-        h('div', { class: 'eval-kpi-val' }, [String(top?.total ?? '—'),
-          h('span', { class: 'u' }, [top ? ` ${top.key}` : ''])])
-      ]),
-      h('div', { class: 'eval-kpi-card' }, [
-        h('div', { class: 'eval-kpi-label' }, ['최저 점수']),
-        h('div', { class: 'eval-kpi-val' }, [String(bot?.total ?? '—'),
-          h('span', { class: 'u' }, [bot ? ` ${bot.key}` : ''])])
-      ])
-    ]));
-
-    // ---------- 등급 분포 ----------
-    el.appendChild(h('div', { class: 'eval-grade-strip' }, counts.map(({ g, n }) =>
-      h('div', { class: `eval-grade eval-grade-${g.label.toLowerCase()}` }, [
-        h('div', { class: 'eval-grade-badge' }, [g.label]),
-        h('div', { class: 'eval-grade-meta' }, [
-          h('div', { class: 'eval-grade-range' }, [g.range]),
-          h('div', { class: 'eval-grade-desc' }, [`${g.desc} · ${n}개 사업단`])
-        ])
-      ])
-    )));
-
-    // ---------- 시각화 차트 (2x2 + 히트맵) ----------
-    el.appendChild(h('div', { class: 'eval-section-title' }, ['📊 시각화 분석']));
-
-    const chartsGrid = h('div', { class: 'eval-charts-grid' }, [
-      // 1) Radar
-      h('div', { class: 'eval-chart-card' }, [
-        h('div', { class: 'eval-chart-head' }, [
-          h('h4', {}, ['항목별 5각 비교']),
-          h('span', { class: 'eval-chart-sub' }, ['8개 사업단 × 5개 평가항목 (만점 대비 %)'])
-        ]),
-        h('div', { class: 'eval-chart-body' }, [h('canvas', { id: 'eval-radar' })])
-      ]),
-      // 2) Ranked horizontal bar
-      h('div', { class: 'eval-chart-card' }, [
-        h('div', { class: 'eval-chart-head' }, [
-          h('h4', {}, ['총점 순위']),
-          h('span', { class: 'eval-chart-sub' }, ['100점 만점 / 등급별 색상'])
-        ]),
-        h('div', { class: 'eval-chart-body' }, [h('canvas', { id: 'eval-rank' })])
-      ]),
-      // 3) Doughnut for grade distribution
-      h('div', { class: 'eval-chart-card' }, [
-        h('div', { class: 'eval-chart-head' }, [
-          h('h4', {}, ['등급 분포']),
-          h('span', { class: 'eval-chart-sub' }, ['A · B · C 비율'])
-        ]),
-        h('div', { class: 'eval-chart-body' }, [h('canvas', { id: 'eval-donut' })])
-      ]),
-      // 4) Stacked bar — per criterion contribution
-      h('div', { class: 'eval-chart-card' }, [
-        h('div', { class: 'eval-chart-head' }, [
-          h('h4', {}, ['항목별 기여도 (누적)']),
-          h('span', { class: 'eval-chart-sub' }, ['총점에 대한 5개 항목 누적'])
-        ]),
-        h('div', { class: 'eval-chart-body' }, [h('canvas', { id: 'eval-stack' })])
-      ])
-    ]);
-    el.appendChild(chartsGrid);
-
-    // 5) Heatmap matrix
-    el.appendChild(h('div', { class: 'eval-chart-card eval-heatmap-card' }, [
-      h('div', { class: 'eval-chart-head' }, [
-        h('h4', {}, ['🔥 점수 히트맵']),
-        h('span', { class: 'eval-chart-sub' }, ['색이 짙을수록 높은 점수 (사업단 × 평가항목)'])
-      ]),
-      h('div', { class: 'eval-chart-body' }, [renderEvalHeatmap()])
-    ]));
-
-    // ---------- 사업단별 평가 카드 ----------
-    el.appendChild(h('div', { class: 'eval-section-title' }, ['📌 사업단별 상세 카드']));
-    const byKey = Object.fromEntries(PROJECTS.map(p => [p.key, p]));
-    const sorted = results.slice().sort((a,b) => b.total - a.total);
-
-    const grid = h('div', { class: 'eval-grid' });
-    sorted.forEach((r, idx) => {
-      const grade = gradeOf(r.total);
-      const proj = byKey[r.key];
-      const max = criteria.reduce((a,c)=>a+c.max, 0) || 100;
-      const pct = (r.total / max) * 100;
-
-      const card = h('article', { class: `eval-card eval-grade-${grade.label.toLowerCase()}` }, [
-        h('header', { class: 'eval-card-head' }, [
-          h('div', { class: 'eval-card-rank' }, [`#${idx + 1}`]),
-          h('div', { class: 'eval-card-title' }, [
-            h('div', { class: 'eval-card-key' }, [r.key]),
-            h('div', { class: 'eval-card-unit' }, [r.unit]),
-            proj ? h('div', { class: 'eval-card-theme' }, [proj.theme]) : null
-          ]),
-          h('div', { class: 'eval-card-score' }, [
-            h('div', { class: 'eval-card-grade' }, [grade.label]),
-            h('div', { class: 'eval-card-total' }, [
-              h('strong', {}, [String(r.total)]),
-              h('span', {}, [' / 100'])
-            ])
-          ])
-        ]),
-        h('div', { class: 'eval-card-bar' }, [
-          h('i', { style: `width:${pct.toFixed(1)}%;` })
-        ]),
-        h('ul', { class: 'eval-card-criteria' }, criteria.map((c, i) => {
-          const score = r.scores[i];
-          const cpct = (score / c.max) * 100;
-          return h('li', {}, [
-            h('span', { class: 'eval-c-name' }, [c.name]),
-            h('span', { class: 'eval-c-bar' }, [
-              h('i', { style: `width:${cpct.toFixed(1)}%;` })
-            ]),
-            h('span', { class: 'eval-c-score' }, [`${score}/${c.max}`])
-          ]);
-        }))
-      ]);
-      grid.appendChild(card);
-    });
-    el.appendChild(grid);
-
-    // ---------- 종합 비교 표 ----------
-    const tableWrap = h('div', { class: 'eval-table-wrap' });
-    const headRow = h('tr', {}, [
-      h('th', {}, ['순위']),
-      h('th', { class: 'l' }, ['사업단']),
-      ...criteria.map(c => h('th', {}, [c.name, h('br', {}), h('span', { class: 'm' }, [`(${c.max})`])])),
-      h('th', {}, ['총점']),
-      h('th', {}, ['등급'])
-    ]);
-    const bodyRows = sorted.map((r, idx) => {
-      const grade = gradeOf(r.total);
-      return h('tr', { class: `row-grade-${grade.label.toLowerCase()}` }, [
-        h('td', {}, [`#${idx + 1}`]),
-        h('td', { class: 'l' }, [
-          h('div', { class: 'eval-tbl-key' }, [r.key]),
-          h('div', { class: 'eval-tbl-unit' }, [r.unit])
-        ]),
-        ...r.scores.map((s, i) => {
-          const c = criteria[i];
-          const isMax = s === c.max;
-          const isLow = s <= c.max * 0.6;
-          return h('td', { class: `num ${isMax ? 'max' : ''} ${isLow ? 'low' : ''}` }, [String(s)]);
-        }),
-        h('td', { class: 'num total' }, [h('strong', {}, [String(r.total)])]),
-        h('td', {}, [h('span', { class: `eval-pill eval-pill-${grade.label.toLowerCase()}` }, [grade.label])])
-      ]);
-    });
-    tableWrap.appendChild(h('table', { class: 'eval-table' }, [
-      h('thead', {}, [headRow]),
-      h('tbody', {}, bodyRows)
-    ]));
-    el.appendChild(h('div', { class: 'eval-section-title' }, ['종합 비교표']));
-    el.appendChild(tableWrap);
-
-    // ---------- 등급 기준 안내 ----------
-    el.appendChild(h('div', { class: 'eval-legend' }, [
-      h('span', { class: 'eval-legend-title' }, ['등급 기준']),
-      ...grades.map(g => h('span', { class: `eval-legend-chip eval-grade-${g.label.toLowerCase()}` }, [
-        h('b', {}, [g.label, '등급']),
-        ` ${g.range} (${g.desc})`
-      ]))
-    ]));
-  }
-
-  // ---------- infrastructure ----------
-  function buildInfra() {
-    const el = $('#view-infra');
-    el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['기타 구축 · 거버넌스·인프라']));
-    el.appendChild(renderTicker(infraTickerItems(), 'LIVE FEED'));
-
-    // 1) 전체 합계 (기존 카드)
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('전체 합계 · 거버넌스 + 인프라', '8개 사업단 통합 집계'),
-      h('div', { class: 'grid-2' }, Store.state.infra.groups.map(g => {
-        const c = h('div', { class: 'infra-card' }, [
-          h('h3', {}, [
-            h('span', { class: 'chip dark' }, [g.name.startsWith('거버') ? 'G' : 'I']),
-            g.name
-          ])
-        ]);
-        g.items.forEach(it => {
-          c.appendChild(h('div', { class: 'infra-item edit' }, [
-            h('div', { class: 'lbl' }, [it.label]),
-            numEdit(() => it.count, v => { it.count = v; Store.save(); })
-          ]));
-        });
-        return c;
-      }))
-    ]));
-
-    // 2) 사업단별 카드 (per-project 71개 항목)
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('사업단별 거버넌스·인프라 상세', '엑셀 원본 71개 per-project 항목 (구분·항목·건수·세부내용·증빙)'),
-      h('div', { class: 'grid-2' },
-        PROJECTS.map(p => infraUnitCard(p))
-      )
-    ]));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('구축 범위 정의', '엑셀 원본 시트의 주석'),
-      h('div', { class: 'card' }, [
-        h('ul', { class: 'callout-list' },
-          INFRASTRUCTURE.note.map(n => h('li', {}, [
-            h('span', { class: 'k' }, ['정의']),
-            h('span', { class: 'v' }, [n.replace(/^\*/, '')])
-          ]))
-        )
-      ])
-    ]));
-  }
-
-  function infraUnitCard(p) {
-    const all = (window.__RISE__.INFRASTRUCTURE.perProject || []).filter(x => x.과제 === p.key);
-    const gov = all.filter(x => x.구분 === '거버넌스 구축');
-    const inf = all.filter(x => x.구분 === '인프라 구축');
-    const sumGov = gov.reduce((a,b)=>a+(b.count||0),0);
-    const sumInf = inf.reduce((a,b)=>a+(b.count||0),0);
-
-    const renderGroup = (label, items, total) => h('div', { class: 'infra-unit-group' }, [
-      h('div', { class: 'iug-head' }, [
-        h('span', { class: 'chip dark', style: 'font-size:10px;' }, [label === '거버넌스' ? 'G' : 'I']),
-        h('span', { class: 'iug-title' }, [label]),
-        h('span', { class: 'iug-total' }, [`총 ${total}건`])
-      ]),
-      h('div', { class: 'iug-list' },
-        items.length === 0
-          ? [h('div', { class: 'iug-empty' }, ['항목 없음'])]
-          : items.map(it => h('div', { class: 'iug-item' }, [
-              h('div', { class: 'iug-row1' }, [
-                h('span', { class: 'iug-label' }, [it.항목]),
-                h('div', { style: 'display:flex; gap:6px; align-items:center;' }, [
-                  it.증빙 ? h('span', { class: 'iug-evid', title: '증빙 보유' }, ['✓']) : null,
-                  h('span', { class: 'iug-count' }, [it.count != null ? `${it.count}건` : '—'])
-                ])
-              ]),
-              it.세부 ? h('div', { class: 'iug-detail' }, [it.세부]) : null
-            ]))
-      )
-    ]);
-
-    return h('div', { class: 'infra-unit-card' }, [
-      h('div', { class: 'iuc-head' }, [
-        h('span', { class: 'chip dark' }, [p.short]),
-        h('div', { style: 'flex:1; min-width:0;' }, [
-          h('div', { class: 'iuc-full' }, [p.full]),
-          h('div', { class: 'iuc-theme' }, [p.theme])
-        ]),
-        h('div', { class: 'iuc-totals' }, [
-          h('div', { class: 'iuc-tot-num' }, [String(sumGov + sumInf)]),
-          h('div', { class: 'iuc-tot-l' }, ['총 건수'])
-        ])
-      ]),
-      renderGroup('거버넌스', gov, sumGov),
-      renderGroup('인프라',   inf, sumInf)
-    ]);
-  }
-
-  // ---------- community ----------
-  let _communityTab = 'student';    // 'student' | 'corp'
-  let _communityCat = 'all';        // category filter
-  let _communityQ = '';             // search query
-  let _showForm = false;            // inline post form open/close
-
-  const STUDENT_CATS = ['공지', '프로그램', '멘토링', '수상', '후기'];
-  const CORP_CATS = ['채용·인턴', '산학협력', '우수사례'];
-
-  function buildCommunity() {
-    const el = $('#view-community');
-    if (!el) return;
-    el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['커뮤니티 · 학생·기업체']));
-    const C = Store.state.community;
-
-    // Hero tri-block (green · black · gray — ref HBM slide)
-    el.appendChild(h('section', { class: 'tri-section' }, [
-      h('div', { class: 'tri-headline' }, [
-        h('span', { class: 'label' }, ['07 · COMMUNITY ECOSYSTEM']),
-        h('span', {}, ['호원RISE 커뮤니티 생태계']),
-        h('div', { class: 'values' }, [
-          h('span', {}, [
-            h('span', { class: 'v' }, [String(C.stats.totalStudents)]),
-            ' 명 참여 '
-          ]),
-          h('span', { class: 'arrow' }, ['→']),
-          h('span', {}, [
-            h('span', { class: 'v' }, [String(C.stats.partnerCompanies)]),
-            ' 기업 · '
-          ]),
-          h('span', { class: 'arrow' }, ['→']),
-          h('span', {}, [
-            h('span', { class: 'v' }, [String(C.stats.ongoingProjects)]),
-            ' 산학 프로젝트 '
-          ])
-        ])
-      ]),
-      h('div', { class: 'tri-block' }, [
-        triBlock('green', '01', '학생 커뮤니티', '재학생 · 졸업생 · 멘티',
-          C.stats.totalStudents, '명', '2025 → 2026E',
-          ['8대 과제 참여 트랙 공유', '멘토·멘티 매칭 허브', '우수사례·수상 기록', '프로그램 신청 창구'],
-          () => { _communityTab = 'student'; buildCommunity(); }),
-        triBlock('black', '02', '기업체 커뮤니티', '파트너 · MOU · 산학',
-          C.stats.partnerCompanies, '개', '협력기관 풀',
-          ['파트너 기업 디렉토리', '채용·인턴십 게시판', '산학협력 공동 제안', 'MOU 진행 상태 관리'],
-          () => { _communityTab = 'corp'; buildCommunity(); }),
-        triBlock('gray', '03', '지역·기관 네트워크', '전북 RISE 생태계',
-          C.stats.activeMentors, '명', '현직 멘토 풀',
-          ['초광역 지산학 연계', '지자체·유관기관 협업', '지역 현안 대응', '글로컬 인재 허브'],
-          null)
-      ])
-    ]));
-
-    // Activity ticker
-    el.appendChild(activityTicker());
-
-    // Tab bar + toolbar
-    const stuCnt = C.students.length;
-    const corpCnt = C.companies.length;
-    const tabs = h('div', { class: 'section-head' }, [
-      h('div', {}, [
-        h('div', { class: 'section-title' }, ['커뮤니티 게시판']),
-        h('div', { class: 'section-desc' }, ['학생/기업체 활동을 실시간으로 공유하고, 새로운 글을 작성할 수 있습니다.'])
-      ]),
-      h('div', { class: 'right' }, [
-        h('div', { class: 'tab-bar' }, [
-          tabBtn('student', '학생 커뮤니티', stuCnt),
-          tabBtn('corp',    '기업체 커뮤니티', corpCnt)
-        ])
-      ])
-    ]);
-    el.appendChild(h('section', { class: 'section' }, [tabs]));
-
-    // mini-stats for current tab
-    const stats = _communityTab === 'student' ? [
-      { icon: 'g', label: '참여 학생',     value: C.stats.totalStudents },
-      { icon: 'e', label: '활동 게시글',   value: C.students.length },
-      { icon: 'k', label: '현직 멘토',     value: C.stats.activeMentors },
-      { icon: 'y', label: '수상·우수사례', value: C.students.filter(p => p.카테고리 === '수상').length }
-    ] : [
-      { icon: 'k', label: '파트너 기업',    value: C.companies.length },
-      { icon: 'g', label: 'MOU 체결',       value: C.companies.filter(b => b.상태 === 'active').length },
-      { icon: 'y', label: '진행중 협약',    value: C.companies.filter(b => b.상태 === 'pending').length },
-      { icon: 'e', label: '공고·산학 글',   value: C.corpPosts.length }
-    ];
-    const miniRow = h('div', { class: 'mini-stats' },
-      stats.map(s => h('div', { class: 'mini-stat' }, [
-        h('div', { class: `icon ${s.icon}` }, [
-          _communityTab === 'student' ? (s.icon === 'g' ? '학' : s.icon === 'e' ? '글' : s.icon === 'k' ? '멘' : '★')
-                                      : (s.icon === 'k' ? '기' : s.icon === 'g' ? 'M' : s.icon === 'y' ? '협' : '글')
-        ]),
-        h('div', { class: 'meta' }, [
-          h('div', { class: 'label' }, [s.label]),
-          h('div', { class: 'value' }, [fmtN(s.value)])
-        ])
-      ]))
-    );
-    el.appendChild(miniRow);
-
-    // toolbar (search + category chips + write)
-    const cats = _communityTab === 'student' ? STUDENT_CATS
-              : (_communityTab === 'corp' ? CORP_CATS : []);
-
-    const toolbar = h('div', { class: 'community-toolbar' }, [
-      h('div', { class: 'search-input' }, [
-        h('input', {
-          type: 'text',
-          placeholder: _communityTab === 'corp' ? '기업명·분야·사업단 검색' : '제목·내용·작성자 검색',
-          value: _communityQ,
-          oninput: (e) => { _communityQ = e.target.value; renderCommunityList(); }
-        })
-      ]),
-      h('div', { class: 'category-chips' }, [
-        chipBtn('all', '전체'),
-        ...cats.map(c => chipBtn(c, c))
-      ]),
-      h('button', {
-        class: 'btn-write',
-        onclick: () => { _showForm = !_showForm; renderCommunityList(); }
-      }, [_communityTab === 'corp' ? '새 협력/공고' : '새 글 작성'])
-    ]);
-    el.appendChild(toolbar);
-
-    // list wrapper
-    const listWrap = h('div', { id: 'community-list' });
-    el.appendChild(listWrap);
-    renderCommunityList();
-
-    // Hall of fame / 우수 파트너
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('TOP 3 · 이달의 우수 파트너', '협력 활동 · 참여 규모 · 성과 기여도 종합 순위'),
-      h('div', { class: 'hall-grid' }, [
-        hallCard('green', '01', '최다 참여', C.companies[0]?.기업명 || 'JB바이오헬스㈜', '헬스케어 리빙랩 · 현장실습 20명'),
-        hallCard('black', '02', '성과 확산', C.companies[3]?.기업명 || '전북관광재단',     '지역축제 청년 기획 · 60명 파견'),
-        hallCard('gray',  '03', 'MOU 신규', C.companies[2]?.기업명 || '전북드론산업협회',  '국가자격 실기장 공유 · 18개사')
-      ])
-    ]));
-  }
-
-  function tabBtn(id, label, cnt) {
-    const btn = h('button', { onclick: () => { _communityTab = id; _communityCat = 'all'; _communityQ = ''; _showForm = false; buildCommunity(); } }, [
-      label,
-      h('span', { class: 'cnt' }, [String(cnt)])
-    ]);
-    if (_communityTab === id) btn.classList.add('active');
-    return btn;
-  }
-
-  function chipBtn(key, label) {
-    const btn = h('button', { onclick: () => { _communityCat = key; renderCommunityList(); } }, [label]);
-    if (_communityCat === key) btn.classList.add('active');
-    return btn;
-  }
-
-  function triBlock(variant, corner, title, role, bigVal, unit, era, lis, onCta) {
-    return h('div', { class: `blk ${variant}` }, [
-      h('div', { class: 'corner' }, [corner]),
-      h('div', { class: 'kicker' }, [title.toUpperCase()]),
-      h('h4', {}, [title]),
-      h('div', { class: 'role' }, [role]),
-      h('div', { class: 'big' }, [String(bigVal), ' ', h('span', { class: 'next' }, [unit])]),
-      h('div', { class: 'era' }, [era]),
-      h('ul', {}, lis.map(x => h('li', {}, [x]))),
-      onCta ? h('div', { class: 'cta', onclick: onCta }, ['바로가기 →']) : null
-    ]);
-  }
-
-  function hallCard(variant, rank, tag, name, sub) {
-    return h('div', { class: `hall-card ${variant}` }, [
-      h('div', { class: 'tag' }, [tag]),
-      h('div', { class: 'rank' }, [rank]),
-      h('div', {}, [
-        h('div', { class: 'name' }, [name]),
-        h('div', { class: 'sub' }, [sub])
-      ])
-    ]);
-  }
-
-  // Shared ticker renderer — items: [{cat, project, text}]
-  function renderTicker(items, label) {
-    if (!items || !items.length) return document.createComment('no-ticker');
-    const doubled = [...items, ...items];
-    return h('div', { class: 'ticker' }, [
-      h('div', { class: 'live' }, [
+    VIEWS.forEach(v => {
+      const btn = h('button', { 'data-view': v.id, onclick: () => setView(v.id) }, [
         h('span', { class: 'dot' }),
-        label || 'LIVE FEED'
-      ]),
-      h('div', { class: 'track' }, [
-        h('div', { class: 'rail' }, doubled.map(it => h('div', { class: 'item' }, [
-          h('span', { class: 'cat' }, [it.cat]),
-          h('b', {}, [it.project]),
-          document.createTextNode(' · '),
-          document.createTextNode(it.text)
-        ])))
-      ])
-    ]);
-  }
-
-  function activityTicker() {
-    const C = Store.state.community;
-    const items = [
-      ...C.students.slice(0, 5).map(p => ({ cat: p.카테고리, text: p.제목, project: p.사업단 })),
-      ...C.corpPosts.slice(0, 3).map(p => ({ cat: p.카테고리, text: p.제목, project: '기업' }))
-    ];
-    return renderTicker(items, 'LIVE FEED');
-  }
-
-  // Per-view ticker feeds
-  function overviewTickerItems() {
-    const K = getKpi();
-    const items = [
-      { cat: 'MOU',      project: '전체',    text: `${K.totalMOU}건 체결` },
-      { cat: '언론',     project: '전체',    text: `${K.totalPress}건 보도` },
-      { cat: '행사',     project: '전체',    text: `${K.totalEvents}건 운영` },
-      { cat: '초광역연계', project: '전체',  text: `${K.totalCrossRegion}건` },
-      { cat: '사업단연계', project: '전체',  text: `${K.totalCrossProject}건` }
-    ];
-    PROJECTS.forEach(p => items.push({ cat: '과제', project: p.short, text: p.theme }));
-    return items;
-  }
-  function commonTickerItems() {
-    const items = [];
-    Store.state.common.forEach(ind => {
-      PROJECTS.forEach(p => {
-        const v = ind.data[p.key];
-        if (v != null && v > 0) {
-          items.push({
-            cat: ind.name.replace(' 건수','').replace(' 실적값','').replace(' 연계','연계').slice(0, 8),
-            project: p.short,
-            text: `${v}${ind.unit}`
-          });
-        }
-      });
-    });
-    return items.slice(0, 16);
-  }
-  function selfTickerItems() {
-    const items = [];
-    Store.state.self.forEach(g => {
-      g.items.forEach(it => {
-        const rate = (it.목표 && it.실적 != null)
-          ? `달성 ${Math.round((it.실적 / it.목표) * 100)}%`
-          : `${it.rows}행 지표`;
-        items.push({
-          cat: g.name.replace(' 지수','').replace(' 향상','').slice(0, 7),
-          project: it.project,
-          text: `${it.name} — ${rate}`
-        });
-      });
-    });
-    return items;
-  }
-  function projectTickerItems() {
-    return Store.state.projects.slice(0, 16).map(r => ({
-      cat: r.달성률 != null ? `달성 ${r.달성률}%` : r.지수.slice(0, 6),
-      project: r.과제명,
-      text: r.전략 || r.과제 || r.계획 || '—'
-    }));
-  }
-  function infraTickerItems() {
-    const items = [];
-    Store.state.infra.groups.forEach(g => {
-      g.items.forEach(it => {
-        const cnt = it.count;
-        items.push({
-          cat: g.name.startsWith('거버') ? '거버넌스' : '인프라',
-          project: it.label,
-          text: cnt != null ? `${cnt}건 구축` : '구축 예정'
-        });
-      });
-    });
-    return items;
-  }
-
-  function renderCommunityList() {
-    const host = document.getElementById('community-list');
-    if (!host) return;
-    host.innerHTML = '';
-    const C = Store.state.community;
-
-    if (_showForm) host.appendChild(postForm());
-
-    if (_communityTab === 'student') {
-      const filtered = C.students.filter(p => filterMatch(p, ['제목','내용','작성자','사업단'], STUDENT_CATS));
-      if (!filtered.length) {
-        host.appendChild(h('div', { class: 'empty' }, ['해당 조건에 맞는 게시글이 없습니다.']));
-        return;
-      }
-      const grid = h('div', { class: 'community-grid' });
-      filtered.forEach(p => grid.appendChild(studentPostCard(p)));
-      host.appendChild(grid);
-    } else {
-      // corp tab: companies grid + corp posts
-      const filteredBiz = C.companies.filter(b => filterMatchBiz(b));
-      const bizGrid = h('div', { class: 'community-grid' });
-      filteredBiz.forEach(b => bizGrid.appendChild(bizCard(b)));
-      host.appendChild(h('div', { class: 'section-head', style: 'margin:6px 0 10px' }, [
-        h('div', {}, [h('div', { class: 'section-title' }, ['파트너 기업 디렉토리'])])
-      ]));
-      host.appendChild(filteredBiz.length ? bizGrid : h('div', { class: 'empty' }, ['검색 결과가 없습니다.']));
-
-      const filteredPosts = C.corpPosts.filter(p => filterMatch(p, ['제목','내용','작성자'], CORP_CATS));
-      if (filteredPosts.length) {
-        host.appendChild(h('div', { class: 'section-head', style: 'margin:28px 0 10px' }, [
-          h('div', {}, [h('div', { class: 'section-title' }, ['협력·공고 게시판'])])
-        ]));
-        const pg = h('div', { class: 'community-grid' });
-        filteredPosts.forEach(p => pg.appendChild(corpPostCard(p)));
-        host.appendChild(pg);
-      }
-    }
-  }
-
-  function filterMatch(p, fields, validCats) {
-    if (_communityCat !== 'all' && validCats.includes(_communityCat) && p.카테고리 !== _communityCat) return false;
-    if (_communityQ.trim()) {
-      const q = _communityQ.toLowerCase();
-      return fields.some(f => String(p[f] || '').toLowerCase().includes(q));
-    }
-    return true;
-  }
-  function filterMatchBiz(b) {
-    if (_communityCat !== 'all' && CORP_CATS.includes(_communityCat)) return false; // categories apply to posts only
-    if (_communityQ.trim()) {
-      const q = _communityQ.toLowerCase();
-      return ['기업명','업종','소재지','사업단','담당자','설명'].some(f => String(b[f] || '').toLowerCase().includes(q));
-    }
-    return true;
-  }
-
-  function studentPostCard(p) {
-    return h('article', { class: 'post-card' }, [
-      h('div', { class: 'top' }, [
-        h('div', { class: 'title-wrap' }, [
-          h('h4', { class: 'title' }, [p.제목]),
-          h('div', { class: 'meta-row' }, [
-            h('span', { class: `cat-badge ${p.카테고리}` }, [p.카테고리]),
-            h('span', { class: 'chip ghost' }, [p.사업단]),
-            h('span', { class: 'dot-sep' }, ['·']),
-            document.createTextNode(p.작성자),
-            h('span', { class: 'dot-sep' }, ['·']),
-            document.createTextNode(p.날짜)
-          ])
-        ]),
-        h('button', { class: 'del-btn', onclick: () => deletePost('students', p.id) }, ['삭제'])
-      ]),
-      h('div', { class: 'body' }, [p.내용])
-    ]);
-  }
-
-  function corpPostCard(p) {
-    return h('article', { class: 'post-card' }, [
-      h('div', { class: 'top' }, [
-        h('div', { class: 'title-wrap' }, [
-          h('h4', { class: 'title' }, [p.제목]),
-          h('div', { class: 'meta-row' }, [
-            h('span', { class: `cat-badge ${p.카테고리}` }, [p.카테고리]),
-            h('span', { class: 'dot-sep' }, ['·']),
-            document.createTextNode(p.작성자),
-            h('span', { class: 'dot-sep' }, ['·']),
-            document.createTextNode(p.날짜)
-          ])
-        ]),
-        h('button', { class: 'del-btn', onclick: () => deletePost('corpPosts', p.id) }, ['삭제'])
-      ]),
-      h('div', { class: 'body' }, [p.내용])
-    ]);
-  }
-
-  function bizCard(b) {
-    const initials = (b.기업명 || '?').replace(/[㈜(주)]/g, '').trim().slice(0, 2);
-    const variant = b.상태 === 'active' ? '' : (b.사업단 === 'JB집' ? 'black' : 'gray');
-    return h('article', { class: 'biz-card' }, [
-      h('div', { class: 'top' }, [
-        h('div', { class: `avatar ${variant}` }, [initials]),
-        h('div', { style: 'flex:1; min-width:0;' }, [
-          h('h4', { class: 'bname' }, [b.기업명]),
-          h('div', { class: 'bmeta' }, [
-            h('span', {}, [b.업종]),
-            h('span', { class: 'dot-sep' }, ['·']),
-            h('span', {}, [b.소재지]),
-            h('span', { class: 'dot-sep' }, ['·']),
-            h('span', { class: 'chip ghost' }, [b.사업단])
-          ])
-        ]),
-        h('button', { class: 'del-btn', onclick: () => deletePost('companies', b.id) }, ['삭제'])
-      ]),
-      h('div', { class: 'bdesc' }, [b.설명]),
-      h('div', { class: 'bfoot' }, [
-        h('div', {}, [
-          '담당: ', h('b', { style: 'color:var(--ink-700); font-weight:600;' }, [b.담당자]),
-          '   ·   체결: ', b.체결일
-        ]),
-        h('span', { class: `status ${b.상태}` }, [b.상태 === 'active' ? 'MOU 체결' : '진행중'])
-      ])
-    ]);
-  }
-
-  function deletePost(kind, id) {
-    if (!confirm('이 항목을 삭제할까요?')) return;
-    const C = Store.state.community;
-    C[kind] = C[kind].filter(x => x.id !== id);
-    Store.save();
-    buildCommunity();
-  }
-
-  function postForm() {
-    const today = new Date().toISOString().slice(0, 10);
-    const isCorp = _communityTab === 'corp';
-    const isBiz  = false; // always post type (for now); biz add done via different shortcut
-    let cats = isCorp ? CORP_CATS : STUDENT_CATS;
-
-    // form state
-    const state = {
-      제목: '', 카테고리: cats[0], 사업단: PROJECTS[0].key,
-      작성자: '', 내용: '', mode: 'post' // or 'biz'
-    };
-    const bizState = {
-      기업명: '', 업종: '', 소재지: '', 사업단: PROJECTS[0].key,
-      담당자: '', 상태: 'pending', 체결일: today, 설명: ''
-    };
-
-    const form = h('div', { class: 'post-form' });
-
-    const rerender = () => {
-      form.innerHTML = '';
-      form.appendChild(header());
-      if (state.mode === 'post') form.appendChild(postBody());
-      else                         form.appendChild(bizBody());
-      form.appendChild(actions());
-    };
-    const header = () => h('div', { class: 'form-row full' }, [
-      h('label', {}, [
-        h('span', { class: 'lbl' }, ['작성 유형']),
-        (() => {
-          const sel = h('select', { onchange: (e) => { state.mode = e.target.value; rerender(); } });
-          sel.appendChild(h('option', { value: 'post' }, [isCorp ? '협력·공고 글' : '게시글']));
-          if (isCorp) sel.appendChild(h('option', { value: 'biz' }, ['파트너 기업 등록']));
-          sel.value = state.mode;
-          return sel;
-        })()
-      ])
-    ]);
-
-    const postBody = () => {
-      const fr1 = h('div', { class: 'form-row' }, [
-        h('label', {}, [h('span', {}, ['카테고리']), (() => {
-          const sel = h('select', { onchange: (e) => { state.카테고리 = e.target.value; } });
-          cats.forEach(c => sel.appendChild(h('option', { value: c }, [c])));
-          sel.value = state.카테고리;
-          return sel;
-        })()]),
-        !isCorp ? h('label', {}, [h('span', {}, ['사업단']), (() => {
-          const sel = h('select', { onchange: (e) => { state.사업단 = e.target.value; } });
-          ['공통', ...PROJECTS.map(p => p.key)].forEach(k => sel.appendChild(h('option', { value: k }, [k])));
-          sel.value = state.사업단;
-          return sel;
-        })()]) : h('label', {}, []),
-        h('label', {}, [h('span', {}, ['작성자']), h('input', { type: 'text', placeholder: '작성자 이름',
-          oninput: (e) => { state.작성자 = e.target.value; } })]),
-        h('label', {}, [h('span', {}, ['날짜']), h('input', { type: 'text', value: today, disabled: 'true' })])
+        document.createTextNode(v.label),
+        counts[v.id] !== '' ? h('span', { class: 'count' }, [String(counts[v.id])]) : null
       ]);
-      const fr2 = h('div', { class: 'form-row full' }, [
-        h('label', {}, [h('span', {}, ['제목']), h('input', { type: 'text', placeholder: '제목 입력',
-          oninput: (e) => { state.제목 = e.target.value; } })])
-      ]);
-      const fr3 = h('div', { class: 'form-row full' }, [
-        h('label', {}, [h('span', {}, ['내용']), h('textarea', { placeholder: '내용을 입력하세요',
-          oninput: (e) => { state.내용 = e.target.value; } })])
-      ]);
-      const wrap = h('div', {});
-      wrap.appendChild(fr1); wrap.appendChild(fr2); wrap.appendChild(fr3);
-      return wrap;
-    };
-
-    const bizBody = () => h('div', {}, [
-      h('div', { class: 'form-row' }, [
-        h('label', {}, [h('span', {}, ['기업명']), h('input', { type: 'text', oninput: e => bizState.기업명 = e.target.value })]),
-        h('label', {}, [h('span', {}, ['업종']), h('input', { type: 'text', oninput: e => bizState.업종 = e.target.value })]),
-        h('label', {}, [h('span', {}, ['소재지']), h('input', { type: 'text', oninput: e => bizState.소재지 = e.target.value })]),
-        h('label', {}, [h('span', {}, ['사업단']), (() => {
-          const sel = h('select', { onchange: e => bizState.사업단 = e.target.value });
-          PROJECTS.forEach(p => sel.appendChild(h('option', { value: p.key }, [p.key])));
-          return sel;
-        })()])
-      ]),
-      h('div', { class: 'form-row' }, [
-        h('label', {}, [h('span', {}, ['담당자']), h('input', { type: 'text', oninput: e => bizState.담당자 = e.target.value })]),
-        h('label', {}, [h('span', {}, ['상태']), (() => {
-          const sel = h('select', { onchange: e => bizState.상태 = e.target.value });
-          sel.appendChild(h('option', { value: 'pending' }, ['진행중']));
-          sel.appendChild(h('option', { value: 'active' }, ['MOU 체결']));
-          return sel;
-        })()]),
-        h('label', {}, [h('span', {}, ['체결일']), h('input', { type: 'date', value: today, oninput: e => bizState.체결일 = e.target.value })])
-      ]),
-      h('div', { class: 'form-row full' }, [
-        h('label', {}, [h('span', {}, ['설명']), h('textarea', { placeholder: '협력 내용·범위', oninput: e => bizState.설명 = e.target.value })])
-      ])
-    ]);
-
-    const actions = () => h('div', { class: 'form-actions' }, [
-      h('button', { class: 'tb-btn', onclick: () => { _showForm = false; renderCommunityList(); } }, ['취소']),
-      h('button', { class: 'tb-btn primary', onclick: () => submit() }, ['등록'])
-    ]);
-
-    const submit = () => {
-      const C = Store.state.community;
-      if (state.mode === 'biz' && isCorp) {
-        if (!bizState.기업명.trim()) { alert('기업명을 입력하세요.'); return; }
-        C.companies.unshift({ id: Date.now(), ...bizState });
-      } else {
-        if (!state.제목.trim()) { alert('제목을 입력하세요.'); return; }
-        const item = {
-          id: Date.now(),
-          제목: state.제목.trim(),
-          카테고리: state.카테고리,
-          작성자: state.작성자.trim() || '익명',
-          날짜: today,
-          내용: state.내용.trim()
-        };
-        if (!isCorp) item.사업단 = state.사업단;
-        if (isCorp) C.corpPosts.unshift(item);
-        else        C.students.unshift(item);
-      }
-      Store.save();
-      _showForm = false;
-      buildCommunity();
-    };
-
-    rerender();
-    return form;
-  }
-
-  // ---------- formula ----------
-  function buildFormula() {
-    const el = $('#view-formula');
-    el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['산식 · 정의']));
-    if (!isUnlocked('formula')) {
-      el.appendChild(h('div', { class: 'lock-card' }, [
-        h('div', { class: 'lock-icon' }),
-        h('h3', {}, ['접근 제한 영역']),
-        h('p', {}, ['산식·정의는 인증된 관리자만 열람할 수 있습니다.']),
-        h('button', {
-          class: 'tb-btn primary',
-          onclick: async () => {
-            const ok = await promptPassword();
-            if (ok) { buildFormula(); buildSidebar(); }
-          }
-        }, ['잠금 해제'])
-      ]));
-      return;
-    }
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('공통지표 산식', '성과평가의 핵심 3요소 — 대학지표 달성률 · 통합만족도 · 성과확산도'),
-      h('div', { class: 'card' }, [
-        h('div', { class: 'formula' }, [
-          h('code', {}, ['A1 × 0.4']), document.createTextNode('+'),
-          h('code', {}, ['A2 × 0.4']), document.createTextNode('+'),
-          h('code', {}, ['A3 × 0.2'])
-        ]),
-        h('div', { style: 'height:10px' }),
-        h('ul', { class: 'callout-list' },
-          META.formulaDesc.map(f => h('li', {}, [
-            h('span', { class: 'k' }, [`${f.code} · ${f.name}`]),
-            h('span', { class: 'v' }, [f.desc])
-          ]))
-        )
-      ])
-    ]));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('성과확산도(A3) 구성', '사업의 인지도와 파급효과를 높이는 5대 활동'),
-      h('div', { class: 'card' }, [
-        h('ul', { class: 'callout-list' },
-          META.diffusionItems.map(x => h('li', {}, [
-            h('span', { class: 'k' }, [x.name]),
-            h('span', { class: 'v' }, [x.desc])
-          ]))
-        )
-      ])
-    ]));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('5대 자체지수 정의', '대학자체지표 영역 구분'),
-      h('div', { class: 'card' }, [
-        h('ul', { class: 'callout-list' },
-          SELF_INDICES.map((s, i) => h('li', {}, [
-            h('span', { class: 'k' }, [`${i + 1}. ${s.name}`]),
-            h('span', { class: 'v' }, [s.desc])
-          ]))
-        )
-      ])
-    ]));
-
-    el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('8개 과제 · 사업단 구성', ''),
-      h('div', {}, [(() => {
-        const tbl = h('table', { class: 'tbl' });
-        tbl.appendChild(h('thead', {}, [h('tr', {}, [
-          h('th', {}, ['약칭']), h('th', {}, ['과제 전체명']), h('th', {}, ['테마'])
-        ])]));
-        const tb = h('tbody');
-        PROJECTS.forEach(p => {
-          tb.appendChild(h('tr', {}, [
-            h('td', {}, [h('span', { class: 'chip' }, [p.short])]),
-            h('td', {}, [p.full]),
-            h('td', {}, [p.theme])
-          ]));
-        });
-        tbl.appendChild(tb);
-        return tbl;
-      })()])
-    ]));
-  }
-
-  // ---------- toolbar actions ----------
-  function onExport() { Store.exportJson(); }
-  function onImport() {
-    const input = h('input', { type: 'file', accept: 'application/json' });
-    input.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const rd = new FileReader();
-      rd.onload = () => {
-        try {
-          const obj = JSON.parse(rd.result);
-          Store.importJson(obj);
-          queueRerender(true);
-        } catch (err) { alert('JSON 파일 형식이 올바르지 않습니다.'); }
-      };
-      rd.readAsText(file);
+      if (v.id === _currentView) btn.classList.add('active');
+      nav.appendChild(btn);
     });
-    input.click();
   }
-  function onReset() {
-    if (!confirm('모든 입력값을 초기화하시겠어요? 이 동작은 되돌릴 수 없습니다.')) return;
-    Store.reset();
-    queueRerender(true);
+
+  function buildMobileQuickNav() {
+    const wrap = $('#mobile-quicknav');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    VIEWS.forEach(v => {
+      const b = h('button', { class: 'q', 'data-view': v.id, onclick: () => setView(v.id) }, [v.label]);
+      if (v.id === _currentView) b.classList.add('active');
+      wrap.appendChild(b);
+    });
   }
 
   // ---------- year2 (2차년도 현황) ----------
-  // 데이터 원천: 옵시디언 성과관리 볼트 → build_data2.js → data2.js (window.__RISE2__)
   function y2Data() { return window.__RISE2__ || null; }
+
+  // 사업단 표시명: 수정사업계획서 풀네임 (과제코드)
+  const divName = d => d.fullName || d.key;
+  const divNameWithCode = d => d.code ? `${divName(d)} (${d.code})` : divName(d);
+  // 차트용 멀티라인 라벨: 긴 풀네임을 어절 단위로 2~3줄 분할
+  function chartLabel(d) {
+    const words = divName(d).split(' ');
+    const lines = [];
+    let cur = '';
+    for (const w of words) {
+      if ((cur + ' ' + w).trim().length > 14 && cur) { lines.push(cur); cur = w; }
+      else cur = (cur + ' ' + w).trim();
+    }
+    if (cur) lines.push(cur);
+    return lines.slice(0, 3);
+  }
 
   function y2Status(status) {
     const active = status === '진행';
@@ -2271,12 +126,25 @@
     ]);
   }
 
+  // 집행률 리스트: 풀네임은 길어서 이름 줄 + 바 줄의 2단 구성
+  function y2RateRow(d) {
+    const muted = d.status !== '진행';
+    return h('div', { class: 'y2-rate-row' }, [
+      h('div', { class: 'y2-rate-name' }, [divNameWithCode(d)]),
+      h('div', { class: 'y2-rate-bar' }, [
+        h('div', { class: `bar ${muted ? 'muted' : ''}` }, [ h('i', { style: `width:${Math.min(d.budget.rate, 100).toFixed(1)}%` }) ]),
+        h('div', { class: 'val' }, [d.budget.spentWon ? `${d.budget.rate}%` : '—'])
+      ])
+    ]);
+  }
+
   function y2DivCard(d) {
     const waiting = d.status !== '진행';
     const satis = d.satisfaction.avg != null ? `${d.satisfaction.avg}` : '—';
     return h('div', { class: `card y2-divcard ${waiting ? 'waiting' : ''}` }, [
-      h('div', { class: 'h' }, [ h('h3', {}, [d.key]), y2Status(d.status) ]),
-      h('div', { class: 'y2-full' }, [d.fullName || '']),
+      h('div', { class: 'h' }, [ h('span', { class: 'y2-code' }, [d.code || d.key]), y2Status(d.status) ]),
+      h('h3', { class: 'y2-name' }, [divName(d)]),
+      h('div', { class: 'y2-full' }, [d.lead ? `책임자 ${d.lead}` : '']),
       y2BarRow('집행률', d.budget.rate, `${d.budget.rate}%`, waiting),
       h('div', { class: 'y2-mini' }, [
         h('div', { class: 'm' }, [h('b', {}, [String(d.programs.length)]), h('span', {}, ['프로그램'])]),
@@ -2296,7 +164,7 @@
     if (!el) return;
     const Y2 = y2Data();
     el.innerHTML = '';
-    el.appendChild(h('div', { class: 'view-anchor' }, ['2차년도 현황 · 2026 실적·예산 집행 (옵시디언 성과관리 연동)']));
+    el.appendChild(h('div', { class: 'view-anchor' }, ['2차년도 현황 · 2026 실적·예산 집행 (성과관리 연동)']));
     if (!Y2) {
       el.appendChild(h('section', { class: 'section' }, [
         sectionHead('2차년도 현황', 'data2.js가 로드되지 않았습니다'),
@@ -2326,13 +194,13 @@
 
     // 사업단별 카드
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('사업단별 현황', '예산 집행률·프로그램·만족도 — 카드의 수치는 볼트 A층(프로그램 카드·지출대장) 합산값'),
+      sectionHead('사업단별 현황', '2차년도 수정사업계획서 기준 단위과제 — 수치는 프로그램 카드·지출 기록 합산값'),
       h('div', { class: 'y2-divgrid' }, divs.map(y2DivCard))
     ]));
 
-    // 예산 차트 + 집행 현황 표
+    // 예산 차트 + 집행 현황
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('예산 편성·집행', '단위: 백만원 — 집행은 인박스에 투입된 지출 문서만 반영'),
+      sectionHead('예산 편성·집행', '단위: 백만원 — 집행은 접수된 지출 문서만 반영'),
       h('div', { class: 'grid-2' }, [
         h('div', { class: 'card' }, [
           h('h3', {}, ['사업단별 편성 대비 집행']),
@@ -2340,22 +208,22 @@
         ]),
         h('div', { class: 'card' }, [
           h('h3', {}, ['집행률 현황']),
-          h('div', {}, divs.map(d => y2BarRow(d.key, d.budget.rate, d.budget.spentWon ? `${d.budget.rate}%` : '—', d.status !== '진행'))),
-          h('div', { class: 'note' }, ['집행률 = 반영된 지출 ÷ 편성 총액. 지급요청 공문이 전부 투입되기 전까지는 실제보다 낮게 표시됩니다.'])
+          h('div', {}, divs.map(y2RateRow)),
+          h('div', { class: 'note' }, ['집행률 = 반영된 지출 ÷ 편성 총액. 지급요청 공문이 전부 접수되기 전까지는 실제보다 낮게 표시됩니다.'])
         ])
       ])
     ]));
 
     // 프로그램 실적 표
     const progRows = [];
-    divs.forEach(d => d.programs.forEach(p => progRows.push({ div: d.key, ...p })));
+    divs.forEach(d => d.programs.forEach(p => progRows.push({ divLabel: divNameWithCode(d), ...p })));
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('프로그램 실적', `${progRows.length}건 — 프로그램 1건 = 1행 (표준 서식)`),
       h('div', { class: 'card' }, [
         progRows.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
-          h('thead', {}, [h('tr', {}, ['사업단','프로그램명','유형','교육기관','참여학생','교육시간','만족도','소요예산','상태'].map(c => h('th', {}, [c])))]),
+          h('thead', {}, [h('tr', {}, ['사업단(단위과제)','프로그램명','유형','교육기관','참여학생','교육시간','만족도','소요예산','상태'].map(c => h('th', {}, [c])))]),
           h('tbody', {}, progRows.map(p => h('tr', {}, [
-            h('td', {}, [p.div]),
+            h('td', { class: 'y2-divcell' }, [p.divLabel]),
             h('td', {}, [p.name]),
             h('td', {}, [p.category || '—']),
             h('td', {}, [p.org || '—']),
@@ -2369,22 +237,22 @@
       ])
     ]));
 
-    // 지출 기록 표 (B안)
+    // 지출 기록 표
     const spendRows = [];
-    divs.forEach(d => d.spending.forEach(s => spendRows.push({ div: d.key, ...s })));
+    divs.forEach(d => d.spending.forEach(x => spendRows.push({ divLabel: divNameWithCode(d), ...x })));
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('지출 기록', `${spendRows.length}건 — 지급요청 공문 전수 기록(B안)`),
+      sectionHead('지출 기록', `${spendRows.length}건 — 지급요청 공문 전수 기록`),
       h('div', { class: 'card' }, [
         spendRows.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
-          h('thead', {}, [h('tr', {}, ['사업단','일자','지출건명','예산항목','금액','근거문서','검증'].map(c => h('th', {}, [c])))]),
-          h('tbody', {}, spendRows.map(s => h('tr', {}, [
-            h('td', {}, [s.div]),
-            h('td', {}, [s.date || '—']),
-            h('td', {}, [s.name]),
-            h('td', {}, [s.item || '—']),
-            h('td', { class: 'num' }, [`${fmtN(s.amount)}원`]),
-            h('td', {}, [s.doc || '—']),
-            h('td', {}, [s.verified ? '🟢' : '🔴'])
+          h('thead', {}, [h('tr', {}, ['사업단(단위과제)','일자','지출건명','예산항목','금액','근거문서','검증'].map(c => h('th', {}, [c])))]),
+          h('tbody', {}, spendRows.map(x => h('tr', {}, [
+            h('td', { class: 'y2-divcell' }, [x.divLabel]),
+            h('td', {}, [x.date || '—']),
+            h('td', {}, [x.name]),
+            h('td', {}, [x.item || '—']),
+            h('td', { class: 'num' }, [`${fmtN(x.amount)}원`]),
+            h('td', {}, [x.doc || '—']),
+            h('td', {}, [x.verified ? '🟢' : '🔴'])
           ])))
         ])]) : h('div', { class: 'empty' }, ['기록된 지출이 없습니다.'])
       ])
@@ -2392,9 +260,9 @@
 
     // 성과지표 목표 ('26)
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('성과지표 목표 (’26)', '출처: 2차연도 종합수정사업계획서 — 실적(누적)은 카드 집계 후 자동 반영'),
+      sectionHead('성과지표 목표 (’26)', '출처: 2차연도 종합수정사업계획서 — 실적(누적)은 프로그램 집계 후 자동 반영'),
       h('div', { class: 'card' }, divs.map(d => h('details', { class: 'y2-ind' }, [
-        h('summary', {}, [`${d.key} — 지표 ${d.indicators.length}개`]),
+        h('summary', {}, [`${divNameWithCode(d)} — 지표 ${d.indicators.length}개`]),
         d.indicators.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
           h('thead', {}, [h('tr', {}, ['구분','지표명','기준값','’26 목표','’25 실적','’26 실적(누적)'].map(c => h('th', {}, [c])))]),
           h('tbody', {}, d.indicators.map(i => h('tr', {}, [
@@ -2410,7 +278,7 @@
     ]));
 
     el.appendChild(h('div', { class: 'note' }, [
-      `데이터 원천: 옵시디언 성과관리 볼트 (원장·프로그램 카드·지출대장) · 생성 ${new Date(Y2.generatedAt).toLocaleString('ko-KR')} · 갱신: 인박스 처리 후 build_data2.js 실행`
+      `데이터 원천: 성과관리 시스템 (원장·프로그램 카드·지출 기록) · 생성 ${new Date(Y2.generatedAt).toLocaleString('ko-KR')}`
     ]));
   }
 
@@ -2422,11 +290,10 @@
     const ctx = document.getElementById('y2-budget-chart');
     if (!ctx) return;
     if (_y2Chart) { _y2Chart.destroy(); _y2Chart = null; }
-    const labels = Y2.divisions.map(d => d.key);
     _y2Chart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels,
+        labels: Y2.divisions.map(chartLabel),
         datasets: [
           { label: '편성(백만원)', data: Y2.divisions.map(d => d.budget.totalM), backgroundColor: 'rgba(10,37,64,0.18)', borderColor: '#0a2540', borderWidth: 1 },
           { label: '집행(백만원)', data: Y2.divisions.map(d => d.budget.spentWon / 1e6), backgroundColor: 'rgba(28,114,147,0.75)', borderColor: '#1c7293', borderWidth: 1 }
@@ -2436,115 +303,48 @@
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
         plugins: {
           legend: { position: 'bottom' },
-          tooltip: { callbacks: { label: (ctx) =>
-            `${ctx.dataset.label}: ${Math.round(ctx.parsed.x * 1e6).toLocaleString('ko-KR')}원`
+          tooltip: { callbacks: { label: (c) =>
+            `${c.dataset.label}: ${Math.round(c.parsed.x * 1e6).toLocaleString('ko-KR')}원`
           } }
         },
-        scales: { x: { beginAtZero: true } }
+        scales: { x: { beginAtZero: true }, y: { ticks: { font: { size: 10.5 }, autoSkip: false } } }
       }
-    });
-  }
-
-  // ---------- re-render orchestrator ----------
-  let _pending = null;
-  function queueRerender(full = false) {
-    if (_pending) cancelAnimationFrame(_pending);
-    _pending = requestAnimationFrame(() => {
-      _pending = null;
-      if (full) {
-        buildSidebar();
-        buildOverview(); buildYear2(); buildCommon(); buildSelf(); buildProject(); buildSangsaeng(); buildEvaluation(); buildInfra(); buildFormula();
-        if (_currentView === 'community') buildCommunity();
-        renderOverviewCharts();
-        renderEvaluationCharts();
-        renderYear2Charts();
-        setView(_currentView);
-      } else {
-        // rebuild data-dependent views only for current view
-        if (_currentView === 'overview') { buildOverview(); renderOverviewCharts(); }
-        if (_currentView === 'common')   { /* keep inputs focused — just redraw chart */ renderCommonChart(); }
-        if (_currentView === 'self')     { /* redraw rates on current view without stealing focus */ refreshRates(); }
-        if (_currentView === 'project')  { /* live-calc display not required */ }
-        buildSidebar();
-      }
-    });
-  }
-  function refreshRates() {
-    // Update 달성률 displays for self-items without rebuilding inputs
-    $$('#view-self .sub-item.edit').forEach((node, i) => {
-      // naive: find matching item in store by name text
-    });
-    // Simpler: refresh full self view (inputs are not currently focused — just refreshing b tags)
-    $$('#view-self .sub-item.edit').forEach((node) => {
-      const name = node.querySelector('.name').textContent;
-      let match;
-      for (const g of Store.state.self) {
-        match = g.items.find(it => it.name === name);
-        if (match) break;
-      }
-      if (!match) return;
-      const b = node.querySelector('.rate b');
-      if (b) b.textContent = (match.목표 && match.실적 != null) ? `${Math.round((match.실적 / match.목표) * 100)}%` : '—';
     });
   }
 
   // ---------- init ----------
   function init() {
-    Store.init();
     buildSidebar();
     buildMobileQuickNav();
-    buildOverview(); buildYear2(); buildCommon(); buildSelf(); buildProject(); buildSangsaeng(); buildEvaluation(); buildInfra(); buildCommunity(); buildFormula();
+    buildYear2();
+    requestAnimationFrame(() => { renderYear2Charts(); });
 
-    // All charts render immediately (single-page scroll layout)
-    requestAnimationFrame(() => {
-      renderOverviewCharts();
-      renderYear2Charts();
-      renderCommonChart();
-      renderSelfChart();
-      renderEvaluationCharts();
-    });
+    const today = $('#today');
+    if (today) today.textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    $('#today').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+    const v = VIEWS.find(x => x.id === _currentView);
+    if (v && $('#crumb')) $('#crumb').innerHTML = crumbHtml(v);
 
-    $('#btn-export').addEventListener('click', onExport);
-    $('#btn-import').addEventListener('click', onImport);
-    $('#btn-reset') .addEventListener('click', onReset);
-
-    // Mobile nav drawer
+    // mobile drawer
     const toggle = $('#nav-toggle');
     const backdrop = $('#nav-backdrop');
-    const openNav  = () => document.body.classList.add('nav-open');
-    const closeNav = () => document.body.classList.remove('nav-open');
-    toggle?.addEventListener('click', () => {
-      document.body.classList.contains('nav-open') ? closeNav() : openNav();
-    });
-    backdrop?.addEventListener('click', closeNav);
-    $$('.nav button').forEach(b => b.addEventListener('click', () => {
-      if (window.matchMedia('(max-width: 880px)').matches) closeNav();
-    }));
-    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeNav(); });
+    if (toggle) toggle.addEventListener('click', () => document.body.classList.toggle('nav-open'));
+    if (backdrop) backdrop.addEventListener('click', () => document.body.classList.remove('nav-open'));
 
-    // Scroll-spy: highlight active nav button based on viewport
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(en => {
-        if (en.isIntersecting) {
+    // scroll-spy (단일 뷰지만 활성 표시 일관성 유지)
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(en => {
+          if (!en.isIntersecting) return;
           const id = en.target.id.replace('view-', '');
           _currentView = id;
           $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
           $$('#mobile-quicknav .q').forEach(b => b.classList.toggle('active', b.dataset.view === id));
-          const v = VIEWS.find(x => x.id === id);
-          if (v) $('#crumb').innerHTML = `호원RISE · <strong>${v.label}</strong> · ${v.desc}`;
-          // auto-scroll the active chip into view on mobile quicknav
-          const activeChip = $(`#mobile-quicknav .q[data-view="${id}"]`);
-          if (activeChip && window.matchMedia('(max-width: 880px)').matches) {
-            activeChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-          }
-        }
-      });
-    }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
-    $$('.view').forEach(v => observer.observe(v));
-
-    pingSaveIndicator();
+        });
+      }, { rootMargin: '-40% 0px -55% 0px' });
+      $$('.view').forEach(sec => io.observe(sec));
+    }
   }
+
   document.addEventListener('DOMContentLoaded', init);
 })();

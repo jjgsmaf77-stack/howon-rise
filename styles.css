@@ -2801,3 +2801,23 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 }
 .y2-tblwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .y2-tblwrap .tbl { min-width: 640px; }
+
+/* ---------- anchor(RISE) y2-primary 개편 ---------- */
+.y2-code {
+  font-size: 10.5px; font-weight: 700; color: var(--g-600);
+  background: #e5f1f7; border-radius: 6px; padding: 2px 8px; letter-spacing: .02em;
+}
+.y2-name {
+  margin: 8px 0 2px; font-size: 14.5px; line-height: 1.35; color: var(--g-900);
+  min-height: 2.7em; display: flex; align-items: flex-start;
+}
+.y2-divcard .y2-full { white-space: normal; }
+.y2-rate-row { padding: 7px 0; border-bottom: 1px solid #f0f3f6; }
+.y2-rate-row:last-of-type { border-bottom: 0; }
+.y2-rate-name { font-size: 12px; color: var(--ink-700, #33414e); margin-bottom: 4px; line-height: 1.35; }
+.y2-rate-bar { display: grid; grid-template-columns: 1fr 56px; align-items: center; gap: 8px; }
+.y2-rate-bar .bar { height: 8px; background: #e9eef3; border-radius: 999px; overflow: hidden; }
+.y2-rate-bar .bar i { display: block; height: 100%; background: var(--grad-accent, #1c7293); border-radius: 999px; }
+.y2-rate-bar .bar.muted i { background: #c9d6df; }
+.y2-rate-bar .val { text-align: right; font-weight: 700; font-size: 12.5px; color: var(--g-800); }
+.y2-divcell { font-size: 11.5px; line-height: 1.35; min-width: 180px; color: var(--ink-600, #47555f); }

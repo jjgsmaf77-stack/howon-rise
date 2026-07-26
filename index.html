@@ -2,36 +2,30 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <title>호원RISE사업 성과관리 플랫폼 | 호원대학교</title>
+  <title>호원 앵커(RISE) 성과관리 플랫폼 | 호원대학교</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="호원대학교 RISE사업 8개 과제 · 5대 자체지수 · 24개 세부지표 통합 성과관리 플랫폼. 공통지표, 과제별 사업성과, 거버넌스·인프라 구축 실적을 한 곳에서 관리합니다." />
-  <meta name="author" content="호원대학교 RISE사업단" />
+  <meta name="description" content="호원대학교 앵커(RISE)사업 2차년도 성과관리 플랫폼. 8개 단위과제의 프로그램 실적·예산 집행·성과지표를 한 곳에서 관리합니다." />
+  <meta name="author" content="호원대학교 앵커(RISE)사업단" />
   <meta name="theme-color" content="#0a2540" />
   <link rel="canonical" href="https://www.howonrise.co.kr/" />
-  <link rel="icon" type="image/png" href="logo.png" />
-  <link rel="apple-touch-icon" href="logo.png" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.howonrise.co.kr/" />
-  <meta property="og:site_name" content="호원RISE 성과관리 플랫폼" />
-  <meta property="og:title" content="호원RISE사업 성과관리 플랫폼" />
-  <meta property="og:description" content="전북 RISE체계와 동행하는 호원성취 POWER UP+ 혁신 플랫폼. 8개 과제 성과를 실시간으로 관리합니다." />
-  <meta property="og:image" content="https://www.howonrise.co.kr/logo.png" />
+  <meta property="og:site_name" content="호원 앵커(RISE) 성과관리 플랫폼" />
+  <meta property="og:title" content="호원 앵커(RISE) 성과관리 플랫폼" />
+  <meta property="og:description" content="호원성취 POWER UP+ 혁신 플랫폼. 2차년도 8개 단위과제 성과를 실시간으로 관리합니다." />
   <meta property="og:locale" content="ko_KR" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="호원RISE사업 성과관리 플랫폼" />
-  <meta name="twitter:description" content="호원대학교 RISE사업 통합 성과관리 플랫폼" />
+  <meta name="twitter:title" content="호원 앵커(RISE) 성과관리 플랫폼" />
+  <meta name="twitter:description" content="호원대학교 앵커(RISE)사업 2차년도 통합 성과관리 플랫폼" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="styles.css?v=tanker10" />
+  <link rel="stylesheet" href="styles.css?v=anchor1" />
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="logo-row">
-          <img src="logo.png" alt="호원대학교 HOWON UNIVERSITY" class="logo-img" onerror="this.style.display='none'" />
-        </div>
-        <span class="tag">HOWON · RISE PLATFORM</span>
-        <div class="mark">호원RISE 성과관리</div>
+        <span class="tag">HOWON · ANCHOR PLATFORM</span>
+        <div class="mark">호원 앵커(RISE) 성과관리</div>
         <div class="sub">POWER UP+ 혁신 플랫폼</div>
       </div>
 
@@ -41,11 +35,11 @@
       </div>
 
       <div class="qr-box" aria-label="플랫폼 접속 QR">
-        <img src="qr-howonrise-small.png?v=3" alt="호원RISE 플랫폼 QR" width="120" height="120" />
+        <img src="qr-howonrise-small.png?v=3" alt="호원 앵커(RISE) 플랫폼 QR" width="120" height="120" />
         <div class="qr-meta">
           <div class="qr-label">스마트폰 접속</div>
           <div class="qr-url">www.howonrise.co.kr</div>
-          <a class="qr-dl" href="qr-howonrise.png?v=3" download="호원RISE_QR.png">고해상도 PNG 저장 ↓</a>
+          <a class="qr-dl" href="qr-howonrise.png?v=3" download="호원앵커RISE_QR.png">고해상도 PNG 저장 ↓</a>
         </div>
       </div>
 
@@ -64,81 +58,25 @@
         <button id="nav-toggle" class="nav-toggle" aria-label="메뉴 열기">
           <span></span><span></span><span></span>
         </button>
-        <div id="crumb" class="crumb">호원RISE · <strong>개요</strong> · 성과 종합</div>
+        <div id="crumb" class="crumb">호원 앵커(RISE) · <strong>2차년도 현황</strong> · 2026 실적·예산 집행</div>
         <div class="spacer"></div>
-        <span id="save-indicator" class="save-indicator saved">저장됨</span>
         <div class="toolbar">
           <a id="btn-admin" class="tb-btn primary" href="/admin/" rel="noopener" title="담당자 입력관리 시스템" onclick="window.location.href=this.href; return false;">✏️ 입력관리</a>
-          <button id="btn-import" class="tb-btn" title="JSON 불러오기">불러오기</button>
-          <button id="btn-export" class="tb-btn" title="JSON 내보내기">내보내기</button>
-          <button id="btn-reset"  class="tb-btn danger" title="입력값 초기화">초기화</button>
+          <span class="pill">2차년도 운영</span>
+          <span class="date" id="today"></span>
         </div>
-        <span class="pill">2차년도 운영</span>
-        <span class="date" id="today"></span>
       </header>
       <div id="nav-backdrop" class="nav-backdrop" aria-hidden="true"></div>
       <nav id="mobile-quicknav" class="mobile-quicknav" aria-label="섹션 바로가기"></nav>
 
       <div class="page">
-        <section id="view-overview" class="view"></section>
-        <section id="view-year2"    class="view"></section>
-        <section id="view-common"   class="view"></section>
-        <section id="view-self"     class="view"></section>
-        <section id="view-project"  class="view"></section>
-        <section id="view-sangsaeng" class="view"></section>
-        <section id="view-evaluation" class="view"></section>
-        <section id="view-infra"    class="view"></section>
-        <section id="view-community" class="view"></section>
-        <section id="view-formula"  class="view"></section>
+        <section id="view-year2" class="view"></section>
       </div>
     </main>
   </div>
 
-  <div id="input-admin-modal" class="ia-modal" style="display:none;" onclick="if(event.target===this) this.style.display='none';">
-    <div class="ia-modal-card">
-      <button class="ia-modal-close" onclick="document.getElementById('input-admin-modal').style.display='none';" aria-label="닫기">✕</button>
-      <div class="ia-modal-icon">✏️</div>
-      <h2 class="ia-modal-title">성과 입력관리 시스템</h2>
-      <div class="ia-modal-sub">사업단 담당자가 추진과제·MOU·홍보 등을 입력하는 별도 관리자 시스템입니다.</div>
-
-      <div class="ia-modal-section">
-        <div class="ia-modal-label">📍 현재 상태</div>
-        <div class="ia-modal-status">
-          <span class="ia-status-dot"></span> 개발 완료 · 배포 준비 중
-        </div>
-        <div class="ia-modal-note">
-          정식 도메인(<code>admin.howonrise.co.kr</code>) 연결 작업이 진행 중입니다.
-        </div>
-      </div>
-
-      <div class="ia-modal-section">
-        <div class="ia-modal-label">🖥️ 내부망 접속 (사업단 담당자)</div>
-        <div class="ia-modal-note">
-          담당 PC에서 다음 주소로 접속하실 수 있습니다:<br/>
-          <code class="ia-modal-url">http://localhost:5173</code>
-        </div>
-      </div>
-
-      <div class="ia-modal-section">
-        <div class="ia-modal-label">📋 주요 기능</div>
-        <ul class="ia-modal-list">
-          <li>8개 사업단 추진과제 입력·수정</li>
-          <li>MOU·홍보·참여인력 관리</li>
-          <li>실시간 통합 대시보드 및 엑셀 출력</li>
-          <li>사진 자동 압축 업로드</li>
-          <li>모바일에서도 입력 가능</li>
-        </ul>
-      </div>
-
-      <div class="ia-modal-footer">
-        문의: 호원대학교 RISE사업단
-      </div>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="data.js?v=tanker10"></script>
-  <script src="data2.js?v=tanker10"></script>
-  <script src="app.js?v=tanker10"></script>
+  <script src="data2.js?v=anchor1"></script>
+  <script src="app.js?v=anchor1"></script>
 </body>
 </html>

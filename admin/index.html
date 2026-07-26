@@ -2,76 +2,64 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="refresh" content="0;url=https://howon-rise-admin.vercel.app" />
-  <link rel="canonical" href="https://howon-rise-admin.vercel.app" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex" />
-  <title>호원RISE 성과 입력관리로 이동 중...</title>
+  <title>앵커(RISE) 성과 입력관리</title>
   <style>
     body {
       font-family: 'Noto Sans KR', -apple-system, sans-serif;
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      margin: 0; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
       background: linear-gradient(135deg, #0a2540 0%, #16548c 100%);
-      color: #fff;
-      text-align: center;
+      color: #fff; text-align: center;
     }
-    .box {
-      max-width: 420px;
-      padding: 32px;
-    }
-    .icon {
-      font-size: 56px;
-      margin-bottom: 16px;
-    }
-    h1 {
-      font-size: 22px;
-      margin: 0 0 8px 0;
-      font-weight: 700;
-    }
-    p {
-      opacity: 0.85;
-      font-size: 14px;
-      line-height: 1.6;
-      margin: 6px 0;
-    }
+    .box { max-width: 440px; padding: 32px; }
+    .icon { font-size: 56px; margin-bottom: 16px; }
+    h1 { font-size: 22px; margin: 0 0 8px 0; font-weight: 700; }
+    p { opacity: .85; font-size: 14px; line-height: 1.6; margin: 6px 0; }
     .loader {
-      display: inline-block;
-      width: 28px; height: 28px;
-      border: 3px solid rgba(255,255,255,0.2);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .9s linear infinite;
-      margin-top: 16px;
+      display: none; width: 28px; height: 28px;
+      border: 3px solid rgba(255,255,255,.2); border-top-color: #fff;
+      border-radius: 50%; animation: spin .9s linear infinite; margin-top: 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    a {
-      color: #fff;
-      font-weight: 600;
-      margin-top: 16px;
-      display: inline-block;
-      padding: 10px 20px;
-      background: rgba(255,255,255,0.15);
-      border-radius: 8px;
-      text-decoration: none;
-      border: 1px solid rgba(255,255,255,0.25);
+    .badge {
+      display: inline-block; background: rgba(245,183,0,.18); border: 1px solid rgba(245,183,0,.5);
+      color: #ffd75e; border-radius: 999px; padding: 4px 14px; font-size: 12.5px; font-weight: 700; margin: 14px 0 4px;
     }
-    a:hover { background: rgba(255,255,255,0.25); }
+    a.btn {
+      color: #fff; font-weight: 600; margin-top: 16px; display: inline-block;
+      padding: 10px 20px; background: rgba(255,255,255,.15); border-radius: 8px;
+      text-decoration: none; border: 1px solid rgba(255,255,255,.25);
+    }
+    a.btn:hover { background: rgba(255,255,255,.25); }
+    code { background: rgba(255,255,255,.12); border-radius: 5px; padding: 2px 7px; font-size: 12.5px; }
   </style>
 </head>
 <body>
   <div class="box">
     <div class="icon">✏️</div>
-    <h1>성과 입력관리</h1>
-    <p>담당자 입력 시스템으로 이동 중입니다...</p>
-    <div class="loader"></div>
-    <p style="margin-top:24px; font-size:12px;">자동 이동되지 않으면 아래 버튼을 클릭하세요</p>
-    <a href="https://howon-rise-admin.vercel.app">입력관리 열기 →</a>
+    <h1>성과 입력관리 시스템 v2</h1>
+    <div id="content">
+      <span class="badge">신규 시스템 배포 준비 중</span>
+      <p>새로운 입력관리 시스템(v2)이 구축 완료되어 서버 배포를 준비하고 있습니다.</p>
+      <p>배포가 완료되면 이 페이지에서 자동으로 이동됩니다.</p>
+      <p style="margin-top:18px; font-size:12.5px;">사업단 내부 PC에서는 임시로<br/><code>http://localhost:8090</code> 으로 접속할 수 있습니다.</p>
+      <p style="font-size:12px; opacity:.7;">문의: 호원대학교 앵커(RISE)사업단</p>
+    </div>
+    <div class="loader" id="loader"></div>
   </div>
   <script>
-    window.location.replace('https://howon-rise-admin.vercel.app');
+    // ★ 입력관리 v2(admin-app)를 Railway 등에 배포한 뒤, 아래에 배포 URL을 넣으면
+    //   이 페이지가 자동 리다이렉트로 전환된다. (예: 'https://howon-rise-admin.up.railway.app')
+    var ADMIN_URL = '';
+    if (ADMIN_URL) {
+      document.getElementById('content').innerHTML =
+        '<p>담당자 입력 시스템으로 이동 중입니다...</p>' +
+        '<a class="btn" href="' + ADMIN_URL + '">입력관리 열기 →</a>';
+      document.getElementById('loader').style.display = 'inline-block';
+      window.location.replace(ADMIN_URL);
+    }
   </script>
 </body>
 </html>

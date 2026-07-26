@@ -207,7 +207,7 @@ const out = {
   generatedAt: new Date().toISOString(),
   year: 2026,
   yearLabel: '2차년도(2026)',
-  source: '옵시디언 성과관리 볼트 (A층 카드·지출대장 합산)',
+  source: '성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)',
   divisions,
   totals,
   warnings: [
