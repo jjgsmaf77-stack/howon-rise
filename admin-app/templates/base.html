@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}호원RISE 성과 입력관리{% endblock %}</title>
+  <link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <span class="mark">호원RISE</span><span class="sub">성과 입력관리</span>
+    </a>
+    {% if user %}
+    <nav class="topnav">
+      <a href="/">사업단</a>
+      <a href="/audit">변경이력</a>
+      {% if user.is_admin %}<a href="/users">계정관리</a>{% endif %}
+    </nav>
+    <div class="userbox">
+      <span>{{ user.display_name or user.username }}{% if user.division_key %} · {{ user.division_key }}{% endif %}</span>
+      <a class="btn ghost sm" href="/logout">로그아웃</a>
+    </div>
+    {% endif %}
+  </header>
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="foot">호원대학교 RISE사업단 · 데이터 원칙: 숫자는 근거문서와 함께, 🟢 확정값만 보고서에 사용</footer>
+</body>
+</html>

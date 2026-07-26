@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}변경이력{% endblock %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <div class="section-title">변경이력</div>
+    <div class="section-desc">모든 생성·수정·삭제·상태변경이 기록됩니다 (최근 300건)</div>
+  </div>
+</div>
+<div class="card">
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>일시(UTC)</th><th>사용자</th><th>동작</th><th>대상</th><th>내용</th></tr></thead>
+      <tbody>
+        {% for l in logs %}
+        <tr>
+          <td class="muted">{{ l.at.strftime("%m-%d %H:%M") }}</td>
+          <td>{{ l.username }}</td>
+          <td>{{ {"create":"생성","update":"수정","delete":"삭제","status":"상태"}.get(l.action, l.action) }}</td>
+          <td>{{ l.entity }}#{{ l.entity_id }}</td>
+          <td class="detail">{{ l.detail }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

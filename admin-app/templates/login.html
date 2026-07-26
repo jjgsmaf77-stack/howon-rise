@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-wrap">
+  <div class="card login-card">
+    <div class="login-logo">호원RISE</div>
+    <h1>성과 입력관리 시스템</h1>
+    <p class="muted">호원대학교 RISE사업단</p>
+    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+    <form method="post" action="/login">
+      <label>아이디 <input name="username" required autofocus /></label>
+      <label>비밀번호 <input name="password" type="password" required /></label>
+      <button class="btn primary block" type="submit">로그인</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

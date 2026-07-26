@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <div class="section-title">사업단 현황</div>
+    <div class="section-desc">2차년도(2026) · 카드를 눌러 실적을 입력·수정하세요</div>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="label">자료 접수</div><div class="value">{{ totals.active }}<span class="unit"> / 8</span></div></div>
+  <div class="kpi"><div class="label">프로그램</div><div class="value">{{ totals.programs }}<span class="unit">건</span></div><div class="foot">참여학생 {{ "{:,}".format(totals.students) }}명</div></div>
+  <div class="kpi"><div class="label">집행액</div><div class="value">{{ "{:,}".format(totals.spent) }}<span class="unit">원</span></div><div class="foot">편성 {{ "{:,}".format(totals.budget_m|int) }}백만원</div></div>
+  <div class="kpi"><div class="label">미검증</div><div class="value">{{ totals.unverified }}<span class="unit">건</span></div><div class="foot">🔴 확정 전 잠정값</div></div>
+</div>
+
+<div class="div-grid">
+  {% for sm in summaries %}
+  {% set d = sm.division %}
+  <a class="card divcard {% if sm.status != '진행' %}waiting{% endif %}" href="/division/{{ d.key }}">
+    <div class="h">
+      <h3>{{ d.key }}</h3>
+      <span class="status {{ 'active' if sm.status == '진행' else 'pending' }}">{{ sm.status }}</span>
+    </div>
+    <div class="full">{{ d.full_name }}</div>
+    <div class="bar-row">
+      <span class="lbl">집행률</span>
+      <span class="bar"><i style="width:{{ [sm.rate, 100]|min }}%"></i></span>
+      <span class="val">{{ sm.rate }}%</span>
+    </div>
+    <div class="mini">
+      <div class="m"><b>{{ sm.programs|length }}</b><span>프로그램</span></div>
+      <div class="m"><b>{{ sm.students }}</b><span>참여학생</span></div>
+      <div class="m"><b>{{ sm.satis_avg if sm.satis_avg is not none else "—" }}</b><span>만족도</span></div>
+      <div class="m"><b>{{ sm.unverified }}</b><span>미검증</span></div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}계정관리{% endblock %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <div class="section-title">계정관리</div>
+    <div class="section-desc">사업단 담당자 계정 — 담당 사업단의 데이터만 수정할 수 있습니다</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>아이디</th><th>이름</th><th>담당</th><th>권한</th><th>비밀번호 재설정</th></tr></thead>
+      <tbody>
+        {% for x in users %}
+        <tr>
+          <td class="strong">{{ x.username }}</td>
+          <td>{{ x.display_name or "—" }}</td>
+          <td>{{ x.division_key or "전체" }}</td>
+          <td>{{ "관리자" if x.is_admin else "담당자" }}</td>
+          <td>
+            <form method="post" action="/users/{{ x.id }}/password" class="inline row-form">
+              <input name="password" type="password" placeholder="새 비밀번호" required />
+              <button class="btn ghost sm">변경</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>담당자 계정 추가</h2></div>
+  <form method="post" action="/users/new" class="form-grid">
+    <label>아이디 * <input name="username" required /></label>
+    <label>비밀번호 * <input name="password" type="password" required /></label>
+    <label>이름 <input name="display_name" /></label>
+    <label>담당 사업단
+      <select name="division_key">
+        <option value="">전체(조회 전용 아님 — 관리자 문의)</option>
+        {% for d in divisions %}<option value="{{ d.key }}">{{ d.key }} — {{ d.full_name }}</option>{% endfor %}
+      </select>
+    </label>
+    <div class="span2 form-actions"><button class="btn primary">계정 생성</button></div>
+  </form>
+</div>
+{% endblock %}

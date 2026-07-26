@@ -8,3 +8,7 @@ _data.json
 _analyze.js
 _serve.js
 .claude/
+admin-app/data/
+admin-app/__pycache__/
+admin-app/**/__pycache__/
+*.pyc

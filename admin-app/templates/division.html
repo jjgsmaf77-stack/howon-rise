@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% set d = sm.division %}
+{% block title %}{{ d.key }} — 입력관리{% endblock %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <div class="crumbs"><a href="/">사업단</a> › {{ d.key }}</div>
+    <div class="section-title">{{ d.key }} <span class="code">{{ d.code }}</span></div>
+    <div class="section-desc">{{ d.full_name }} · 책임자 {{ d.lead }}</div>
+  </div>
+  <div class="right">
+    <span class="status {{ 'active' if sm.status == '진행' else 'pending' }}">{{ sm.status }}</span>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="label">집행률</div><div class="value">{{ sm.rate }}<span class="unit">%</span></div>
+    <div class="foot">{{ "{:,}".format(sm.spent) }}원 / 편성 {{ "{:,}".format(d.budget_total_m|int) }}백만원</div></div>
+  <div class="kpi"><div class="label">프로그램</div><div class="value">{{ sm.programs|length }}<span class="unit">건</span></div>
+    <div class="foot">참여학생 {{ sm.students }}명</div></div>
+  <div class="kpi"><div class="label">만족도(가중)</div><div class="value">{{ sm.satis_avg if sm.satis_avg is not none else "—" }}</div>
+    <div class="foot">응답 {{ sm.satis_n }}명 기준</div></div>
+  <div class="kpi"><div class="label">연계실적</div><div class="value">{{ sm.spread['사업단연계'] + sm.spread['초광역'] }}<span class="unit">건</span></div>
+    <div class="foot">MOU {{ sm.spread['MOU'] }} · 언론 {{ sm.spread['언론보도'] }} · 행사 {{ sm.spread['행사'] }}</div></div>
+</div>
+
+<!-- 프로그램 -->
+<div class="card">
+  <div class="card-head">
+    <h2>프로그램 실적 <span class="cnt">{{ sm.programs|length }}</span></h2>
+    {% if editable %}<a class="btn primary sm" href="/division/{{ d.key }}/program/new">+ 프로그램 추가</a>{% endif %}
+  </div>
+  {% if sm.programs %}
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>상태</th><th>프로그램명</th><th>유형</th><th>교육기관</th><th class="num">참여학생</th><th>교육시간</th><th class="num">만족도</th><th class="num">소요예산</th><th></th></tr></thead>
+      <tbody>
+        {% for p in sm.programs %}
+        <tr>
+          <td>{{ STATUS_ICON[p.status] }}</td>
+          <td class="strong">{{ p.name }}</td>
+          <td>{{ p.category or "—" }}</td>
+          <td>{{ p.org or "—" }}</td>
+          <td class="num">{{ p.students if p.students is not none else "—" }}</td>
+          <td>{{ p.hours or "—" }}</td>
+          <td class="num">{% if p.satisfaction is not none %}{{ p.satisfaction }}{% if p.satisfaction_n %} <span class="muted">(n={{ p.satisfaction_n }})</span>{% else %} 🔴{% endif %}{% else %}—{% endif %}</td>
+          <td class="num">{% if p.budget_won is not none %}{{ "{:,}".format(p.budget_won) }}원{% else %}—{% endif %}</td>
+          <td class="acts">
+            {% if editable %}
+            <a class="btn ghost sm" href="/program/{{ p.id }}/edit">수정</a>
+            <form method="post" action="/program/{{ p.id }}/status" class="inline">
+              <select name="status" onchange="this.form.submit()">
+                {% for st in STATUS_FLOW %}<option value="{{ st }}" {% if p.status == st %}selected{% endif %}>{{ STATUS_ICON[st] }} {{ st }}</option>{% endfor %}
+              </select>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty">등록된 프로그램이 없습니다.</div>{% endif %}
+</div>
+
+<!-- 지출 (B안) -->
+<div class="card">
+  <div class="card-head"><h2>지출 기록 <span class="cnt">{{ sm.spendings|length }}</span></h2></div>
+  {% if sm.spendings %}
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>검증</th><th>일자</th><th>지출건명</th><th>예산항목</th><th class="num">금액</th><th>근거문서</th><th></th></tr></thead>
+      <tbody>
+        {% for x in sm.spendings %}
+        <tr>
+          <td>
+            {% if editable %}
+            <form method="post" action="/spending/{{ x.id }}/verify" class="inline"><button class="linkbtn" title="클릭하여 전환">{{ "🟢" if x.verified else "🔴" }}</button></form>
+            {% else %}{{ "🟢" if x.verified else "🔴" }}{% endif %}
+          </td>
+          <td>{{ x.date or "—" }}</td>
+          <td class="strong">{{ x.name }}</td>
+          <td>{{ x.budget_item or "—" }}</td>
+          <td class="num">{{ "{:,}".format(x.amount_won) }}원</td>
+          <td>{{ x.doc or "—" }}</td>
+          <td class="acts">
+            {% if editable %}
+            <form method="post" action="/spending/{{ x.id }}/delete" class="inline" onsubmit="return confirm('이 지출 기록을 삭제할까요?')"><button class="btn danger sm">삭제</button></form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty">기록된 지출이 없습니다.</div>{% endif %}
+  {% if editable %}
+  <form method="post" action="/division/{{ d.key }}/spending/new" class="spend-form">
+    <input name="date" placeholder="일자 (2026-07-01)" />
+    <input name="name" placeholder="지출건명 *" required />
+    <input name="budget_item" placeholder="예산항목" />
+    <input name="amount_won" placeholder="금액(원) * 환수는 음수" required />
+    <input name="doc" placeholder="근거문서 (RISE사업팀-NNNN)" />
+    <button class="btn primary sm" type="submit">+ 지출 추가</button>
+  </form>
+  <div class="note">B안 규칙: 지급요청 공문 1건 = 1행. 근거문서 번호를 반드시 기재하세요.</div>
+  {% endif %}
+</div>
+
+<!-- 지표 -->
+<div class="card">
+  <div class="card-head"><h2>성과지표 (’26)</h2></div>
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>구분</th><th>지표명</th><th class="num">기준값</th><th class="num">’26 목표</th><th class="num">’25 실적</th><th class="num">’26 실적(보정)</th></tr></thead>
+      <tbody>
+        {% for i in indicators %}
+        <tr>
+          <td>{{ i.grp }}</td>
+          <td>{{ i.name }}</td>
+          <td class="num">{{ i.base }}</td>
+          <td class="num">{{ i.target26 }}</td>
+          <td class="num">{{ i.prev25 }}</td>
+          <td class="num">
+            {% if editable %}
+            <form method="post" action="/indicator/{{ i.id }}/manual" class="inline row-form">
+              <input class="mini-input" name="manual26" value="{{ i.manual26 }}" placeholder="—" />
+              <button class="btn ghost sm" type="submit">저장</button>
+            </form>
+            {% else %}{{ i.manual26 or "—" }}{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="note">’26 실적(보정)은 프로그램 자동집계 외 수기 확정값 입력란입니다. 입력 후 Enter.</div>
+</div>
+{% endblock %}

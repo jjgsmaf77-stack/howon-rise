@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ division.key }} 프로그램 {{ "수정" if p else "추가" }}{% endblock %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <div class="crumbs"><a href="/">사업단</a> › <a href="/division/{{ division.key }}">{{ division.key }}</a> › 프로그램 {{ "수정" if p else "추가" }}</div>
+    <div class="section-title">프로그램 {{ "수정" if p else "추가" }}</div>
+    <div class="section-desc">표준 서식: 프로그램 1건 = 1행 · 만족도는 (점수·응답자수·척도) 3종 세트</div>
+  </div>
+</div>
+
+<form method="post" class="card form-grid" action="{{ '/program/%d/edit'|format(p.id) if p else '/division/%s/program/new'|format(division.key) }}">
+  <label class="span2">프로그램명 *
+    <input name="name" value="{{ p.name if p else '' }}" required />
+  </label>
+  <label>프로그램 유형
+    <select name="category">
+      <option value="">선택</option>
+      {% for c in CATEGORIES %}<option value="{{ c }}" {% if p and p.category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>교육기관
+    <input name="org" value="{{ p.org if p else '' }}" placeholder="덕암정보고등학교" />
+  </label>
+  <label>운영기간
+    <input name="period" value="{{ p.period if p else '' }}" placeholder="2026-05-15 ~ 2026-06-15" />
+  </label>
+  <label>교육시간
+    <input name="hours" value="{{ p.hours if p else '' }}" placeholder="18차시(6회)" />
+  </label>
+  <label>참여학생수
+    <input name="students" value="{{ p.students if p and p.students is not none else '' }}" inputmode="numeric" placeholder="16" />
+  </label>
+  <label>소요예산(원)
+    <input name="budget_won" value="{{ p.budget_won if p and p.budget_won is not none else '' }}" inputmode="numeric" placeholder="7650000" />
+  </label>
+
+  <fieldset class="span2 satis">
+    <legend>만족도 3종 세트</legend>
+    <label>점수 <input name="satisfaction" value="{{ p.satisfaction if p and p.satisfaction is not none else '' }}" placeholder="4.56" /></label>
+    <label>응답자수 <input name="satisfaction_n" value="{{ p.satisfaction_n if p and p.satisfaction_n is not none else '' }}" inputmode="numeric" placeholder="16" /></label>
+    <label>척도 <select name="satisfaction_scale">
+      <option value="5" {% if not p or p.satisfaction_scale == 5 %}selected{% endif %}>5점</option>
+      <option value="100" {% if p and p.satisfaction_scale == 100 %}selected{% endif %}>100점</option>
+    </select></label>
+    <div class="note">응답자수가 없으면 사업단 가중평균에서 제외됩니다(🔴 표시).</div>
+  </fieldset>
+
+  <label>예산항목
+    <input name="budget_item" value="{{ p.budget_item if p else '' }}" placeholder="교육·연구 프로그램 개발·운영비" />
+  </label>
+  <label>내부결재
+    <input name="approval_doc" value="{{ p.approval_doc if p else '' }}" placeholder="RISE사업팀-1355(2026.06.25)" />
+  </label>
+  <label class="span2">지표매핑 (쉼표 구분 — 확산실적은 초광역/사업단연계/MOU/언론보도/행사 포함 시 자동 집계)
+    <input name="indicator_tags" value="{{ p.indicator_tags if p else '' }}" placeholder="지자체➊ 연계교육, 자체➋ 대회수상률, 사업단연계" />
+  </label>
+  <label class="span2">기타실적
+    <textarea name="extra" rows="3" placeholder="수상 내역, 연계 실적 등">{{ p.extra if p else '' }}</textarea>
+  </label>
+  <label class="span2">증빙 (한 줄에 하나: 파일명 | 페이지 | 값 설명)
+    <textarea name="evidence" rows="3" placeholder="결과보고서.pdf | p.1 | 참여 16명·수상 9건">{{ p.evidence if p else '' }}</textarea>
+  </label>
+
+  <div class="span2 form-actions">
+    <button class="btn primary" type="submit">저장</button>
+    <a class="btn ghost" href="/division/{{ division.key }}">취소</a>
+    {% if p %}
+    <button class="btn danger right" type="submit" formaction="/program/{{ p.id }}/delete" formnovalidate onclick="return confirm('이 프로그램을 삭제할까요? 변경이력에 기록됩니다.')">삭제</button>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}
