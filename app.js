@@ -190,6 +190,32 @@
             h('td', {}, [x.doc || '—'])
           ])))
         ])]) : h('div', { class: 'empty' }, ['기록된 지출이 없습니다.']),
+        h('h3', {}, ['예산 항목별 편성·집행 (주관대학분, 백만원)']),
+        (d.budgetPlan && d.budgetPlan.length) ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+          h('thead', {}, [h('tr', {}, ['예산항목','편성','집행','집행률'].map(c => h('th', { class: c === '예산항목' ? '' : 'num' }, [c])))]),
+          h('tbody', {}, (() => {
+            const spentBy = {};
+            d.spending.forEach(x => { if (x.item) spentBy[x.item] = (spentBy[x.item] || 0) + x.amount; });
+            const rows = d.budgetPlan.map(bp => {
+              const spent = spentBy[bp.item] || 0;
+              const rate = bp.plannedM ? (spent / (bp.plannedM * 1e6) * 100) : 0;
+              return h('tr', {}, [
+                h('td', {}, [bp.item + (bp.flagged ? ' 🔴' : '')]),
+                h('td', { class: 'num' }, [String(bp.plannedM)]),
+                h('td', { class: 'num' }, [spent ? (spent / 1e6).toFixed(2) : '—']),
+                h('td', { class: 'num' }, [spent ? `${rate.toFixed(1)}%` : '—'])
+              ]);
+            });
+            const planSum = d.budgetPlan.reduce((a, b) => a + b.plannedM, 0);
+            rows.push(h('tr', { class: 'strong' }, [
+              h('td', {}, ['합계']),
+              h('td', { class: 'num strong' }, [String(Math.round(planSum * 100) / 100)]),
+              h('td', { class: 'num strong' }, [d.budget.spentWon ? (d.budget.spentWon / 1e6).toFixed(2) : '—']),
+              h('td', { class: 'num strong' }, [d.budget.spentWon ? `${d.budget.rate}%` : '—'])
+            ]));
+            return rows;
+          })())
+        ])]) : h('div', { class: 'empty' }, ['항목별 편성 정보 없음']),
         h('h3', {}, ['성과지표']),
         h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
           h('thead', {}, [h('tr', {}, ['구분','지표명','단위','’25 목표','’25 실적','’25 달성도','’26 목표'].map(c => h('th', {}, [c])))]),

@@ -2978,3 +2978,4 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .y2-tkh .l { font-size: 13px; font-weight: 800; color: var(--g-600); line-height: 1.1; }
 .y2-tkh .n { font-size: 9px; font-weight: 600; color: var(--ink-500); letter-spacing: -.02em; }
 .y2-matrix td.num { font-size: 11.5px; }
+.tkb-foot { font-family: var(--font-sans); letter-spacing: .08em; }

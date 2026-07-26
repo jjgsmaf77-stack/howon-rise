@@ -23,6 +23,7 @@ const LEGACY_ITEM_MAP = {
   '실험·실습장비 및 기자재 구입·운영비': '실험실습 장비·기자재',
   '교육·연구 환경 개선비': '교육 연구 환경 개선',
   '그 밖의 사업운영 경비': '기타운영',
+  '기업 지원·협력 활동비': '기업지원 협력 활동',
 };
 // 축2: TANKer — 주분류 1개 필수(간접비 제외) + 부분류(참고용)
 const TANKER = { T: '지역인재육성', A: '지역현장강화', N: '지역기업연계', K: '취창업 실현' };
@@ -179,6 +180,14 @@ function loadLedger(div) {
     rate25: pick(r, col('25 달성도')),
     target: pick(r, col('26 목표')),
   })).filter(i => i.name) : [];
+  // 항목별 편성 (수정사업계획서 당해연도 예산 집행 계획 — §3 표)
+  const bt = parseTables(src).find(t => t.header.includes('예산항목') && t.header.includes('편성'));
+  const budgetPlan = bt ? bt.rows
+    .filter(r => r[0] && !r[0].includes('총계'))
+    .map(r => ({ item: r[0].replace(/\*/g, '').trim(), plannedM: num(r[1]),
+                 flagged: /🔴/.test(r[1] || '') }))
+    .filter(x => x.plannedM != null) : [];
+
   return {
     code: fm['과제코드'] || '',
     fullName: fm['과제명'] || '',
@@ -186,6 +195,7 @@ function loadLedger(div) {
     budgetTotalM: num(fm['예산_총계']) || 0,
     budgetMainM: num(fm['예산_주관대학']) || 0,
     budgetOpM: num(fm['예산_운영비']) || 0,
+    budgetPlan,
     indicators,
   };
 }
@@ -227,6 +237,7 @@ const divisions = DIVISIONS.map(key => {
     fullName: ledger.fullName,
     lead: ledger.lead,
     budget: { totalM: ledger.budgetTotalM, mainM: ledger.budgetMainM, opM: ledger.budgetOpM, spentWon, rate: budgetWon ? +(spentWon / budgetWon * 100).toFixed(1) : 0 },
+    budgetPlan: ledger.budgetPlan,
     programs: cards,
     spending,
     students,

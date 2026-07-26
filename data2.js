@@ -1,6 +1,6 @@
 // 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.
 window.__RISE2__ = {
-  "generatedAt": "2026-07-26T04:17:49.183Z",
+  "generatedAt": "2026-07-26T04:47:20.917Z",
   "year": 2026,
   "yearLabel": "2차년도(2026)",
   "source": "성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)",
@@ -17,6 +17,53 @@ window.__RISE2__ = {
         "spentWon": 0,
         "rate": 0
       },
+      "budgetPlan": [
+        {
+          "item": "장학금",
+          "plannedM": 70,
+          "flagged": false
+        },
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 256,
+          "flagged": false
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 13,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 45,
+          "flagged": false
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 16,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용 확산",
+          "plannedM": 10,
+          "flagged": false
+        },
+        {
+          "item": "교육 연구 환경 개선",
+          "plannedM": 207,
+          "flagged": false
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 2,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 31,
+          "flagged": false
+        }
+      ],
       "programs": [],
       "spending": [],
       "students": 0,
@@ -105,6 +152,48 @@ window.__RISE2__ = {
         "spentWon": 0,
         "rate": 0
       },
+      "budgetPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 140.862,
+          "flagged": false
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 0,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 10.888,
+          "flagged": false
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 10,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용 확산",
+          "plannedM": 19,
+          "flagged": false
+        },
+        {
+          "item": "교육 연구 환경 개선",
+          "plannedM": 0,
+          "flagged": false
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 1.2,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 9.15,
+          "flagged": false
+        }
+      ],
       "programs": [],
       "spending": [],
       "students": 0,
@@ -193,6 +282,33 @@ window.__RISE2__ = {
         "spentWon": 0,
         "rate": 0
       },
+      "budgetPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 59.64,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 4.3,
+          "flagged": false
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 25,
+          "flagged": false
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 1,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 4.56,
+          "flagged": false
+        }
+      ],
       "programs": [],
       "spending": [],
       "students": 0,
@@ -281,6 +397,53 @@ window.__RISE2__ = {
         "spentWon": 0,
         "rate": 0
       },
+      "budgetPlan": [
+        {
+          "item": "장학금",
+          "plannedM": 60,
+          "flagged": false
+        },
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 212,
+          "flagged": false
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 70,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 91,
+          "flagged": false
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 12,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용 확산",
+          "plannedM": 21,
+          "flagged": false
+        },
+        {
+          "item": "교육 연구 환경 개선",
+          "plannedM": 100,
+          "flagged": false
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 2,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 29,
+          "flagged": false
+        }
+      ],
       "programs": [],
       "spending": [],
       "students": 0,
@@ -369,6 +532,38 @@ window.__RISE2__ = {
         "spentWon": 0,
         "rate": 0
       },
+      "budgetPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 22,
+          "flagged": false
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 5,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 15,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용 확산",
+          "plannedM": 13.25,
+          "flagged": false
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 1,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 2.85,
+          "flagged": false
+        }
+      ],
       "programs": [],
       "spending": [],
       "students": 0,
@@ -457,6 +652,38 @@ window.__RISE2__ = {
         "spentWon": 0,
         "rate": 0
       },
+      "budgetPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 30.7,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 6.9,
+          "flagged": false
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 3.4,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용 확산",
+          "plannedM": 6,
+          "flagged": false
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 1.5,
+          "flagged": true
+        },
+        {
+          "item": "간접비",
+          "plannedM": 1.5,
+          "flagged": false
+        }
+      ],
       "programs": [],
       "spending": [],
       "students": 0,
@@ -545,6 +772,43 @@ window.__RISE2__ = {
         "spentWon": 8585380,
         "rate": 2.9
       },
+      "budgetPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 53,
+          "flagged": false
+        },
+        {
+          "item": "실험실습 장비·기자재",
+          "plannedM": 4,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 63,
+          "flagged": false
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 24,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용 확산",
+          "plannedM": 30,
+          "flagged": false
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 1,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 9,
+          "flagged": false
+        }
+      ],
       "programs": [
         {
           "file": "2026-05 COOKING브릿지-조리경연대회 교육(덕암정보고)",
@@ -702,6 +966,38 @@ window.__RISE2__ = {
         "spentWon": 0,
         "rate": 0
       },
+      "budgetPlan": [
+        {
+          "item": "교육·연구 프로그램 운영·개발",
+          "plannedM": 22.77,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계 협업 지원",
+          "plannedM": 0.5,
+          "flagged": false
+        },
+        {
+          "item": "기업지원 협력 활동",
+          "plannedM": 0.5,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용 확산",
+          "plannedM": 0.5,
+          "flagged": false
+        },
+        {
+          "item": "기타운영",
+          "plannedM": 0.95,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 0.78,
+          "flagged": false
+        }
+      ],
       "programs": [],
       "spending": [],
       "students": 0,
