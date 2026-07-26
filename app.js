@@ -314,9 +314,9 @@
     el.appendChild(h('section', { class: 'section' }, [
       sectionHead('예산 편성·집행', '단위: 백만원 — 집행은 접수된 지출 문서만 반영'),
       h('div', { class: 'grid-2' }, [
-        h('div', { class: 'card' }, [
+        h('div', { class: 'card y2-budget-card' }, [
           h('h3', {}, ['사업단별 편성 대비 집행']),
-          h('div', { class: 'chart-wrap tall' }, [h('canvas', { id: 'y2-budget-chart' })])
+          h('div', { class: 'chart-wrap y2-budget-wrap' }, [h('canvas', { id: 'y2-budget-chart' })])
         ]),
         h('div', { class: 'card' }, [
           h('h3', {}, ['집행률 현황']),
@@ -574,22 +574,29 @@
       data: {
         labels: Y2.divisions.map(d => d.key),
         datasets: [
-          { label: '편성(백만원)', data: Y2.divisions.map(d => d.budget.totalM), backgroundColor: 'rgba(10,37,64,0.16)', borderColor: '#0a2540', borderWidth: 1, borderRadius: 3 },
-          { label: '집행(백만원)', data: Y2.divisions.map(d => d.budget.spentWon / 1e6), backgroundColor: 'rgba(28,114,147,0.8)', borderColor: '#1c7293', borderWidth: 1, borderRadius: 3 }
+          { label: '편성(백만원)', data: Y2.divisions.map(d => d.budget.totalM), backgroundColor: '#b9cfe4', borderWidth: 0, borderRadius: 5 },
+          { label: '집행(백만원)', data: Y2.divisions.map(d => d.budget.spentWon / 1e6), backgroundColor: '#f5b700', borderWidth: 0, borderRadius: 5 }
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        categoryPercentage: 0.72, barPercentage: 0.95,
         plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 14, font: { size: 11.5 } } },
-          tooltip: { callbacks: {
-            title: (items) => divNameWithCode(Y2.divisions[items[0].dataIndex]),
-            label: (c) => `${c.dataset.label}: ${Math.round(c.parsed.x * 1e6).toLocaleString('ko-KR')}원`
-          } }
+          legend: { position: 'bottom', labels: { boxWidth: 22, boxHeight: 10, borderRadius: 3, useBorderRadius: true, font: { size: 11.5 }, padding: 16 } },
+          tooltip: {
+            backgroundColor: 'rgba(10,37,64,.94)', padding: 12, cornerRadius: 8, titleFont: { size: 12 },
+            callbacks: {
+              title: (items) => divNameWithCode(Y2.divisions[items[0].dataIndex]),
+              label: (c) => `${c.dataset.label}: ${Math.round(c.parsed.x * 1e6).toLocaleString('ko-KR')}원`
+            }
+          }
         },
         scales: {
-          x: { beginAtZero: true, grid: { color: '#eef2f6' } },
-          y: { ticks: { font: { size: 12, weight: 700 }, autoSkip: false }, grid: { display: false } }
+          x: { beginAtZero: true, grid: { color: '#eef2f6' }, border: { display: false },
+               ticks: { font: { size: 11 }, color: '#7b8894' },
+               title: { display: true, text: '백만원', font: { size: 10.5 }, color: '#98a4af' } },
+          y: { ticks: { font: { size: 12.5, weight: 700 }, color: '#22303c', autoSkip: false },
+               grid: { display: false }, border: { display: false } }
         }
       }
     });

@@ -2962,3 +2962,7 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .y2-modal-card h3 { font-size: 14px; color: var(--g-800); margin: 18px 0 8px; font-family: var(--font-sans); }
 .y2-divcard { cursor: pointer; }
 .y2-divcard:focus-visible { outline: 2px solid var(--g-600); }
+
+/* 예산 차트 카드: 오른쪽 카드 높이에 맞춰 차트가 채워지게 (빈 공간 제거) */
+.y2-budget-card { display: flex; flex-direction: column; }
+.y2-budget-wrap { flex: 1; min-height: 380px; position: relative; }
