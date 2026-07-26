@@ -3023,3 +3023,22 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .y2-all-div:first-of-type { border-top: 0; margin-top: 6px; padding-top: 0; }
 .y2-all-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .y2-all-head h2 { margin: 0; font-size: 16.5px; color: var(--g-900); font-family: var(--font-sans); }
+
+/* ---------- 사이드바 AI 질의 패널 ---------- */
+.side-ai { margin: 14px 0 0; background: #fff; border: 1px solid #e4eef4; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.sa-head { font-weight: 800; font-size: 13px; color: #0a2540; display: flex; align-items: center; gap: 6px; }
+.sa-scope { margin-left: auto; background: #e5f1f7; color: #1c7293; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
+.sa-msgs { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.sa-msgs:empty { display: none; }
+.sa-m { font-size: 12px; line-height: 1.55; padding: 7px 9px; border-radius: 9px; white-space: pre-wrap; word-break: break-word; }
+.sa-m.user { background: #1c7293; color: #fff; align-self: flex-end; max-width: 92%; }
+.sa-m.assistant { background: #f2f7fa; color: #22303c; align-self: flex-start; max-width: 96%; border: 1px solid #e4eef4; }
+.sa-m.err { color: #c0392b; }
+.sa-sel { border: 1px solid #d7dee6; border-radius: 8px; padding: 6px 8px; font-size: 12px; color: #22303c; font-family: inherit; background: #fff; }
+.sa-in { border: 1px solid #d7dee6; border-radius: 8px; padding: 8px 9px; font-size: 16px; resize: vertical; font-family: inherit; color: #22303c; min-height: 40px; }
+.sa-in:disabled { background: #f4f6f8; }
+.sa-btn { border: 0; border-radius: 8px; background: #1c7293; color: #fff; font-weight: 700; font-size: 12.5px; padding: 8px; cursor: pointer; font-family: inherit; }
+.sa-btn:hover { background: #175f7b; }
+.sa-btn:disabled { background: #b7c6cf; cursor: default; }
+.sa-note { font-size: 10.5px; color: #8a97a3; line-height: 1.4; }
+@media (max-width: 900px) { .side-ai { margin: 10px 0; } .sa-msgs { max-height: 200px; } }

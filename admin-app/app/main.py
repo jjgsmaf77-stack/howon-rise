@@ -627,6 +627,44 @@ def dash_asset(asset: str, request: Request, s: Session = Depends(db)):
     return FileResponse(p)
 
 
+# ---------- AI 질의 (옵시디언 지식 번들 기반, app/ai.py) ----------
+from . import ai as ai_mod  # noqa: E402
+
+
+@app.get("/ai/status")
+def ai_status(request: Request, s: Session = Depends(db)):
+    u = require_user(request, s)
+    divisions = [d.key for d in s.exec(select(Division).order_by(Division.sort)).all()] if u.is_admin else []
+    return {"enabled": ai_mod.available(), "isAdmin": u.is_admin,
+            "scope": None if u.is_admin else u.division_key,
+            "divisions": divisions, "kbAt": ai_mod.kb().get("generatedAt")}
+
+
+@app.post("/ai/ask")
+async def ai_ask(request: Request, s: Session = Depends(db)):
+    u = require_user(request, s)
+    if not ai_mod.available():
+        raise HTTPException(503, "AI 질의가 아직 활성화되지 않았습니다 (관리자에게 문의)")
+    body = await request.json()
+    q = (body.get("question") or "").strip()
+    if not q:
+        raise HTTPException(422, "질문을 입력하세요")
+    if len(q) > 2000:
+        raise HTTPException(422, "질문은 2000자 이내로 입력하세요")
+    # 권한: 사업단 계정은 소속 사업단 데이터로 고정, 총괄관리자만 범위 선택 가능
+    div = (body.get("division") or None) if u.is_admin else u.division_key
+    hist = [{"role": m["role"], "content": str(m["content"])[:4000]}
+            for m in (body.get("history") or [])
+            if isinstance(m, dict) and m.get("role") in ("user", "assistant") and m.get("content")][-10:]
+    try:
+        answer = ai_mod.ask(q, div, hist)
+    except Exception as e:
+        raise HTTPException(502, f"AI 응답 실패({type(e).__name__}) — 잠시 후 다시 시도해 주세요")
+    audit(s, u, "ai_ask", "ai", div or "전체", q[:300])
+    s.commit()
+    return {"answer": answer, "scope": div or "전체"}
+
+
 @app.get("/healthz")
 def healthz():
     return {"ok": True}

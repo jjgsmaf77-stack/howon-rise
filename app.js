@@ -63,6 +63,28 @@
     return sha256Sync(text);
   }
 
+  // 시크릿모드 등 저장소 접근이 막힌 브라우저 대응
+  const safeGet = k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+  const safeSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* 무시 — 세션 유지만 안 됨 */ } };
+
+  // 한글 키보드 상태로 입력한 비밀번호를 영문 자판으로 역변환 (두벌식)
+  function hangulToQwerty(str) {
+    const CHO = ['r', 'R', 's', 'e', 'E', 'f', 'a', 'q', 'Q', 't', 'T', 'd', 'w', 'W', 'c', 'z', 'x', 'v', 'g'];
+    const JUNG = ['k', 'o', 'i', 'O', 'j', 'p', 'u', 'P', 'h', 'hk', 'ho', 'hl', 'y', 'n', 'nj', 'np', 'nl', 'b', 'm', 'ml', 'l'];
+    const JONG = ['', 'r', 'R', 'rt', 's', 'sw', 'sg', 'e', 'f', 'fr', 'fa', 'fq', 'ft', 'fx', 'fv', 'fg', 'a', 'q', 'qt', 't', 'T', 'd', 'w', 'c', 'z', 'x', 'v', 'g'];
+    const JAMO = { 'ㄱ': 'r', 'ㄲ': 'R', 'ㄴ': 's', 'ㄷ': 'e', 'ㄸ': 'E', 'ㄹ': 'f', 'ㅁ': 'a', 'ㅂ': 'q', 'ㅃ': 'Q', 'ㅅ': 't', 'ㅆ': 'T', 'ㅇ': 'd', 'ㅈ': 'w', 'ㅉ': 'W', 'ㅊ': 'c', 'ㅋ': 'z', 'ㅌ': 'x', 'ㅍ': 'v', 'ㅎ': 'g', 'ㅏ': 'k', 'ㅐ': 'o', 'ㅑ': 'i', 'ㅒ': 'O', 'ㅓ': 'j', 'ㅔ': 'p', 'ㅕ': 'u', 'ㅖ': 'P', 'ㅗ': 'h', 'ㅘ': 'hk', 'ㅙ': 'ho', 'ㅚ': 'hl', 'ㅛ': 'y', 'ㅜ': 'n', 'ㅝ': 'nj', 'ㅞ': 'np', 'ㅟ': 'nl', 'ㅠ': 'b', 'ㅡ': 'm', 'ㅢ': 'ml', 'ㅣ': 'l' };
+    let out = '';
+    for (const ch of str) {
+      const c = ch.charCodeAt(0);
+      if (c >= 0xAC00 && c <= 0xD7A3) {
+        const i = c - 0xAC00;
+        out += CHO[Math.floor(i / 588)] + JUNG[Math.floor((i % 588) / 28)] + JONG[i % 28];
+      } else if (JAMO[ch]) out += JAMO[ch];
+      else out += ch;
+    }
+    return out;
+  }
+
   function showGate() {
     const style = document.createElement('style');
     style.textContent = `
@@ -74,7 +96,7 @@
       #pw-gate h1{font-size:20px;margin:10px 0 6px;color:#0a2540}
       #pw-gate p{color:#5d6b78;font-size:13px;margin:0 0 22px}
       #pw-gate label{display:block;text-align:left;font-size:12.5px;font-weight:700;color:#22303c;margin:0 0 6px}
-      #pw-gate input{width:100%;padding:11px 12px;border:1px solid #d7dee6;border-radius:8px;font-size:14px;
+      #pw-gate input{width:100%;padding:11px 12px;border:1px solid #d7dee6;border-radius:8px;font-size:16px;
         box-sizing:border-box;color:#22303c;background:#fff}
       #pw-gate input:focus{outline:2px solid rgba(28,114,147,.25);border-color:#1c7293}
       #pw-gate button{width:100%;margin-top:14px;padding:11px;border:0;border-radius:8px;background:#1c7293;
@@ -99,14 +121,25 @@
     const err = gate.querySelector('#pw-err');
     input.focus();
     const tryUnlock = async () => {
-      const hex = await sha256Hex(input.value);
-      if (hex === PW_HASH) {
-        sessionStorage.setItem(UNLOCK_KEY, '1');
-        gate.remove();
-        init();
-      } else {
-        err.textContent = '비밀번호가 올바르지 않습니다.';
-        input.value = ''; input.focus();
+      try {
+        const raw = input.value;
+        let ok = (await sha256Hex(raw)) === PW_HASH;
+        // 한글 키보드 상태로 입력한 경우(예: ㅗㅐㅈㅐㅜ2026) 영문 자판 역변환으로 재시도
+        if (!ok && /[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(raw)) {
+          ok = (await sha256Hex(hangulToQwerty(raw))) === PW_HASH;
+        }
+        if (ok) {
+          safeSet(UNLOCK_KEY, '1');
+          gate.remove();
+          init();
+        } else {
+          err.textContent = /[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(raw)
+            ? '비밀번호가 올바르지 않습니다. 키보드를 영문으로 전환해 주세요.'
+            : '비밀번호가 올바르지 않습니다.';
+          input.value = ''; input.focus();
+        }
+      } catch (e) {
+        err.textContent = '확인 중 오류가 발생했습니다. 새로고침 후 다시 시도해 주세요.';
       }
     };
     gate.querySelector('#pw-go').addEventListener('click', tryUnlock);
@@ -203,6 +236,71 @@
       if (v.id === _currentView) b.classList.add('active');
       wrap.appendChild(b);
     });
+  }
+
+  // ---------- AI 질의 패널 (입력관리 서버로 서빙될 때만 표시 — 정적 사이트엔 백엔드가 없음) ----------
+  async function buildAiPanel() {
+    const box = $('#ai-panel');
+    if (!box) return;
+    let st;
+    try {
+      const r = await fetch('/ai/status', { credentials: 'same-origin' });
+      if (!r.ok) return;
+      st = await r.json();
+    } catch (e) { return; }
+    const history = [];
+    box.className = 'side-ai';
+    box.innerHTML = '';
+    const head = h('div', { class: 'sa-head' }, ['🤖 AI 질의',
+      h('span', { class: 'sa-scope' }, [st.isAdmin ? '전체' : (st.scope || '전체')])]);
+    const msgs = h('div', { class: 'sa-msgs' }, []);
+    const sel = st.isAdmin ? h('select', { class: 'sa-sel' }, [
+      h('option', { value: '' }, ['전체(종합)']),
+      ...(st.divisions || []).map(d => h('option', { value: d }, [d]))
+    ]) : null;
+    const ta = h('textarea', { class: 'sa-in', rows: '2',
+      placeholder: st.enabled ? '사업단 실적·예산에 대해 질문…' : 'API 키 설정 후 활성화됩니다' });
+    const btn = h('button', { class: 'sa-btn' }, ['질문하기']);
+    if (!st.enabled) { ta.disabled = true; btn.disabled = true; }
+    const addMsg = (role, text) => {
+      const m = h('div', { class: 'sa-m ' + role }, [text]);
+      msgs.appendChild(m);
+      msgs.scrollTop = msgs.scrollHeight;
+      return m;
+    };
+    let busy = false;
+    const send = async () => {
+      const q = ta.value.trim();
+      if (!q || busy) return;
+      busy = true; btn.disabled = true; ta.value = '';
+      addMsg('user', q);
+      const wait = addMsg('assistant', '분석 중…');
+      try {
+        const r = await fetch('/ai/ask', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q, division: sel ? sel.value : undefined, history })
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.detail || '응답 실패');
+        wait.textContent = j.answer;
+        history.push({ role: 'user', content: q }, { role: 'assistant', content: j.answer });
+        while (history.length > 10) history.shift();
+      } catch (e) {
+        wait.textContent = '⚠️ ' + (e.message || '응답 실패 — 잠시 후 다시 시도해 주세요');
+        wait.classList.add('err');
+      }
+      busy = false; btn.disabled = !st.enabled;
+      msgs.scrollTop = msgs.scrollHeight;
+    };
+    btn.addEventListener('click', send);
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+    const kids = [head, msgs];
+    if (sel) kids.push(sel);
+    kids.push(ta, btn, h('div', { class: 'sa-note' }, [st.enabled
+      ? '옵시디언 성과관리 문서 기반 · 🟢확정/🔴미검증 구분'
+      : 'AI 질의는 관리자가 API 키를 설정하면 켜집니다']));
+    kids.forEach(k => box.appendChild(k));
   }
 
   // ---------- year2 (2차년도 현황) ----------
@@ -889,6 +987,7 @@
   // ---------- init ----------
   function init() {
     buildSidebar();
+    buildAiPanel();
     buildMobileQuickNav();
     buildYear2();
     requestAnimationFrame(() => { renderYear2Charts(); });
@@ -921,7 +1020,7 @@
   }
 
   function boot() {
-    if (sessionStorage.getItem(UNLOCK_KEY) === '1') init();
+    if (safeGet(UNLOCK_KEY) === '1') init();
     else showGate();
   }
   document.addEventListener('DOMContentLoaded', boot);

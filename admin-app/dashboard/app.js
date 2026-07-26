@@ -94,6 +94,71 @@
     });
   }
 
+  // ---------- AI 질의 패널 (입력관리 서버로 서빙될 때만 표시 — 정적 사이트엔 백엔드가 없음) ----------
+  async function buildAiPanel() {
+    const box = $('#ai-panel');
+    if (!box) return;
+    let st;
+    try {
+      const r = await fetch('/ai/status', { credentials: 'same-origin' });
+      if (!r.ok) return;
+      st = await r.json();
+    } catch (e) { return; }
+    const history = [];
+    box.className = 'side-ai';
+    box.innerHTML = '';
+    const head = h('div', { class: 'sa-head' }, ['🤖 AI 질의',
+      h('span', { class: 'sa-scope' }, [st.isAdmin ? '전체' : (st.scope || '전체')])]);
+    const msgs = h('div', { class: 'sa-msgs' }, []);
+    const sel = st.isAdmin ? h('select', { class: 'sa-sel' }, [
+      h('option', { value: '' }, ['전체(종합)']),
+      ...(st.divisions || []).map(d => h('option', { value: d }, [d]))
+    ]) : null;
+    const ta = h('textarea', { class: 'sa-in', rows: '2',
+      placeholder: st.enabled ? '사업단 실적·예산에 대해 질문…' : 'API 키 설정 후 활성화됩니다' });
+    const btn = h('button', { class: 'sa-btn' }, ['질문하기']);
+    if (!st.enabled) { ta.disabled = true; btn.disabled = true; }
+    const addMsg = (role, text) => {
+      const m = h('div', { class: 'sa-m ' + role }, [text]);
+      msgs.appendChild(m);
+      msgs.scrollTop = msgs.scrollHeight;
+      return m;
+    };
+    let busy = false;
+    const send = async () => {
+      const q = ta.value.trim();
+      if (!q || busy) return;
+      busy = true; btn.disabled = true; ta.value = '';
+      addMsg('user', q);
+      const wait = addMsg('assistant', '분석 중…');
+      try {
+        const r = await fetch('/ai/ask', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q, division: sel ? sel.value : undefined, history })
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.detail || '응답 실패');
+        wait.textContent = j.answer;
+        history.push({ role: 'user', content: q }, { role: 'assistant', content: j.answer });
+        while (history.length > 10) history.shift();
+      } catch (e) {
+        wait.textContent = '⚠️ ' + (e.message || '응답 실패 — 잠시 후 다시 시도해 주세요');
+        wait.classList.add('err');
+      }
+      busy = false; btn.disabled = !st.enabled;
+      msgs.scrollTop = msgs.scrollHeight;
+    };
+    btn.addEventListener('click', send);
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+    const kids = [head, msgs];
+    if (sel) kids.push(sel);
+    kids.push(ta, btn, h('div', { class: 'sa-note' }, [st.enabled
+      ? '옵시디언 성과관리 문서 기반 · 🟢확정/🔴미검증 구분'
+      : 'AI 질의는 관리자가 API 키를 설정하면 켜집니다']));
+    kids.forEach(k => box.appendChild(k));
+  }
+
   // ---------- year2 (2차년도 현황) ----------
   function y2Data() { return window.__RISE2__ || null; }
 
@@ -778,6 +843,7 @@
   // ---------- init ----------
   function init() {
     buildSidebar();
+    buildAiPanel();
     buildMobileQuickNav();
     buildYear2();
     requestAnimationFrame(() => { renderYear2Charts(); });
