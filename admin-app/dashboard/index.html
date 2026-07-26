@@ -2,6 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
+  <script>/* http 접속 시 계정 인증(CORS)이 차단되므로 https로 강제 전환 */
+    if (location.protocol === 'http:' && location.hostname.indexOf('howonrise') !== -1)
+      location.replace(location.href.replace('http://', 'https://'));</script>
   <title>호원 앵커(RISE) 성과관리 플랫폼 | 호원대학교</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="호원대학교 앵커(RISE)사업 2차년도 성과관리 플랫폼. 8개 단위과제의 프로그램 실적·예산 집행·성과지표를 한 곳에서 관리합니다." />
