@@ -615,8 +615,8 @@
       data: {
         labels: Y2.divisions.map(d => d.key),
         datasets: [
-          { label: '편성(백만원)', data: Y2.divisions.map(d => d.budget.totalM), backgroundColor: '#b9cfe4', borderWidth: 0, borderRadius: 5 },
-          { label: '집행(백만원)', data: Y2.divisions.map(d => d.budget.spentWon / 1e6), backgroundColor: '#f5b700', borderWidth: 0, borderRadius: 5 }
+          { label: '편성(백만원)', data: Y2.divisions.map(d => d.budget.totalM), backgroundColor: '#b9cfe4', borderWidth: 0, borderRadius: 2 },
+          { label: '집행(백만원)', data: Y2.divisions.map(d => d.budget.spentWon / 1e6), backgroundColor: '#f5b700', borderWidth: 0, borderRadius: 2 }
         ]
       },
       options: {

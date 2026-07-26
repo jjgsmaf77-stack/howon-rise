@@ -2980,3 +2980,13 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .y2-matrix td.num { font-size: 11.5px; }
 .tkb-foot { font-family: var(--font-sans); letter-spacing: .08em; }
 .y2-exec-sub { font-size: 10px; color: var(--g-600); font-weight: 700; margin-top: 1px; }
+
+/* ---------- 조화로운 모서리 (과한 라운드 절제, 4~8px 통일) ---------- */
+:root { --radius-sm: 4px; --radius-md: 5px; --radius-lg: 6px; --radius-xl: 8px; }
+.tkb-tile, .tkb-anchor { border-radius: 6px; }
+.y2-modal-card { border-radius: 8px; }
+.y2-mini .m, .divcard .m { border-radius: 4px; }
+.tkb-foot, .y2-exec-list-head { border-radius: 4px; }
+.y2-tk, .y2-code { border-radius: 3px; }
+.y2-modal-kpis, .y2-modal-close { border-radius: 4px; }
+.qr-dl, .tb-btn, .btn { border-radius: 4px; }

@@ -8,6 +8,17 @@
     X-Frame-Options = "SAMEORIGIN"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
+# HTML은 항상 재검증 — 캐시버스터(?v=) 변경이 즉시 반영되도록
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
