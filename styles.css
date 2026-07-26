@@ -2966,3 +2966,15 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 /* 예산 차트 카드: 오른쪽 카드 높이에 맞춰 차트가 채워지게 (빈 공간 제거) */
 .y2-budget-card { display: flex; flex-direction: column; }
 .y2-budget-wrap { flex: 1; min-height: 380px; position: relative; }
+
+/* 매트릭스 한눈 표시: 좌측 우선 배분 + 셀 줄바꿈 금지 / QR 버튼 한 줄 */
+.y2-matrix-grid { grid-template-columns: 1.75fr 1fr; }
+@media (max-width: 1180px) { .y2-matrix-grid { grid-template-columns: 1fr; } }
+.y2-matrix { min-width: 0 !important; }
+.y2-matrix th, .y2-matrix td { white-space: nowrap; padding: 8px 8px; }
+.y2-matrix td:first-child { white-space: normal; min-width: 96px; }
+.qr-dl { white-space: nowrap; font-size: 11px; }
+.y2-tkh { text-align: center !important; }
+.y2-tkh .l { font-size: 13px; font-weight: 800; color: var(--g-600); line-height: 1.1; }
+.y2-tkh .n { font-size: 9px; font-weight: 600; color: var(--ink-500); letter-spacing: -.02em; }
+.y2-matrix td.num { font-size: 11.5px; }

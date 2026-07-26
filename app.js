@@ -360,15 +360,26 @@
     const execCounts = {};
     allPrograms.forEach(p => { if (p.execType) execCounts[p.execType] = (execCounts[p.execType] || 0) + 1; });
     const matrixRows = Object.keys(cell).filter(it => Object.keys(cell[it]).length || BUDGET_ITEMS.includes(it));
-    const fmtCell = c => c ? `${c.count ? c.count + '건' : ''}${c.count && c.amount ? ' · ' : ''}${c.amount ? fmtN(c.amount) + '원' : ''}` : '';
+    // 셀 표기: 백만원 단위 압축 (정확한 원 단위는 마우스오버 title)
+    const fmtCell = c => {
+      if (!c || (!c.count && !c.amount)) return '';
+      const parts = [];
+      if (c.count) parts.push(`${c.count}건`);
+      if (c.amount) parts.push(`${(c.amount / 1e6).toFixed(1)}백만`);
+      return parts.join(' · ');
+    };
+    const cellTitle = c => c && c.amount ? `${fmtN(c.amount)}원` : '';
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('예산항목 × TANKer 매트릭스', '축1: 예산항목 9종(인건비 없음·간접비는 TANKer 제외) · 축2: TANKer 주분류 기준 — 셀 = 프로그램 건수 · 집행액'),
-      h('div', { class: 'grid-2' }, [
+      sectionHead('예산항목 × TANKer 매트릭스', '축1: 예산항목 9종(인건비 없음·간접비는 TANKer 제외) · 축2: TANKer 주분류 기준 — 셀 = 건수 · 집행액(백만원)'),
+      h('div', { class: 'grid-2 y2-matrix-grid' }, [
         h('div', { class: 'card' }, [
           h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl y2-matrix' }, [
             h('thead', {}, [h('tr', {}, [
               h('th', {}, ['예산항목']),
-              ...TANKER_KEYS.map(k => h('th', { class: 'num' }, [`${k} ${TANKER[k]}`])),
+              ...TANKER_KEYS.map(k => h('th', { class: 'num y2-tkh' }, [
+                h('div', { class: 'l' }, [k]),
+                h('div', { class: 'n' }, [TANKER[k]])
+              ])),
               h('th', { class: 'num' }, ['합계'])
             ])]),
             h('tbody', {}, (() => {
@@ -381,9 +392,9 @@
                 return h('tr', { class: isIndirect ? 'y2-indirect' : '' }, [
                   h('td', {}, [it]),
                   ...(isIndirect
-                    ? [h('td', { class: 'num y2-excluded', colspan: '4' }, [fmtCell(rowCells['제외']) || 'TANKer 분류 제외'])]
-                    : TANKER_KEYS.map(k => h('td', { class: 'num', style: heat(rowCells[k]) }, [fmtCell(rowCells[k]) || '—']))),
-                  h('td', { class: 'num strong' }, [fmtCell(sum) || '—'])
+                    ? [h('td', { class: 'num y2-excluded', colspan: '4', title: cellTitle(rowCells['제외']) }, [fmtCell(rowCells['제외']) || 'TANKer 분류 제외'])]
+                    : TANKER_KEYS.map(k => h('td', { class: 'num', style: heat(rowCells[k]), title: cellTitle(rowCells[k]) }, [fmtCell(rowCells[k]) || '—']))),
+                  h('td', { class: 'num strong', title: cellTitle(sum) }, [fmtCell(sum) || '—'])
                 ]);
               });
             })())
