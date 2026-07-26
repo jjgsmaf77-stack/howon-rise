@@ -106,18 +106,7 @@
   // 사업단 표시명: 수정사업계획서 풀네임 (과제코드)
   const divName = d => d.fullName || d.key;
   const divNameWithCode = d => d.code ? `${divName(d)} (${d.code})` : divName(d);
-  // 차트용 멀티라인 라벨: 긴 풀네임을 어절 단위로 2~3줄 분할
-  function chartLabel(d) {
-    const words = divName(d).split(' ');
-    const lines = [];
-    let cur = '';
-    for (const w of words) {
-      if ((cur + ' ' + w).trim().length > 14 && cur) { lines.push(cur); cur = w; }
-      else cur = (cur + ' ' + w).trim();
-    }
-    if (cur) lines.push(cur);
-    return lines.slice(0, 3);
-  }
+  // 차트 축은 약칭(깔끔) — 풀네임(코드)은 툴팁에서 표시
 
   function y2Status(status) {
     const active = status === '진행';
@@ -144,10 +133,87 @@
     ]);
   }
 
+  // 사업단 상세 모달 — 입력관리와 같은 내용의 읽기 전용 뷰
+  function y2DivModal(d) {
+    const prev = document.getElementById('y2-modal');
+    if (prev) prev.remove();
+    const TK = k => k ? `${k} ${TANKER[k] || ''}` : '—';
+    const close = () => { const m = document.getElementById('y2-modal'); if (m) m.remove(); document.removeEventListener('keydown', esc); };
+    const esc = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', esc);
+    const modal = h('div', { id: 'y2-modal', class: 'y2-modal', onclick: (e) => { if (e.target.id === 'y2-modal') close(); } }, [
+      h('div', { class: 'y2-modal-card' }, [
+        h('div', { class: 'y2-modal-head' }, [
+          h('div', {}, [
+            h('div', { class: 'y2-code' }, [d.code || d.key]),
+            h('h2', {}, [divName(d)]),
+            h('div', { class: 'muted' }, [`책임자 ${d.lead || '—'} · 조회 전용 (수정은 입력관리에서)`])
+          ]),
+          h('button', { class: 'y2-modal-close', onclick: close, 'aria-label': '닫기' }, ['✕'])
+        ]),
+        h('div', { class: 'y2-modal-kpis' }, [
+          h('span', {}, [`집행률 ${d.budget.rate}%`]),
+          h('span', {}, [`집행 ${fmtN(d.budget.spentWon)}원 / 편성 ${fmtN(d.budget.totalM)}백만원`]),
+          h('span', {}, [`프로그램 ${d.programs.length}건 · 참여학생 ${d.students}명`]),
+          h('span', {}, [`만족도 ${d.satisfaction.avg != null ? d.satisfaction.avg + ` (n=${d.satisfaction.n})` : '—'}`]),
+          h('span', {}, [`미검증 ${d.unverified}건`])
+        ]),
+        h('h3', {}, [`프로그램 실적 (${d.programs.length})`]),
+        d.programs.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+          h('thead', {}, [h('tr', {}, ['상태','프로그램명','유형','TANKer','예산항목','집행방식','교육기관','참여','시간','만족도','소요예산','내부결재'].map(c => h('th', {}, [c])))]),
+          h('tbody', {}, d.programs.map(p => h('tr', {}, [
+            h('td', {}, [p.status === '입력반영' ? '🟢' : p.status === '검토완료' ? '🟡' : '🔴']),
+            h('td', { class: 'strong' }, [p.name]),
+            h('td', {}, [p.category || '—']),
+            h('td', {}, [p.tanker ? `${p.tanker}${p.tankerSub ? '·' + p.tankerSub : ''}` : '—']),
+            h('td', {}, [p.budgetItem || '—']),
+            h('td', {}, [p.execType || '—']),
+            h('td', {}, [p.org || '—']),
+            h('td', { class: 'num' }, [p.students != null ? `${p.students}명` : '—']),
+            h('td', {}, [p.hours || '—']),
+            h('td', { class: 'num' }, [p.satis != null ? `${p.satis}${p.satisN ? ` (n=${p.satisN})` : ' 🔴'}` : '—']),
+            h('td', { class: 'num' }, [p.budget != null ? `${fmtN(p.budget)}원` : '—']),
+            h('td', {}, [p.approval || '—'])
+          ])))
+        ])]) : h('div', { class: 'empty' }, ['접수된 프로그램이 없습니다.']),
+        h('h3', {}, [`지출 기록 (${d.spending.length})`]),
+        d.spending.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+          h('thead', {}, [h('tr', {}, ['검증','일자','지출건명','예산항목','TANKer','집행방식','금액','근거문서'].map(c => h('th', {}, [c])))]),
+          h('tbody', {}, d.spending.map(x => h('tr', {}, [
+            h('td', {}, [x.verified ? '🟢' : '🔴']),
+            h('td', {}, [x.date || '—']),
+            h('td', { class: 'strong' }, [x.name]),
+            h('td', {}, [x.item || '—']),
+            h('td', {}, [TK(x.tanker)]),
+            h('td', {}, [x.execType || '—']),
+            h('td', { class: 'num' }, [`${fmtN(x.amount)}원`]),
+            h('td', {}, [x.doc || '—'])
+          ])))
+        ])]) : h('div', { class: 'empty' }, ['기록된 지출이 없습니다.']),
+        h('h3', {}, ['성과지표']),
+        h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+          h('thead', {}, [h('tr', {}, ['구분','지표명','단위','’25 목표','’25 실적','’25 달성도','’26 목표'].map(c => h('th', {}, [c])))]),
+          h('tbody', {}, d.indicators.map(i => h('tr', {}, [
+            h('td', {}, [i.group]),
+            h('td', {}, [i.name]),
+            h('td', {}, [i.unit || '—']),
+            h('td', { class: 'num' }, [String(i.target25 || '—')]),
+            h('td', { class: 'num' }, [String(i.actual25 || '—')]),
+            h('td', { class: 'num' }, [i.rate25 !== '' ? `${i.rate25}%` : '—']),
+            h('td', { class: 'num strong' }, [String(i.target || '—')])
+          ])))
+        ])])
+      ])
+    ]);
+    document.body.appendChild(modal);
+  }
+
   function y2DivCard(d) {
     const waiting = d.status !== '진행';
     const satis = d.satisfaction.avg != null ? `${d.satisfaction.avg}` : '—';
-    return h('div', { class: `card y2-divcard ${waiting ? 'waiting' : ''}` }, [
+    return h('div', { class: `card y2-divcard ${waiting ? 'waiting' : ''}`, role: 'button', tabindex: '0',
+                      onclick: () => y2DivModal(d),
+                      onkeydown: (e) => { if (e.key === 'Enter') y2DivModal(d); } }, [
       h('div', { class: 'h' }, [ h('span', { class: 'y2-code' }, [d.code || d.key]), y2Status(d.status) ]),
       h('h3', { class: 'y2-name' }, [divName(d)]),
       h('div', { class: 'y2-full' }, [d.lead ? `책임자 ${d.lead}` : '']),
@@ -336,8 +402,39 @@
           h('h3', {}, ['집행방식']),
           h('div', { class: 'y2-exec' },
             ['자체운영', '용역(수의계약)', '용역(입찰)'].map(t =>
-              h('span', { class: `chip ${execCounts[t] ? '' : 'ghost'}` }, [`${t} ${execCounts[t] || 0}건`]))),
-          h('div', { class: 'note' }, ['용역 여부·계약방식은 프로그램 카드의 집행방식 필드에서 집계.'])
+              h('button', {
+                class: `chip y2-exec-btn ${execCounts[t] ? '' : 'ghost'}`,
+                'data-exec': t,
+                onclick: (e) => {
+                  const box = $('#y2-exec-detail');
+                  const btn = e.currentTarget;
+                  const already = btn.classList.contains('active');
+                  $$('.y2-exec-btn').forEach(b => b.classList.remove('active'));
+                  if (already) { box.innerHTML = ''; return; }
+                  btn.classList.add('active');
+                  const rows = [];
+                  divs.forEach(d => {
+                    d.programs.forEach(p => { if (p.execType === t) rows.push({ kind: '프로그램', div: d, name: p.name, item: p.budgetItem, amount: p.budget }); });
+                    d.spending.forEach(x => { if (x.execType === t) rows.push({ kind: '지출', div: d, name: x.name, item: x.item, amount: x.amount }); });
+                  });
+                  box.innerHTML = '';
+                  box.appendChild(h('div', { class: 'y2-exec-list' }, [
+                    h('div', { class: 'y2-exec-list-head' }, [`${t} — ${rows.length}건`]),
+                    rows.length ? h('table', { class: 'tbl' }, [
+                      h('thead', {}, [h('tr', {}, ['구분', '사업단', '내용', '예산항목', '금액'].map(c => h('th', {}, [c])))]),
+                      h('tbody', {}, rows.map(r => h('tr', {}, [
+                        h('td', {}, [r.kind]),
+                        h('td', { class: 'y2-divcell' }, [divName(r.div)]),
+                        h('td', {}, [r.name]),
+                        h('td', {}, [r.item || '—']),
+                        h('td', { class: 'num' }, [r.amount != null ? `${fmtN(r.amount)}원` : '—'])
+                      ])))
+                    ]) : h('div', { class: 'empty' }, ['해당 집행방식의 실적이 아직 없습니다.'])
+                  ]));
+                }
+              }, [`${t} ${execCounts[t] || 0}건`]))),
+          h('div', { id: 'y2-exec-detail' }),
+          h('div', { class: 'note' }, ['칩을 클릭하면 해당 집행방식의 프로그램·지출 목록이 표시됩니다.'])
         ])
       ])
     ]));
@@ -475,21 +572,25 @@
     _y2Chart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: Y2.divisions.map(chartLabel),
+        labels: Y2.divisions.map(d => d.key),
         datasets: [
-          { label: '편성(백만원)', data: Y2.divisions.map(d => d.budget.totalM), backgroundColor: 'rgba(10,37,64,0.18)', borderColor: '#0a2540', borderWidth: 1 },
-          { label: '집행(백만원)', data: Y2.divisions.map(d => d.budget.spentWon / 1e6), backgroundColor: 'rgba(28,114,147,0.75)', borderColor: '#1c7293', borderWidth: 1 }
+          { label: '편성(백만원)', data: Y2.divisions.map(d => d.budget.totalM), backgroundColor: 'rgba(10,37,64,0.16)', borderColor: '#0a2540', borderWidth: 1, borderRadius: 3 },
+          { label: '집행(백만원)', data: Y2.divisions.map(d => d.budget.spentWon / 1e6), backgroundColor: 'rgba(28,114,147,0.8)', borderColor: '#1c7293', borderWidth: 1, borderRadius: 3 }
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
         plugins: {
-          legend: { position: 'bottom' },
-          tooltip: { callbacks: { label: (c) =>
-            `${c.dataset.label}: ${Math.round(c.parsed.x * 1e6).toLocaleString('ko-KR')}원`
+          legend: { position: 'bottom', labels: { boxWidth: 14, font: { size: 11.5 } } },
+          tooltip: { callbacks: {
+            title: (items) => divNameWithCode(Y2.divisions[items[0].dataIndex]),
+            label: (c) => `${c.dataset.label}: ${Math.round(c.parsed.x * 1e6).toLocaleString('ko-KR')}원`
           } }
         },
-        scales: { x: { beginAtZero: true }, y: { ticks: { font: { size: 10.5 }, autoSkip: false } } }
+        scales: {
+          x: { beginAtZero: true, grid: { color: '#eef2f6' } },
+          y: { ticks: { font: { size: 12, weight: 700 }, autoSkip: false }, grid: { display: false } }
+        }
       }
     });
   }

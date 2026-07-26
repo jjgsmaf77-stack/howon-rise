@@ -1,5 +1,19 @@
 /* ---------- KoddiUDOnGothic (match tankeron) ---------- */
 @font-face {
+  font-family: 'KoPubWorld Dotum';
+  src: url('fonts/KoPubWorldDotum-Medium.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KoPubWorld Dotum';
+  src: url('fonts/KoPubWorldDotum-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
   font-family: 'KoddiUDOnGothic';
   src: url('fonts/KoddiUDOnGothic-Regular.ttf') format('truetype');
   font-weight: 400;
@@ -117,9 +131,12 @@
   --radius-lg: 14px;
   --radius-xl: 18px;
 
-  --font-sans: "KoddiUDOnGothic", system-ui, -apple-system, BlinkMacSystemFont,
+  /* 제목·강조용: KoddiUD 온고딕 (개성) */
+  --font-sans: "KoddiUDOnGothic", "KoPubWorld Dotum", system-ui, -apple-system, BlinkMacSystemFont,
                "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", Roboto, sans-serif;
-  /* Display stack (same family as body — matches tankeron) */
+  /* 본문·표·라벨용: KoPub월드 돋움 (정갈한 문서체) */
+  --font-body: "KoPubWorld Dotum", "KoddiUDOnGothic", system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", Roboto, sans-serif;
   --font-serif: "KoddiUDOnGothic", system-ui, -apple-system, BlinkMacSystemFont,
                 "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -128,7 +145,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
   color: var(--ink-900);
   background: var(--paper);
   line-height: 1.55;
@@ -2898,3 +2915,50 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .y2-ring span { position: relative; font-weight: 800; font-size: 15px; color: var(--g-800); }
 .y2-ring-meta { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--ink-500); }
 .y2-ring-meta b { font-size: 13.5px; color: var(--g-900); }
+
+/* 집행방식 클릭 상세 · 제목 서체 유지 */
+.y2-exec-btn { cursor: pointer; border: 1px solid var(--ink-100); background: #fff; font: inherit; }
+.y2-exec-btn.active { background: var(--g-600, #1c7293); color: #fff; border-color: var(--g-600, #1c7293); }
+.y2-exec-list { margin-top: 12px; }
+.y2-exec-list-head { font-weight: 800; font-size: 13px; color: var(--g-800); margin-bottom: 6px; }
+.section-title, .card h3, .card-head h2, .kpi .value, .brand .mark, .view-anchor,
+.tkb-headline, .tkb-result-name, .tkb-letter, .tkb-anchor-name { font-family: var(--font-sans); }
+
+/* 상단바: 입력관리와 동일한 네이비 그라데이션 */
+.topbar {
+  background: linear-gradient(120deg, #0a2540 0%, #102e55 70%, #16548c 100%);
+  border-bottom: 0;
+}
+.topbar .crumb { color: rgba(255,255,255,.82); }
+.topbar .crumb strong { color: #fff; }
+.topbar .date { color: rgba(255,255,255,.75); }
+.topbar .pill { background: rgba(255,255,255,.14); color: #fff; }
+.topbar .nav-toggle span { background: #fff; }
+.topbar #btn-admin.tb-btn.primary {
+  background: var(--br-400); color: #0a2540; border-color: var(--br-400);
+}
+.topbar #btn-admin.tb-btn.primary:hover { background: var(--br-300, #ffc93c); }
+
+/* 사업단 상세 모달 (읽기 전용) */
+.y2-modal {
+  position: fixed; inset: 0; z-index: 100; background: rgba(10,37,64,.45);
+  display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto;
+}
+.y2-modal-card {
+  background: #fff; border-radius: 16px; max-width: 1040px; width: 100%;
+  padding: 24px 28px 28px; box-shadow: 0 24px 60px rgba(10,37,64,.35);
+}
+.y2-modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.y2-modal-head h2 { margin: 6px 0 2px; font-size: 19px; color: var(--g-900); font-family: var(--font-sans); }
+.y2-modal-close {
+  border: 1px solid var(--ink-100); background: #fff; border-radius: 8px;
+  width: 34px; height: 34px; font-size: 15px; cursor: pointer; color: var(--ink-500); flex: none;
+}
+.y2-modal-close:hover { border-color: var(--g-600); color: var(--g-600); }
+.y2-modal-kpis {
+  display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12.5px; color: var(--ink-500);
+  background: #f4f9fc; border-radius: 10px; padding: 10px 14px; margin: 14px 0 6px;
+}
+.y2-modal-card h3 { font-size: 14px; color: var(--g-800); margin: 18px 0 8px; font-family: var(--font-sans); }
+.y2-divcard { cursor: pointer; }
+.y2-divcard:focus-visible { outline: 2px solid var(--g-600); }

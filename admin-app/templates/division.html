@@ -24,6 +24,25 @@
     <div class="foot">MOU {{ sm.spread['MOU'] }} · 언론 {{ sm.spread['언론보도'] }} · 행사 {{ sm.spread['행사'] }}</div></div>
 </div>
 
+{% if editable %}
+<details class="card" style="padding:14px 20px;">
+  <summary style="cursor:pointer;font-weight:700;color:var(--g-800);">✎ 사업단 정보 수정 (과제명·책임자·편성예산)</summary>
+  <form method="post" action="/division/{{ d.key }}/edit" class="form-grid" style="margin-top:12px;">
+    <label class="span2">과제명(사업단명) *
+      <input name="full_name" value="{{ d.full_name }}" required />
+    </label>
+    <label>책임자 <input name="lead" value="{{ d.lead }}" /></label>
+    <label>편성 총계(백만원) <input name="budget_total_m" value="{{ d.budget_total_m }}" inputmode="decimal" /></label>
+    <label>주관대학(백만원) <input name="budget_main_m" value="{{ d.budget_main_m }}" inputmode="decimal" /></label>
+    <label>운영비(백만원) <input name="budget_op_m" value="{{ d.budget_op_m }}" inputmode="decimal" /></label>
+    <div class="span2 form-actions">
+      <button class="btn primary sm">저장</button>
+      <span class="note">변경은 이력에 기록되며, 대시보드에는 다음 데이터 동기화 때 반영됩니다.</span>
+    </div>
+  </form>
+</details>
+{% endif %}
+
 <!-- 프로그램 -->
 <div class="card">
   <div class="card-head">
@@ -44,7 +63,11 @@
           <td class="num">{{ p.students if p.students is not none else "—" }}</td>
           <td>{{ p.hours or "—" }}</td>
           <td class="num">{% if p.satisfaction is not none %}{{ p.satisfaction }}{% if p.satisfaction_n %} <span class="muted">(n={{ p.satisfaction_n }})</span>{% else %} 🔴{% endif %}{% else %}—{% endif %}</td>
-          <td class="num">{% if p.budget_won is not none %}{{ "{:,}".format(p.budget_won) }}원{% else %}—{% endif %}</td>
+          <td class="num">
+            {% if p.budget_won is not none %}{{ "{:,}".format(p.budget_won) }}원{% else %}—{% endif %}
+            {% if p.exec_type %}<div class="muted" style="font-size:10.5px;">{{ p.exec_type }}</div>{% endif %}
+            {% if p.budget_item %}<div class="muted" style="font-size:10.5px;">{{ p.budget_item }}</div>{% endif %}
+          </td>
           <td class="acts">
             {% if editable %}
             <a class="btn ghost sm" href="/program/{{ p.id }}/edit">수정</a>

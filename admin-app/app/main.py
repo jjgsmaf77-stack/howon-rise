@@ -168,6 +168,44 @@ def division_page(key: str, request: Request, s: Session = Depends(db)):
                                        "editable": can_edit(u, key)})
 
 
+# ---------- 사업단 정보 수정 ----------
+@app.post("/division/{key}/edit")
+def division_edit(key: str, request: Request, full_name: str = Form(...), lead: str = Form(""),
+                  budget_total_m: str = Form(""), budget_main_m: str = Form(""), budget_op_m: str = Form(""),
+                  s: Session = Depends(db)):
+    u = require_user(request, s)
+    d = require_division(s, key)
+    if not can_edit(u, key):
+        raise HTTPException(403)
+    def fnum(v, label):
+        v = (v or "").replace(",", "").strip()
+        if v == "":
+            return None
+        try:
+            return float(v)
+        except ValueError:
+            raise HTTPException(422, f"{label}: 숫자를 입력하세요")
+    changes = []
+    full_name = full_name.strip()
+    if full_name and full_name != d.full_name:
+        changes.append(f"과제명: {d.full_name!r}→{full_name!r}")
+        d.full_name = full_name
+    lead = lead.strip()
+    if lead != d.lead:
+        changes.append(f"책임자: {d.lead!r}→{lead!r}")
+        d.lead = lead
+    for field, label, val in [("budget_total_m", "편성 총계", fnum(budget_total_m, "편성 총계")),
+                              ("budget_main_m", "주관대학", fnum(budget_main_m, "주관대학")),
+                              ("budget_op_m", "운영비", fnum(budget_op_m, "운영비"))]:
+        if val is not None and getattr(d, field) != val:
+            changes.append(f"{label}: {getattr(d, field)}→{val}")
+            setattr(d, field, val)
+    if changes:
+        audit(s, u, "update", "division", key, "; ".join(changes))
+        s.commit()
+    return RedirectResponse(f"/division/{key}", status_code=303)
+
+
 # ---------- 프로그램 CRUD ----------
 def _num(v, label, *, is_int, min_val=None, max_val=None):
     """폼 숫자 파싱 — 실패 시 500이 아니라 422로 사용자에게 알림. 콤마 허용."""
