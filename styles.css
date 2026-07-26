@@ -2807,9 +2807,9 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   font-size: 10.5px; font-weight: 700; color: var(--g-600);
   background: #e5f1f7; border-radius: 6px; padding: 2px 8px; letter-spacing: .02em;
 }
-.y2-name {
-  margin: 8px 0 2px; font-size: 14.5px; line-height: 1.35; color: var(--g-900);
-  min-height: 2.7em; display: flex; align-items: flex-start;
+.card h3.y2-name, .y2-divcard h3.y2-name {
+  margin: 8px 0 2px; font-size: 12px; line-height: 1.4; color: var(--g-900);
+  letter-spacing: -0.05em; word-break: keep-all; font-weight: 700;
 }
 .y2-divcard .y2-full { white-space: normal; }
 .y2-rate-row { padding: 7px 0; border-bottom: 1px solid #f0f3f6; }
