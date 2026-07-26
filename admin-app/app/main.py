@@ -29,7 +29,9 @@ IS_SQLITE = DATABASE_URL.startswith("sqlite")
 if IS_SQLITE:
     (BASE / "data").mkdir(exist_ok=True)
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if IS_SQLITE else {})
+# pool_pre_ping: 서버리스/Neon처럼 유휴 연결이 끊기는 환경에서 죽은 커넥션 자동 감지
+engine = create_engine(DATABASE_URL, pool_pre_ping=True,
+                       connect_args={"check_same_thread": False} if IS_SQLITE else {})
 
 # 세션 서명 키: 환경변수 필수. 미설정 시 매 기동마다 무작위 생성(하드코딩 키 위조 방지).
 # 무작위 키는 재기동 시 기존 세션을 무효화하므로(재로그인 필요), 운영에서는 SESSION_SECRET를 반드시 지정.
@@ -42,11 +44,23 @@ EXPORT_TOKEN = os.environ.get("EXPORT_TOKEN")
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "0") == "1"
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+_db_ready = False
+
+
+def ensure_db():
+    # 테이블 생성+시드 (멱등). 서버리스(Vercel)에선 lifespan이 보장되지 않아 요청 시 1회 호출.
+    global _db_ready
+    if _db_ready:
+        return
     SQLModel.metadata.create_all(engine)
     with Session(engine) as s:
         seed_mod.seed(s)
+    _db_ready = True
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_db()
     yield
 
 
@@ -74,6 +88,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 
 def db():
+    ensure_db()
     with Session(engine) as s:
         yield s
 
