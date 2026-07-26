@@ -2887,7 +2887,7 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 }
 
 /* 로고 · 도넛 · 링 */
-.logo-hu { width: 92px; height: auto; display: block; margin-bottom: 10px; }
+.logo-hu { width: 48px; height: auto; display: block; margin-bottom: 8px; }
 .y2-donut-wrap { height: 190px; margin-bottom: 10px; }
 .y2-ringrow { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
 .y2-ring {
