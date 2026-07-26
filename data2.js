@@ -1,10 +1,44 @@
 // 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.
 window.__RISE2__ = {
-  "generatedAt": "2026-07-26T04:56:59.879Z",
+  "generatedAt": "2026-07-26T05:17:09.652Z",
   "year": 2026,
   "yearLabel": "2차년도(2026)",
   "source": "성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)",
   "divisions": [
+    {
+      "key": "본부",
+      "code": "HW-HQ",
+      "fullName": "앵커(RISE)사업단 본부",
+      "lead": "정의붕(사업단장) 🔴확인",
+      "budget": {
+        "totalM": 0,
+        "mainM": 0,
+        "opM": 0,
+        "spentWon": 0,
+        "rate": 0
+      },
+      "budgetPlan": [],
+      "programs": [],
+      "spending": [],
+      "students": 0,
+      "satisfaction": {
+        "avg": null,
+        "n": 0,
+        "scale": 5,
+        "excluded": 0
+      },
+      "spread": {
+        "초광역": 0,
+        "사업단연계": 0,
+        "MOU": 0,
+        "언론보도": 0,
+        "행사": 0
+      },
+      "spreadPending": 0,
+      "indicators": [],
+      "unverified": 0,
+      "status": "자료대기"
+    },
     {
       "key": "보건",
       "code": "R26-T1-S1-HW-01",
@@ -759,8 +793,8 @@ window.__RISE2__ = {
         "totalM": 294,
         "mainM": 185,
         "opM": 109,
-        "spentWon": 8585380,
-        "rate": 2.9
+        "spentWon": 6450000,
+        "rate": 2.2
       },
       "budgetPlan": [
         {
@@ -801,90 +835,56 @@ window.__RISE2__ = {
       ],
       "programs": [
         {
-          "file": "2026-05 COOKING브릿지-조리경연대회 교육(덕암정보고)",
-          "name": "COOKING브릿지-조리경연대회 교육",
+          "file": "2026-07 COOKING브릿지-조리경연대회 교육(진경여고)",
+          "name": "COOKING브릿지-조리경연대회 교육(진경여고)",
           "category": "경연대회지도",
-          "org": "덕암정보고등학교",
-          "period": "2026-05-15 ~ 2026-06-15",
-          "students": 16,
-          "hours": "18차시(6회)",
-          "satis": 4.56,
-          "satisN": 16,
+          "org": "진경여자고등학교",
+          "period": "2026-06-26 ~ 2026-07-15",
+          "students": 48,
+          "hours": "12시간(4회)",
+          "satis": null,
+          "satisN": null,
           "satisScale": 5,
-          "budget": 7650000,
+          "budget": 6450000,
           "budgetItem": "교육·연구 프로그램 운영·개발",
           "tanker": "T",
           "tankerSub": "K",
           "execType": "자체운영",
           "indicators": [
             "지자체➊ 연계교육",
-            "자체➋ 대회수상률",
-            "자체➍ 만족도지수"
+            "자체➋ 대회수상률"
           ],
           "status": "추출완료",
-          "approval": "RISE사업팀-1355(2026.06.25)"
-        },
-        {
-          "file": "2026-05 아이들 웃음도 JobGO 배움도 JobGO(사회공헌)",
-          "name": "아이들 웃음도 JobGO! 배움도 JobGO!",
-          "category": "사회공헌·봉사",
-          "org": "익산보육원",
-          "period": "2026-05-03",
-          "students": 17,
-          "hours": "1회",
-          "satis": 4.92,
-          "satisN": null,
-          "satisScale": 5,
-          "budget": 935380,
-          "budgetItem": "지역 연계 협업 지원",
-          "tanker": "A",
-          "tankerSub": "",
-          "execType": "자체운영",
-          "indicators": [
-            "사업단연계",
-            "행사(분류확인)"
-          ],
-          "status": "추출완료",
-          "approval": "RISE사업팀-1288(2026.06.09)"
+          "approval": "결과보고서 제출 2026.07.15 (계획 제출 06.25)"
         }
       ],
       "spending": [
         {
-          "date": "2026-06-09",
-          "name": "사회공헌단 프로그램 현수막·재료비",
-          "item": "지역 연계 협업 지원",
-          "tanker": "A",
-          "execType": "자체운영",
-          "amount": 935380,
-          "doc": "RISE사업팀-1288 지급요청",
-          "verified": false
-        },
-        {
-          "date": "2026-06-25",
-          "name": "COOKING브릿지 강사료·재료비",
+          "date": "2026-07-15",
+          "name": "COOKING브릿지(진경여고) 강사료·재료비",
           "item": "교육·연구 프로그램 운영·개발",
           "tanker": "T",
           "execType": "자체운영",
-          "amount": 7650000,
-          "doc": "RISE사업팀-1355 결과보고",
+          "amount": 6450000,
+          "doc": "결과보고서(최종_0716) 지출내역 p.5",
           "verified": false
         }
       ],
-      "students": 33,
+      "students": 48,
       "satisfaction": {
-        "avg": 4.56,
-        "n": 16,
+        "avg": null,
+        "n": 0,
         "scale": 5,
-        "excluded": 1
+        "excluded": 0
       },
       "spread": {
         "초광역": 0,
-        "사업단연계": 1,
+        "사업단연계": 0,
         "MOU": 0,
         "언론보도": 0,
         "행사": 0
       },
-      "spreadPending": 1,
+      "spreadPending": 0,
       "indicators": [
         {
           "group": "지자체➊",
@@ -941,7 +941,7 @@ window.__RISE2__ = {
           "target": "84.0"
         }
       ],
-      "unverified": 4,
+      "unverified": 2,
       "status": "진행"
     },
     {
@@ -1067,16 +1067,16 @@ window.__RISE2__ = {
   ],
   "totals": {
     "budgetM": 2975,
-    "spentWon": 8585380,
-    "programs": 2,
-    "students": 33,
-    "unverified": 4,
+    "spentWon": 6450000,
+    "programs": 1,
+    "students": 48,
+    "unverified": 2,
     "activeDivisions": 1,
-    "rate": 0.29
+    "rate": 0.22
   },
   "warnings": [
     "프로그램 자료 접수: 1/8 사업단 — 나머지 사업단 결과보고서 투입 필요",
     "집행률은 인박스에 투입된 지출 문서만 반영 (비프로그램성 지출 미반영 시 실제보다 낮음)",
-    "미검증(🔴) 항목 4건 — 확정 전 수치는 잠정값"
+    "미검증(🔴) 항목 2건 — 확정 전 수치는 잠정값"
   ]
 };

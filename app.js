@@ -404,7 +404,37 @@
           h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl y2-matrix' }, [
             h('thead', {}, [h('tr', {}, [
               h('th', {}, ['예산항목']),
-              ...TANKER_KEYS.map(k => h('th', { class: 'num y2-tkh' }, [
+              ...TANKER_KEYS.map(k => h('th', {
+                class: 'num y2-tkh y2-tkh-btn', 'data-tk': k, title: `${TANKER[k]} 관련 프로그램·지출 보기`,
+                onclick: (e) => {
+                  const box = $('#y2-tk-detail');
+                  const th = e.currentTarget;
+                  const already = th.classList.contains('active');
+                  $$('.y2-tkh-btn').forEach(x => x.classList.remove('active'));
+                  if (already) { box.innerHTML = ''; return; }
+                  th.classList.add('active');
+                  const rows = [];
+                  divs.forEach(d => {
+                    d.programs.forEach(p => { if (p.tanker === k || p.tankerSub === k) rows.push({ kind: p.tanker === k ? '프로그램' : '프로그램(부분류)', div: d, name: p.name, item: p.budgetItem, students: p.students, amount: p.budget }); });
+                    d.spending.forEach(x => { if (x.tanker === k) rows.push({ kind: '지출', div: d, name: x.name, item: x.item, students: null, amount: x.amount }); });
+                  });
+                  box.innerHTML = '';
+                  box.appendChild(h('div', { class: 'y2-exec-list' }, [
+                    h('div', { class: 'y2-exec-list-head' }, [`${k} ${TANKER[k]} — 관련 ${rows.length}건`]),
+                    rows.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
+                      h('thead', {}, [h('tr', {}, ['구분', '사업단', '내용', '예산항목', '참여', '금액'].map(c => h('th', {}, [c])))]),
+                      h('tbody', {}, rows.map(r => h('tr', {}, [
+                        h('td', {}, [r.kind]),
+                        h('td', { class: 'y2-divcell' }, [divName(r.div)]),
+                        h('td', {}, [r.name]),
+                        h('td', {}, [r.item || '—']),
+                        h('td', { class: 'num' }, [r.students != null ? `${r.students}명` : '—']),
+                        h('td', { class: 'num' }, [r.amount != null ? `${fmtN(r.amount)}원` : '—'])
+                      ])))
+                    ])]) : h('div', { class: 'empty' }, [`${TANKER[k]} 분류의 실적이 아직 없습니다.`])
+                  ]));
+                }
+              }, [
                 h('div', { class: 'l' }, [k]),
                 h('div', { class: 'n' }, [TANKER[k]])
               ])),
@@ -427,7 +457,8 @@
               });
             })())
           ])]),
-          h('div', { class: 'note' }, ['건수=프로그램(주분류 기준), 금액=지출 기록 — 셀 색 농도는 집행액 비중. 부분류는 카드에 참고 표기.'])
+          h('div', { id: 'y2-tk-detail' }),
+          h('div', { class: 'note' }, ['건수=프로그램(주분류 기준), 금액=지출 기록 — 셀 색 농도는 집행액 비중. T·A·N·K 헤더를 클릭하면 관련 프로그램·지출 목록이 표시됩니다.'])
         ]),
         h('div', { class: 'card' }, [
           h('h3', {}, ['TANKer 전략별 집행 분포']),

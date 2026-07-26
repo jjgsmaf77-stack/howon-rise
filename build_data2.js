@@ -9,7 +9,7 @@ const path = require('path');
 const VAULT = process.argv[2] || 'G:/홍인기_옵시디언/LLM_Wiki/2_Wiki/성과관리';
 const OUT = path.join(__dirname, 'data2.js');
 
-const DIVISIONS = ['보건', '컬쳐', 'JB집', '성인', '드론', '축제', '맛잡고', '늘봄'];
+const DIVISIONS = ['본부', '보건', '컬쳐', 'JB집', '성인', '드론', '축제', '맛잡고', '늘봄'];
 const WARN = []; // 파싱 중 무시/탈락된 항목 — 침묵 탈락 금지
 
 // ---------- 2축 분류 체계 (설계문서 §12, 2026-07-26 확정) ----------

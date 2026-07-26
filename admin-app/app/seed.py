@@ -7,6 +7,7 @@ import os
 
 DIVISIONS = [
     # key, code, full_name, lead, total, main, op
+    ("본부", "HW-HQ", "앵커(RISE)사업단 본부", "정의붕(사업단장)", 0, 0, 0),
     ("보건", "R26-T1-S1-HW-01", "JB 산업체 근로자의 Healthcare 융합인재양성", "홍지연(간호학과)", 1042, 650, 392),
     ("컬쳐", "R26-T2-S2-HW-01", "지산학 K-컬처&아트테크 창업가 양성대학", "조항민", 303, 191, 112),
     ("JB집", "R26-T2-S3-HW-01", "해외 우수인재 원스톱 지원을 위한 JB-Zip사업", "한성관", 152, 94.5, 57.5),
@@ -85,37 +86,24 @@ INDICATORS = {
     ],
 }
 
-# 옵시디언 A층 카드 (2026-07-26 기준, 2축 분류 반영)
+# 옵시디언 A층 카드 (2026-07-26 초기화 후 — 정본: ★★★2차년도 앵커사업단 성과관리★★★ 폴더)
 PROGRAMS = [
-    dict(division_key="맛잡고", name="COOKING브릿지-조리경연대회 교육", category="경연대회지도",
-         org="덕암정보고등학교", period="2026-05-15 ~ 2026-06-15", students=16, hours="18차시(6회)",
-         satisfaction=4.56, satisfaction_n=16, satisfaction_scale=5,
-         budget_won=7650000, budget_item="교육·연구 프로그램 운영·개발",
+    dict(division_key="맛잡고", name="COOKING브릿지-조리경연대회 교육(진경여고)", category="경연대회지도",
+         org="진경여자고등학교", period="2026-06-26 ~ 2026-07-15", students=48, hours="12시간(4회)",
+         satisfaction=None, satisfaction_n=None, satisfaction_scale=5,
+         budget_won=6450000, budget_item="교육·연구 프로그램 운영·개발",
          tanker="T", tanker_sub="K", exec_type="자체운영",
-         indicator_tags="지자체➊ 연계교육, 자체➋ 대회수상률, 자체➍ 만족도지수",
-         extra="2025 대한민국 국제요리&제과 경연대회 수상 9건(대상2·금2·은2·우수1·장려1·지회장상1), 참가 16명 전원 수상",
-         approval_doc="RISE사업팀-1355(2026.06.25)",
-         evidence="COOKING브릿지- 덕암정보고 조리경연대회 교육 결과보고서.pdf | p.1 | 참여 16명·수상 9건\nCOOKING브릿지 만족도조사.pdf | p.1 | 종합만족도 4.56\n결과보고서.pdf | p.3 | 지출 7,650,000원",
-         card_file="2026-05 COOKING브릿지-조리경연대회 교육(덕암정보고)", status="추출완료"),
-    dict(division_key="맛잡고", name="아이들 웃음도 JobGO! 배움도 JobGO!", category="사회공헌·봉사",
-         org="익산보육원", period="2026-05-03", students=17, hours="1회",
-         satisfaction=4.92, satisfaction_n=None, satisfaction_scale=5,
-         budget_won=935380, budget_item="지역 연계 협업 지원",
-         tanker="A", exec_type="자체운영",
-         indicator_tags="사업단연계, 행사(분류확인)",
-         extra="H-성인학습지원사업단×맛JobGO 연계 사회공헌 (총 19명, 교직원 2 포함). 행사 분류 여부 확인 필요",
-         approval_doc="RISE사업팀-1288(2026.06.09)",
-         evidence="아이들 웃음도 JobGO! 배움도 JobGO! 결과보고_붙임파일.pdf | p.1 | 참여 19명·만족도 4.92",
-         card_file="2026-05 아이들 웃음도 JobGO 배움도 JobGO(사회공헌)", status="추출완료"),
+         indicator_tags="지자체➊ 연계교육, 자체➋ 대회수상률",
+         extra="2026 대한민국 국제요리&제과 경연대회 10팀 전원 수상(금상 6팀·은상 4팀, 특별상: 전북교육감상·대회장상·국회의원상·기후에너지환경부장관상·조리기능장려회장상). 만족도조사 미제출 🔴",
+         approval_doc="결과보고서 제출 2026.07.15",
+         evidence="COOKING브릿지- 진경여고 조리경연대회 교육 결과보고서_（최종＿0716）.pdf | p.1,4 | 참여 48명·10팀 수상\n〃 | p.5 | 지출 6,450,000원",
+         card_file="2026-07 COOKING브릿지-조리경연대회 교육(진경여고)", status="추출완료"),
 ]
 
 SPENDINGS = [
-    dict(division_key="맛잡고", date="2026-06-09", name="사회공헌단 프로그램 현수막·재료비",
-         budget_item="지역 연계 협업 지원", tanker="A", exec_type="자체운영",
-         amount_won=935380, doc="RISE사업팀-1288 지급요청", verified=False),
-    dict(division_key="맛잡고", date="2026-06-25", name="COOKING브릿지 강사료·재료비",
+    dict(division_key="맛잡고", date="2026-07-15", name="COOKING브릿지(진경여고) 강사료·재료비",
          budget_item="교육·연구 프로그램 운영·개발", tanker="T", exec_type="자체운영",
-         amount_won=7650000, doc="RISE사업팀-1355 결과보고", verified=False),
+         amount_won=6450000, doc="결과보고서(최종_0716) 지출내역 p.5", verified=False),
 ]
 
 
@@ -125,7 +113,7 @@ def seed(session: Session):
     for i, (key, code, full, lead, t, m, op) in enumerate(DIVISIONS):
         session.add(Division(key=key, code=code, full_name=full, lead=lead,
                              budget_total_m=t, budget_main_m=m, budget_op_m=op, sort=i))
-        for grp, name, unit, t25, a25, r25, t26 in INDICATORS[key]:
+        for grp, name, unit, t25, a25, r25, t26 in INDICATORS.get(key, []):
             session.add(Indicator(division_key=key, grp=grp, name=name, unit=unit,
                                   target25=t25, actual25=a25, rate25=r25, target26=t26))
     for p in PROGRAMS:

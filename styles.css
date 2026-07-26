@@ -2990,3 +2990,15 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .y2-tk, .y2-code { border-radius: 3px; }
 .y2-modal-kpis, .y2-modal-close { border-radius: 4px; }
 .qr-dl, .tb-btn, .btn { border-radius: 4px; }
+.y2-tkh-btn { cursor: pointer; user-select: none; }
+.y2-tkh-btn:hover .l { color: var(--br-400); }
+.y2-tkh-btn.active { background: var(--g-600) !important; }
+.y2-tkh-btn.active .l, .y2-tkh-btn.active .n { color: #fff; }
+
+/* 사이드바 브랜드: KoPub돋움 + 전 항목 한 줄 고정 */
+.brand .mark {
+  font-family: var(--font-body); font-weight: 700; font-size: 16px;
+  letter-spacing: -0.04em; white-space: nowrap;
+}
+.brand .sub { white-space: nowrap; font-size: 11px; letter-spacing: -0.02em; }
+.brand .tag { white-space: nowrap; font-size: 9.5px; letter-spacing: .14em; }
