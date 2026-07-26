@@ -3002,3 +3002,12 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 }
 .brand .sub { white-space: nowrap; font-size: 11px; letter-spacing: -0.02em; }
 .brand .tag { white-space: nowrap; font-size: 9.5px; letter-spacing: .14em; }
+
+/* 표 가독성: 셀 줄바꿈 최소화 — 짧은 값은 한 줄, 이름류만 어절 줄바꿈 */
+#view-year2 .tbl th, #view-year2 .tbl td,
+.y2-modal .tbl th, .y2-modal .tbl td { white-space: nowrap; }
+#view-year2 .tbl td:nth-child(2), .y2-modal .tbl td:nth-child(2) {
+  white-space: normal; word-break: keep-all; min-width: 190px; line-height: 1.45;
+}
+#view-year2 .tbl td.y2-divcell, .y2-modal .tbl td.y2-divcell { white-space: normal; }
+.y2-exec-sub { white-space: nowrap; }

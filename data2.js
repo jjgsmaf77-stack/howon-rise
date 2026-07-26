@@ -1,6 +1,6 @@
 // 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.
 window.__RISE2__ = {
-  "generatedAt": "2026-07-26T05:17:09.652Z",
+  "generatedAt": "2026-07-26T05:31:18.918Z",
   "year": 2026,
   "yearLabel": "2차년도(2026)",
   "source": "성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)",
@@ -9,7 +9,7 @@ window.__RISE2__ = {
       "key": "본부",
       "code": "HW-HQ",
       "fullName": "앵커(RISE)사업단 본부",
-      "lead": "정의붕(사업단장) 🔴확인",
+      "lead": "서충길",
       "budget": {
         "totalM": 0,
         "mainM": 0,

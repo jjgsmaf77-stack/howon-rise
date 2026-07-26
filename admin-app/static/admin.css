@@ -147,3 +147,8 @@ fieldset.satis .note { grid-column: span 3; }
   .topbar { flex-wrap: wrap; gap: 10px; }
   .userbox { margin-left: 0; }
 }
+
+/* 표 가독성: 짧은 값 한 줄 고정, 이름류만 어절 줄바꿈 */
+.tbl th, .tbl td { white-space: nowrap; }
+.tbl td.strong { white-space: normal; word-break: keep-all; min-width: 190px; line-height: 1.45; }
+.tbl td .muted { white-space: nowrap; }
