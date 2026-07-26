@@ -2,6 +2,60 @@
 // 데이터 원천: 옵시디언 성과관리 볼트 → build_data2.js → data2.js (window.__RISE2__)
 // 1차년도(2025) 뷰·데이터(data.js)는 2026-07 개편으로 제거됨 — git 이력에서 복원 가능.
 (() => {
+  // ---------- 접근 비밀번호 게이트 (정적 사이트 — 열람 차단막 수준) ----------
+  // 비밀번호 변경: 새 값의 SHA-256 해시를 아래 PW_HASH에 넣으면 됨.
+  //   node -e "console.log(require('crypto').createHash('sha256').update('새비번').digest('hex'))"
+  const PW_HASH = '3b501506c66e869ecdf39dc3b787c71078ce74351a18db1c79aa4477edd126b6'; // howon2026
+  const UNLOCK_KEY = 'anchor.unlocked.v1';
+
+  async function sha256Hex(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function showGate() {
+    const style = document.createElement('style');
+    style.textContent = `
+      #pw-gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+        background:linear-gradient(135deg,#0a2540,#16548c);color:#fff;font-family:'Noto Sans KR',sans-serif}
+      #pw-gate .box{width:340px;text-align:center;padding:34px 30px}
+      #pw-gate .logo{font-weight:800;letter-spacing:.08em;font-size:13px;color:#ffc93c}
+      #pw-gate h1{font-size:19px;margin:8px 0 4px}
+      #pw-gate p{opacity:.8;font-size:12.5px;margin:0 0 20px}
+      #pw-gate input{width:100%;padding:11px 12px;border:0;border-radius:8px;font-size:14px;box-sizing:border-box}
+      #pw-gate button{width:100%;margin-top:10px;padding:11px;border:0;border-radius:8px;background:#ffc93c;
+        color:#0a2540;font-weight:800;font-size:14px;cursor:pointer}
+      #pw-gate .err{color:#ffd0c8;font-size:12px;margin-top:10px;min-height:16px}`;
+    document.head.appendChild(style);
+    const gate = document.createElement('div');
+    gate.id = 'pw-gate';
+    gate.innerHTML = `<div class="box">
+      <div class="logo">HOWON · ANCHOR PLATFORM</div>
+      <h1>성과관리 플랫폼</h1>
+      <p>접근 비밀번호를 입력하세요</p>
+      <input id="pw-in" type="password" autocomplete="current-password" placeholder="비밀번호" />
+      <button id="pw-go">들어가기</button>
+      <div class="err" id="pw-err"></div>
+    </div>`;
+    document.body.appendChild(gate);
+    const input = gate.querySelector('#pw-in');
+    const err = gate.querySelector('#pw-err');
+    input.focus();
+    const tryUnlock = async () => {
+      const hex = await sha256Hex(input.value);
+      if (hex === PW_HASH) {
+        sessionStorage.setItem(UNLOCK_KEY, '1');
+        gate.remove();
+        init();
+      } else {
+        err.textContent = '비밀번호가 올바르지 않습니다.';
+        input.value = ''; input.focus();
+      }
+    };
+    gate.querySelector('#pw-go').addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+  }
+
   // ---------- helpers ----------
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
@@ -809,5 +863,9 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', init);
+  function boot() {
+    if (sessionStorage.getItem(UNLOCK_KEY) === '1') init();
+    else showGate();
+  }
+  document.addEventListener('DOMContentLoaded', boot);
 })();

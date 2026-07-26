@@ -119,6 +119,36 @@ def division_summary(s: Session, d: Division) -> dict:
 
 
 # ---------- 화면 ----------
+# 무차별 대입 방어: IP별 로그인 실패 카운트 (인메모리, 5분 창)
+_login_fails: dict = {}
+LOGIN_MAX_FAILS = 8
+LOGIN_WINDOW_SEC = 300
+
+
+def _client_ip(request: Request) -> str:
+    xff = request.headers.get("x-forwarded-for")
+    return (xff.split(",")[0].strip() if xff else (request.client.host if request.client else "?"))
+
+
+def _login_blocked(ip: str) -> bool:
+    rec = _login_fails.get(ip)
+    if not rec:
+        return False
+    fails, first = rec
+    if (now_utc() - first).total_seconds() > LOGIN_WINDOW_SEC:
+        _login_fails.pop(ip, None)
+        return False
+    return fails >= LOGIN_MAX_FAILS
+
+
+def _login_record_fail(ip: str):
+    rec = _login_fails.get(ip)
+    if rec and (now_utc() - rec[1]).total_seconds() <= LOGIN_WINDOW_SEC:
+        _login_fails[ip] = (rec[0] + 1, rec[1])
+    else:
+        _login_fails[ip] = (1, now_utc())
+
+
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
     return templates.TemplateResponse(request, "login.html", {"error": None})
@@ -126,9 +156,15 @@ def login_page(request: Request):
 
 @app.post("/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...), s: Session = Depends(db)):
+    ip = _client_ip(request)
+    if _login_blocked(ip):
+        return templates.TemplateResponse(request, "login.html",
+            {"error": "로그인 시도가 너무 많습니다. 5분 후 다시 시도하세요."}, status_code=429)
     u = s.exec(select(User).where(User.username == username)).first()
     if not u or not verify_password(password, u.password_hash):
+        _login_record_fail(ip)
         return templates.TemplateResponse(request, "login.html", {"error": "아이디 또는 비밀번호가 올바르지 않습니다."}, status_code=401)
+    _login_fails.pop(ip, None)
     request.session["uid"] = u.id
     return RedirectResponse("/", status_code=303)
 
