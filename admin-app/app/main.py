@@ -1,7 +1,9 @@
 # 호원RISE 성과 입력관리 v2 — FastAPI 단일 서비스 (서버렌더링)
 # 실행: uvicorn app.main:app --port 8090   (admin-app/ 디렉터리에서)
+import hashlib
 import os
 import secrets
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,9 +15,11 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from sqlmodel import SQLModel, Session, create_engine, select
 
-from .models import (Division, Indicator, Program, Spending, User, AuditLog,
+from .models import (Division, Indicator, Program, Spending, User, AuditLog, LoginFail,
                      STATUS_FLOW, PROGRAM_CATEGORIES, BUDGET_ITEMS, TANKER, EXEC_TYPES, now_utc)
 from .auth import hash_password, verify_password
 from . import seed as seed_mod
@@ -67,6 +71,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="호원RISE 성과 입력관리", lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET,
                    https_only=COOKIE_SECURE, same_site="lax")
+# 정적 대시보드(howonrise.co.kr)에서 계정 인증·AI 질의 호출 허용 (Bearer 토큰 방식, 쿠키 미사용)
+app.add_middleware(CORSMiddleware,
+                   allow_origins=["https://www.howonrise.co.kr", "https://howonrise.co.kr",
+                                  "http://localhost:8087"],
+                   allow_methods=["GET", "POST", "OPTIONS"],
+                   allow_headers=["Content-Type", "Authorization"])
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
 
@@ -134,8 +144,7 @@ def division_summary(s: Session, d: Division) -> dict:
 
 
 # ---------- 화면 ----------
-# 무차별 대입 방어: IP별 로그인 실패 카운트 (인메모리, 5분 창)
-_login_fails: dict = {}
+# 무차별 대입 방어: IP별 로그인 실패 카운트 — DB 기반 (서버리스 다중 인스턴스에서도 공유)
 LOGIN_MAX_FAILS = 8
 LOGIN_WINDOW_SEC = 300
 
@@ -145,23 +154,83 @@ def _client_ip(request: Request) -> str:
     return (xff.split(",")[0].strip() if xff else (request.client.host if request.client else "?"))
 
 
-def _login_blocked(ip: str) -> bool:
-    rec = _login_fails.get(ip)
-    if not rec:
-        return False
-    fails, first = rec
-    if (now_utc() - first).total_seconds() > LOGIN_WINDOW_SEC:
-        _login_fails.pop(ip, None)
-        return False
-    return fails >= LOGIN_MAX_FAILS
+def _login_blocked(ip: str, s: Session) -> bool:
+    cutoff = time.time() - LOGIN_WINDOW_SEC
+    fails = s.exec(select(LoginFail).where(LoginFail.ip == ip, LoginFail.ts > cutoff)).all()
+    return len(fails) >= LOGIN_MAX_FAILS
 
 
-def _login_record_fail(ip: str):
-    rec = _login_fails.get(ip)
-    if rec and (now_utc() - rec[1]).total_seconds() <= LOGIN_WINDOW_SEC:
-        _login_fails[ip] = (rec[0] + 1, rec[1])
-    else:
-        _login_fails[ip] = (1, now_utc())
+def _login_record_fail(ip: str, s: Session):
+    # 오래된 기록은 기회적으로 정리 (테이블 무한 성장 방지)
+    for old in s.exec(select(LoginFail).where(LoginFail.ts < time.time() - LOGIN_WINDOW_SEC * 2)).all():
+        s.delete(old)
+    s.add(LoginFail(ip=ip, ts=time.time()))
+    s.commit()
+
+
+def _login_clear(ip: str, s: Session):
+    for rec in s.exec(select(LoginFail).where(LoginFail.ip == ip)).all():
+        s.delete(rec)
+    s.commit()
+
+
+# ---------- 정적 대시보드(howonrise.co.kr)용 계정 인증 토큰 ----------
+_site_ts = URLSafeTimedSerializer(SESSION_SECRET, salt="site-token")
+SITE_TOKEN_TTL = 43200  # 12시간
+
+
+def _pw_tag(u: User) -> str:
+    # 토큰을 현재 비밀번호에 바인딩 — 비밀번호 변경 시 기발급 토큰 즉시 무효화(폐기 수단)
+    return hashlib.sha256(u.password_hash.encode()).hexdigest()[:12]
+
+
+def make_site_token(u: User) -> str:
+    return _site_ts.dumps({"uid": u.id, "pw": _pw_tag(u)})
+
+
+def check_site_token(token: str, s: Session) -> Optional[User]:
+    try:
+        data = _site_ts.loads(token, max_age=SITE_TOKEN_TTL)
+    except (BadSignature, SignatureExpired):
+        return None
+    except Exception:
+        return None
+    u = s.get(User, data.get("uid"))
+    if u and data.get("pw") == _pw_tag(u):
+        return u
+    return None
+
+
+def user_from_session_or_token(request: Request, s: Session) -> Optional[User]:
+    u = current_user(request, s)
+    if u:
+        return u
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer "):
+        return check_site_token(auth[7:].strip(), s)
+    return None
+
+
+@app.post("/api/auth-check")
+async def auth_check(request: Request, s: Session = Depends(db)):
+    """정적 사이트 게이트용: 계정 검증 후 12시간 토큰 발급 (세션 쿠키 없음)."""
+    ip = _client_ip(request)
+    if _login_blocked(ip, s):
+        return JSONResponse({"ok": False, "error": "로그인 시도가 너무 많습니다. 5분 후 다시 시도하세요."}, status_code=429)
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(422, "잘못된 요청입니다")
+    username = (body.get("username") or "").strip()
+    password = body.get("password") or ""
+    u = s.exec(select(User).where(User.username == username)).first()
+    if not u or not verify_password(password, u.password_hash):
+        _login_record_fail(ip, s)
+        return JSONResponse({"ok": False, "error": "아이디 또는 비밀번호가 올바르지 않습니다."}, status_code=401)
+    _login_clear(ip, s)
+    return {"ok": True, "token": make_site_token(u),
+            "display": u.display_name or u.username,
+            "division": u.division_key, "isAdmin": u.is_admin}
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -172,14 +241,14 @@ def login_page(request: Request):
 @app.post("/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...), s: Session = Depends(db)):
     ip = _client_ip(request)
-    if _login_blocked(ip):
+    if _login_blocked(ip, s):
         return templates.TemplateResponse(request, "login.html",
             {"error": "로그인 시도가 너무 많습니다. 5분 후 다시 시도하세요."}, status_code=429)
     u = s.exec(select(User).where(User.username == username)).first()
     if not u or not verify_password(password, u.password_hash):
-        _login_record_fail(ip)
+        _login_record_fail(ip, s)
         return templates.TemplateResponse(request, "login.html", {"error": "아이디 또는 비밀번호가 올바르지 않습니다."}, status_code=401)
-    _login_fails.pop(ip, None)
+    _login_clear(ip, s)
     request.session["uid"] = u.id
     return RedirectResponse("/", status_code=303)
 
@@ -513,7 +582,7 @@ def user_create(request: Request, username: str = Form(...), password: str = For
         raise HTTPException(422, "이미 있는 아이디입니다")
     s.add(User(username=username, password_hash=hash_password(password),
                display_name=display_name.strip(), division_key=division_key or None, is_admin=False))
-    audit(s, u, "create", "user", username, f"담당: {division_key or '전체(조회)'}")
+    audit(s, u, "create", "user", username, f"담당: {division_key or '조회전용'}")
     s.commit()
     return RedirectResponse("/users", status_code=303)
 
@@ -633,7 +702,9 @@ from . import ai as ai_mod  # noqa: E402
 
 @app.get("/ai/status")
 def ai_status(request: Request, s: Session = Depends(db)):
-    u = require_user(request, s)
+    u = user_from_session_or_token(request, s)
+    if not u:
+        raise HTTPException(401, "로그인이 필요합니다")
     divisions = [d.key for d in s.exec(select(Division).order_by(Division.sort)).all()] if u.is_admin else []
     return {"enabled": ai_mod.available(), "isAdmin": u.is_admin,
             "scope": None if u.is_admin else u.division_key,
@@ -642,7 +713,9 @@ def ai_status(request: Request, s: Session = Depends(db)):
 
 @app.post("/ai/ask")
 async def ai_ask(request: Request, s: Session = Depends(db)):
-    u = require_user(request, s)
+    u = user_from_session_or_token(request, s)
+    if not u:
+        raise HTTPException(401, "로그인이 필요합니다")
     if not ai_mod.available():
         raise HTTPException(503, "AI 질의가 아직 활성화되지 않았습니다 (관리자에게 문의)")
     body = await request.json()

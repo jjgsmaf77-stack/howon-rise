@@ -4,7 +4,7 @@
 <div class="section-head">
   <div>
     <div class="section-title">계정관리</div>
-    <div class="section-desc">사업단 담당자 계정 — 담당 사업단의 데이터만 수정할 수 있습니다</div>
+    <div class="section-desc">사업단 담당자 계정은 담당 사업단만 수정 가능 · 조회전용 계정은 열람만 가능합니다</div>
   </div>
 </div>
 
@@ -18,7 +18,7 @@
           <td class="strong">{{ x.username }}</td>
           <td>{{ x.display_name or "—" }}</td>
           <td>{{ x.division_key or "전체" }}</td>
-          <td>{{ "관리자" if x.is_admin else "담당자" }}</td>
+          <td>{{ "관리자" if x.is_admin else ("담당자" if x.division_key else "조회전용") }}</td>
           <td>
             <form method="post" action="/users/{{ x.id }}/password" class="inline row-form">
               <input name="password" type="password" placeholder="새 비밀번호" required />
@@ -33,15 +33,15 @@
 </div>
 
 <div class="card">
-  <div class="card-head"><h2>담당자 계정 추가</h2></div>
+  <div class="card-head"><h2>계정 추가</h2></div>
   <form method="post" action="/users/new" class="form-grid">
     <label>아이디 * <input name="username" required /></label>
     <label>비밀번호 * <input name="password" type="password" required /></label>
     <label>이름 <input name="display_name" /></label>
-    <label>담당 사업단
+    <label>권한 유형
       <select name="division_key">
-        <option value="">전체(조회 전용 아님 — 관리자 문의)</option>
-        {% for d in divisions %}<option value="{{ d.key }}">{{ d.key }} — {{ d.full_name }}</option>{% endfor %}
+        <option value="">조회전용 — 전체 열람 가능, 수정 불가</option>
+        {% for d in divisions %}<option value="{{ d.key }}">{{ d.key }} 담당 — {{ d.full_name }}</option>{% endfor %}
       </select>
     </label>
     <div class="span2 form-actions"><button class="btn primary">계정 생성</button></div>

@@ -106,3 +106,10 @@ class AuditLog(SQLModel, table=True):
     entity: str = ""                             # program/spending/indicator/division
     entity_id: str = ""
     detail: str = ""                             # 변경 요약 (필드: 이전→이후)
+
+
+class LoginFail(SQLModel, table=True):
+    """로그인 실패 기록 — 서버리스 인스턴스 간 공유되는 DB 기반 무차별 대입 차단."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    ip: str = Field(index=True)
+    ts: float = Field(index=True)                # epoch seconds (타임존 이슈 회피)

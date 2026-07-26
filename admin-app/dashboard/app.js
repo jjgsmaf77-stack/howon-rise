@@ -2,6 +2,14 @@
 // 데이터 원천: 옵시디언 성과관리 볼트 → build_data2.js → data2.js (window.__RISE2__)
 // 1차년도(2025) 뷰·데이터(data.js)는 2026-07 개편으로 제거됨 — git 이력에서 복원 가능.
 (() => {
+  // ---------- 공통 상수/저장소 (게이트·AI 질의 공용) ----------
+  const API_BASE = 'https://howon-rise-admin.vercel.app'; // 입력관리 서버 (계정 인증·AI 질의)
+  const TOKEN_KEY = 'anchor.token.v1';
+  const USER_KEY = 'anchor.user.v1';
+  const safeGet = k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+  const safeSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* 시크릿모드 등 — 세션 유지만 안 됨 */ } };
+  const safeDel = k => { try { sessionStorage.removeItem(k); } catch (e) { } };
+
   // ---------- helpers ----------
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
@@ -98,12 +106,29 @@
   async function buildAiPanel() {
     const box = $('#ai-panel');
     if (!box) return;
-    let st;
-    try {
-      const r = await fetch('/ai/status', { credentials: 'same-origin' });
-      if (!r.ok) return;
-      st = await r.json();
-    } catch (e) { return; }
+    // 1) 입력관리 서버에 내장된 경우: 같은 주소(세션 쿠키)로 호출
+    // 2) 정적 사이트(howonrise.co.kr): 게이트 로그인 토큰으로 입력관리 서버에 호출
+    let st, base = '', hdrs = {};
+    let r = null;
+    try { r = await fetch('/ai/status', { credentials: 'same-origin' }); } catch (e) { r = null; }
+    if (!r || !r.ok) {
+      const tok = safeGet(TOKEN_KEY);
+      if (!tok) return;
+      base = API_BASE; hdrs = { 'Authorization': 'Bearer ' + tok };
+      try { r = await fetch(base + '/ai/status', { headers: hdrs }); } catch (e) { return; }
+      if (r.status === 401 || r.status === 403) {
+        // 토큰 만료/무효 — 조용히 사라지지 않고 재로그인 안내
+        safeDel(TOKEN_KEY);
+        box.className = 'side-ai';
+        box.innerHTML = '';
+        box.appendChild(h('div', { class: 'sa-head' }, ['🤖 AI 질의']));
+        box.appendChild(h('div', { class: 'sa-note' }, ['로그인 세션이 만료되었습니다. 다시 로그인해 주세요.']));
+        box.appendChild(h('button', { class: 'sa-btn', onclick: () => location.reload() }, ['다시 로그인']));
+        return;
+      }
+      if (!r.ok) return; // 일시적 서버 오류(5xx 등) — 토큰은 보존
+    }
+    try { st = await r.json(); } catch (e) { return; }
     const history = [];
     box.className = 'side-ai';
     box.innerHTML = '';
@@ -132,12 +157,21 @@
       addMsg('user', q);
       const wait = addMsg('assistant', '분석 중…');
       try {
-        const r = await fetch('/ai/ask', {
+        const r = await fetch(base + '/ai/ask', {
           method: 'POST', credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
+          headers: Object.assign({ 'Content-Type': 'application/json' }, hdrs),
           body: JSON.stringify({ question: q, division: sel ? sel.value : undefined, history })
         });
-        const j = await r.json();
+        const j = await r.json().catch(() => ({}));
+        if (r.status === 401) {
+          // 탭을 오래 열어둔 채 세션 만료 — 재시도 안내 대신 재로그인 유도
+          safeDel(TOKEN_KEY);
+          wait.textContent = '로그인 세션이 만료되었습니다.';
+          wait.classList.add('err');
+          msgs.appendChild(h('button', { class: 'sa-btn', onclick: () => location.reload() }, ['다시 로그인']));
+          msgs.scrollTop = msgs.scrollHeight;
+          return;
+        }
         if (!r.ok) throw new Error(j.detail || '응답 실패');
         wait.textContent = j.answer;
         history.push({ role: 'user', content: q }, { role: 'assistant', content: j.answer });

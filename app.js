@@ -2,89 +2,15 @@
 // 데이터 원천: 옵시디언 성과관리 볼트 → build_data2.js → data2.js (window.__RISE2__)
 // 1차년도(2025) 뷰·데이터(data.js)는 2026-07 개편으로 제거됨 — git 이력에서 복원 가능.
 (() => {
-  // ---------- 접근 비밀번호 게이트 (정적 사이트 — 열람 차단막 수준) ----------
-  // 비밀번호 변경: 새 값의 SHA-256 해시를 아래 PW_HASH에 넣으면 됨.
-  //   node -e "console.log(require('crypto').createHash('sha256').update('새비번').digest('hex'))"
-  const PW_HASH = '3b501506c66e869ecdf39dc3b787c71078ce74351a18db1c79aa4477edd126b6'; // howon2026
-  const UNLOCK_KEY = 'anchor.unlocked.v1';
-
-  // 순수 JS SHA-256 — crypto.subtle이 없는 구형 모바일/인앱 브라우저 폴백
-  function sha256Sync(data) {
-    const H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
-    const K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
-    const rr = (x, n) => (x >>> n) | (x << (32 - n));
-    const bytes = [];
-    for (let i = 0; i < data.length; i++) {
-      const c = data.charCodeAt(i);
-      if (c < 128) bytes.push(c);
-      else if (c < 2048) bytes.push(192 | c >> 6, 128 | c & 63);
-      else bytes.push(224 | c >> 12, 128 | (c >> 6) & 63, 128 | c & 63);
-    }
-    const bitLen = bytes.length * 8;
-    bytes.push(0x80);
-    while (bytes.length % 64 !== 56) bytes.push(0);
-    for (let i = 7; i >= 0; i--) bytes.push(Math.floor(bitLen / Math.pow(2, 8 * i)) & 0xff);
-    for (let off = 0; off < bytes.length; off += 64) {
-      const w = new Array(64);
-      for (let i = 0; i < 16; i++) w[i] = (bytes[off + 4 * i] << 24) | (bytes[off + 4 * i + 1] << 16) | (bytes[off + 4 * i + 2] << 8) | bytes[off + 4 * i + 3];
-      for (let i = 16; i < 64; i++) {
-        const s0 = rr(w[i - 15], 7) ^ rr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
-        const s1 = rr(w[i - 2], 17) ^ rr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
-        w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
-      }
-      let a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], hh = H[7];
-      for (let i = 0; i < 64; i++) {
-        const S1 = rr(e, 6) ^ rr(e, 11) ^ rr(e, 25);
-        const t1 = (hh + S1 + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0;
-        const S0 = rr(a, 2) ^ rr(a, 13) ^ rr(a, 22);
-        const t2 = (S0 + ((a & b) ^ (a & c) ^ (b & c))) | 0;
-        hh = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
-      }
-      H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
-      H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + hh) | 0;
-    }
-    return H.map(x => (x >>> 0).toString(16).padStart(8, '0')).join('');
-  }
-
-  async function sha256Hex(text) {
-    if (window.crypto && crypto.subtle && crypto.subtle.digest) {
-      try {
-        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-      } catch (e) { /* 폴백으로 진행 */ }
-    }
-    return sha256Sync(text);
-  }
-
-  // 시크릿모드 등 저장소 접근이 막힌 브라우저 대응
+  // ---------- 공통 상수/저장소 (게이트·AI 질의 공용) ----------
+  const API_BASE = 'https://howon-rise-admin.vercel.app'; // 입력관리 서버 (계정 인증·AI 질의)
+  const TOKEN_KEY = 'anchor.token.v1';
+  const USER_KEY = 'anchor.user.v1';
   const safeGet = k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
-  const safeSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* 무시 — 세션 유지만 안 됨 */ } };
+  const safeSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* 시크릿모드 등 — 세션 유지만 안 됨 */ } };
+  const safeDel = k => { try { sessionStorage.removeItem(k); } catch (e) { } };
 
-  // 한글 키보드 상태로 입력한 비밀번호를 영문 자판으로 역변환 (두벌식)
-  function hangulToQwerty(str) {
-    const CHO = ['r', 'R', 's', 'e', 'E', 'f', 'a', 'q', 'Q', 't', 'T', 'd', 'w', 'W', 'c', 'z', 'x', 'v', 'g'];
-    const JUNG = ['k', 'o', 'i', 'O', 'j', 'p', 'u', 'P', 'h', 'hk', 'ho', 'hl', 'y', 'n', 'nj', 'np', 'nl', 'b', 'm', 'ml', 'l'];
-    const JONG = ['', 'r', 'R', 'rt', 's', 'sw', 'sg', 'e', 'f', 'fr', 'fa', 'fq', 'ft', 'fx', 'fv', 'fg', 'a', 'q', 'qt', 't', 'T', 'd', 'w', 'c', 'z', 'x', 'v', 'g'];
-    const JAMO = { 'ㄱ': 'r', 'ㄲ': 'R', 'ㄴ': 's', 'ㄷ': 'e', 'ㄸ': 'E', 'ㄹ': 'f', 'ㅁ': 'a', 'ㅂ': 'q', 'ㅃ': 'Q', 'ㅅ': 't', 'ㅆ': 'T', 'ㅇ': 'd', 'ㅈ': 'w', 'ㅉ': 'W', 'ㅊ': 'c', 'ㅋ': 'z', 'ㅌ': 'x', 'ㅍ': 'v', 'ㅎ': 'g', 'ㅏ': 'k', 'ㅐ': 'o', 'ㅑ': 'i', 'ㅒ': 'O', 'ㅓ': 'j', 'ㅔ': 'p', 'ㅕ': 'u', 'ㅖ': 'P', 'ㅗ': 'h', 'ㅘ': 'hk', 'ㅙ': 'ho', 'ㅚ': 'hl', 'ㅛ': 'y', 'ㅜ': 'n', 'ㅝ': 'nj', 'ㅞ': 'np', 'ㅟ': 'nl', 'ㅠ': 'b', 'ㅡ': 'm', 'ㅢ': 'ml', 'ㅣ': 'l' };
-    let out = '';
-    for (const ch of str) {
-      const c = ch.charCodeAt(0);
-      if (c >= 0xAC00 && c <= 0xD7A3) {
-        const i = c - 0xAC00;
-        out += CHO[Math.floor(i / 588)] + JUNG[Math.floor((i % 588) / 28)] + JONG[i % 28];
-      } else if (JAMO[ch]) out += JAMO[ch];
-      else out += ch;
-    }
-    return out;
-  }
-
+  // ---------- 접근 비밀번호 게이트 (정적 사이트 — 입력관리 등록 계정으로 로그인) ----------
   function showGate() {
     const style = document.createElement('style');
     style.textContent = `
@@ -94,15 +20,17 @@
         box-shadow:0 10px 30px rgba(16,42,67,.08);padding:34px 30px;text-align:center;box-sizing:border-box}
       #pw-gate .logo{font-weight:800;font-size:14px;color:#1c7293}
       #pw-gate h1{font-size:20px;margin:10px 0 6px;color:#0a2540}
-      #pw-gate p{color:#5d6b78;font-size:13px;margin:0 0 22px}
-      #pw-gate label{display:block;text-align:left;font-size:12.5px;font-weight:700;color:#22303c;margin:0 0 6px}
+      #pw-gate p{color:#5d6b78;font-size:13px;margin:0 0 10px}
+      #pw-gate label{display:block;text-align:left;font-size:12.5px;font-weight:700;color:#22303c;margin:12px 0 6px}
       #pw-gate input{width:100%;padding:11px 12px;border:1px solid #d7dee6;border-radius:8px;font-size:16px;
         box-sizing:border-box;color:#22303c;background:#fff}
       #pw-gate input:focus{outline:2px solid rgba(28,114,147,.25);border-color:#1c7293}
-      #pw-gate button{width:100%;margin-top:14px;padding:11px;border:0;border-radius:8px;background:#1c7293;
+      #pw-gate button{width:100%;margin-top:16px;padding:11px;border:0;border-radius:8px;background:#1c7293;
         color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
       #pw-gate button:hover{background:#175f7b}
-      #pw-gate .err{color:#c0392b;font-size:12.5px;margin-top:10px;min-height:16px}`;
+      #pw-gate button:disabled{background:#b7c6cf;cursor:default}
+      #pw-gate .err{color:#c0392b;font-size:12.5px;margin-top:10px;min-height:16px}
+      #pw-gate .note{color:#8a97a3;font-size:11px;margin-top:14px;line-height:1.5}`;
     document.head.appendChild(style);
     const gate = document.createElement('div');
     gate.id = 'pw-gate';
@@ -110,40 +38,49 @@
       <div class="logo">호원 앵커(RISE)</div>
       <h1>성과관리 플랫폼</h1>
       <p>호원대학교 앵커(RISE)사업단</p>
+      <label for="pw-id">아이디</label>
+      <input id="pw-id" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" />
       <label for="pw-in">비밀번호</label>
-      <input id="pw-in" type="password" autocomplete="current-password"
-        autocapitalize="none" autocorrect="off" spellcheck="false" />
+      <input id="pw-in" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
       <button id="pw-go">로그인</button>
       <div class="err" id="pw-err"></div>
+      <div class="note">계정은 입력관리 시스템 총괄관리자(계정관리)가 발급합니다.</div>
     </div>`;
     document.body.appendChild(gate);
-    const input = gate.querySelector('#pw-in');
+    const idIn = gate.querySelector('#pw-id');
+    const pwIn = gate.querySelector('#pw-in');
+    const btn = gate.querySelector('#pw-go');
     const err = gate.querySelector('#pw-err');
-    input.focus();
+    idIn.focus();
+    let busy = false;
     const tryUnlock = async () => {
+      if (busy) return;
+      const username = idIn.value.trim(), password = pwIn.value;
+      if (!username || !password) { err.textContent = '아이디와 비밀번호를 입력하세요.'; return; }
+      busy = true; btn.disabled = true; btn.textContent = '확인 중…'; err.textContent = '';
       try {
-        const raw = input.value;
-        let ok = (await sha256Hex(raw)) === PW_HASH;
-        // 한글 키보드 상태로 입력한 경우(예: ㅗㅐㅈㅐㅜ2026) 영문 자판 역변환으로 재시도
-        if (!ok && /[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(raw)) {
-          ok = (await sha256Hex(hangulToQwerty(raw))) === PW_HASH;
-        }
-        if (ok) {
-          safeSet(UNLOCK_KEY, '1');
+        const r = await fetch(API_BASE + '/api/auth-check', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && j.ok && j.token) {
+          safeSet(TOKEN_KEY, j.token);
+          safeSet(USER_KEY, JSON.stringify({ display: j.display, division: j.division, isAdmin: j.isAdmin }));
           gate.remove();
           init();
-        } else {
-          err.textContent = /[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(raw)
-            ? '비밀번호가 올바르지 않습니다. 키보드를 영문으로 전환해 주세요.'
-            : '비밀번호가 올바르지 않습니다.';
-          input.value = ''; input.focus();
+          return;
         }
+        err.textContent = j.error || '아이디 또는 비밀번호가 올바르지 않습니다.';
+        pwIn.value = ''; pwIn.focus();
       } catch (e) {
-        err.textContent = '확인 중 오류가 발생했습니다. 새로고침 후 다시 시도해 주세요.';
+        err.textContent = '서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.';
       }
+      busy = false; btn.disabled = false; btn.textContent = '로그인';
     };
-    gate.querySelector('#pw-go').addEventListener('click', tryUnlock);
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+    btn.addEventListener('click', tryUnlock);
+    pwIn.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+    idIn.addEventListener('keydown', e => { if (e.key === 'Enter') pwIn.focus(); });
   }
 
   // ---------- helpers ----------
@@ -242,12 +179,29 @@
   async function buildAiPanel() {
     const box = $('#ai-panel');
     if (!box) return;
-    let st;
-    try {
-      const r = await fetch('/ai/status', { credentials: 'same-origin' });
-      if (!r.ok) return;
-      st = await r.json();
-    } catch (e) { return; }
+    // 1) 입력관리 서버에 내장된 경우: 같은 주소(세션 쿠키)로 호출
+    // 2) 정적 사이트(howonrise.co.kr): 게이트 로그인 토큰으로 입력관리 서버에 호출
+    let st, base = '', hdrs = {};
+    let r = null;
+    try { r = await fetch('/ai/status', { credentials: 'same-origin' }); } catch (e) { r = null; }
+    if (!r || !r.ok) {
+      const tok = safeGet(TOKEN_KEY);
+      if (!tok) return;
+      base = API_BASE; hdrs = { 'Authorization': 'Bearer ' + tok };
+      try { r = await fetch(base + '/ai/status', { headers: hdrs }); } catch (e) { return; }
+      if (r.status === 401 || r.status === 403) {
+        // 토큰 만료/무효 — 조용히 사라지지 않고 재로그인 안내
+        safeDel(TOKEN_KEY);
+        box.className = 'side-ai';
+        box.innerHTML = '';
+        box.appendChild(h('div', { class: 'sa-head' }, ['🤖 AI 질의']));
+        box.appendChild(h('div', { class: 'sa-note' }, ['로그인 세션이 만료되었습니다. 다시 로그인해 주세요.']));
+        box.appendChild(h('button', { class: 'sa-btn', onclick: () => location.reload() }, ['다시 로그인']));
+        return;
+      }
+      if (!r.ok) return; // 일시적 서버 오류(5xx 등) — 토큰은 보존
+    }
+    try { st = await r.json(); } catch (e) { return; }
     const history = [];
     box.className = 'side-ai';
     box.innerHTML = '';
@@ -276,12 +230,21 @@
       addMsg('user', q);
       const wait = addMsg('assistant', '분석 중…');
       try {
-        const r = await fetch('/ai/ask', {
+        const r = await fetch(base + '/ai/ask', {
           method: 'POST', credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
+          headers: Object.assign({ 'Content-Type': 'application/json' }, hdrs),
           body: JSON.stringify({ question: q, division: sel ? sel.value : undefined, history })
         });
-        const j = await r.json();
+        const j = await r.json().catch(() => ({}));
+        if (r.status === 401) {
+          // 탭을 오래 열어둔 채 세션 만료 — 재시도 안내 대신 재로그인 유도
+          safeDel(TOKEN_KEY);
+          wait.textContent = '로그인 세션이 만료되었습니다.';
+          wait.classList.add('err');
+          msgs.appendChild(h('button', { class: 'sa-btn', onclick: () => location.reload() }, ['다시 로그인']));
+          msgs.scrollTop = msgs.scrollHeight;
+          return;
+        }
         if (!r.ok) throw new Error(j.detail || '응답 실패');
         wait.textContent = j.answer;
         history.push({ role: 'user', content: q }, { role: 'assistant', content: j.answer });
@@ -1020,7 +983,7 @@
   }
 
   function boot() {
-    if (safeGet(UNLOCK_KEY) === '1') init();
+    if (safeGet(TOKEN_KEY)) init();
     else showGate();
   }
   document.addEventListener('DOMContentLoaded', boot);
