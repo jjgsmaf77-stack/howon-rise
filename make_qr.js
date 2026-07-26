@@ -1,10 +1,7 @@
 const QR = require('qrcode');
 
-// NOTE: GitHub Pages 커스텀 도메인의 SSL 인증서가 아직 발급되지 않아
-// HTTPS 접속 시 인증서 오류 발생. HTTP로 생성해 모바일 카메라 스캔 시 즉시 접속되도록 함.
-// (GitHub repo Settings → Pages → "Enforce HTTPS" 체크박스 활성화로 SSL 발급 후
-//  https로 변경 가능)
-const url = 'http://www.howonrise.co.kr';
+// https 필수: http로 열리면 계정 인증(CORS)이 차단됨 (2026-07 계정 게이트 도입)
+const url = 'https://www.howonrise.co.kr';
 
 const variants = [
   { file: 'qr-howonrise.png',       width: 1024, dark: '#0A2540', light: '#FFFFFF' },  // Tanker 네이비 (웹/디자인용)
@@ -14,7 +11,7 @@ const variants = [
 
 (async () => {
   for (const v of variants) {
-    const out = `E:/2025 RISE 결과보고서/성과관리플랫폼/${v.file}`;
+    const out = `${__dirname}/${v.file}`;
     await QR.toFile(out, url, {
       errorCorrectionLevel: 'H',
       margin: 2,
