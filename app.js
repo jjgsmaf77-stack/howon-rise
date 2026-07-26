@@ -160,19 +160,21 @@
         ]),
         h('h3', {}, [`프로그램 실적 (${d.programs.length})`]),
         d.programs.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
-          h('thead', {}, [h('tr', {}, ['상태','프로그램명','유형','TANKer','예산항목','집행방식','교육기관','참여','시간','만족도','소요예산','내부결재'].map(c => h('th', {}, [c])))]),
+          h('thead', {}, [h('tr', {}, ['상태','프로그램명','유형','TANKer','예산항목','교육기관','참여','시간','만족도','소요예산','내부결재'].map(c => h('th', {}, [c])))]),
           h('tbody', {}, d.programs.map(p => h('tr', {}, [
             h('td', {}, [p.status === '입력반영' ? '🟢' : p.status === '검토완료' ? '🟡' : '🔴']),
             h('td', { class: 'strong' }, [p.name]),
             h('td', {}, [p.category || '—']),
             h('td', {}, [p.tanker ? `${p.tanker}${p.tankerSub ? '·' + p.tankerSub : ''}` : '—']),
             h('td', {}, [p.budgetItem || '—']),
-            h('td', {}, [p.execType || '—']),
             h('td', {}, [p.org || '—']),
             h('td', { class: 'num' }, [p.students != null ? `${p.students}명` : '—']),
             h('td', {}, [p.hours || '—']),
             h('td', { class: 'num' }, [p.satis != null ? `${p.satis}${p.satisN ? ` (n=${p.satisN})` : ' 🔴'}` : '—']),
-            h('td', { class: 'num' }, [p.budget != null ? `${fmtN(p.budget)}원` : '—']),
+            h('td', { class: 'num' }, [
+              p.budget != null ? `${fmtN(p.budget)}원` : '—',
+              p.execType ? h('div', { class: 'y2-exec-sub' }, [p.execType]) : null
+            ]),
             h('td', {}, [p.approval || '—'])
           ])))
         ])]) : h('div', { class: 'empty' }, ['접수된 프로그램이 없습니다.']),
@@ -483,19 +485,21 @@
       sectionHead('프로그램 실적', `${progRows.length}건 — 프로그램 1건 = 1행 (표준 서식)`),
       h('div', { class: 'card' }, [
         progRows.length ? h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
-          h('thead', {}, [h('tr', {}, ['사업단(단위과제)','프로그램명','유형','TANKer','예산항목','집행방식','교육기관','참여학생','교육시간','만족도','소요예산','상태'].map(c => h('th', {}, [c])))]),
+          h('thead', {}, [h('tr', {}, ['사업단(단위과제)','프로그램명','유형','TANKer','예산항목','교육기관','참여학생','교육시간','만족도','소요예산','상태'].map(c => h('th', {}, [c])))]),
           h('tbody', {}, progRows.map(p => h('tr', {}, [
             h('td', { class: 'y2-divcell' }, [p.divLabel]),
             h('td', {}, [p.name]),
             h('td', {}, [p.category || '—']),
             h('td', {}, [p.tanker ? h('span', { class: 'y2-tk', title: TANKER[p.tanker] || '' }, [`${p.tanker}${p.tankerSub ? '·' + p.tankerSub : ''}`]) : '—']),
             h('td', {}, [p.budgetItem || '—']),
-            h('td', {}, [p.execType || '—']),
             h('td', {}, [p.org || '—']),
             h('td', { class: 'num' }, [p.students != null ? `${p.students}명` : '—']),
             h('td', {}, [p.hours || '—']),
             h('td', { class: 'num' }, [p.satis != null ? `${p.satis}${p.satisN ? ` (n=${p.satisN})` : ' 🔴'}` : '—']),
-            h('td', { class: 'num' }, [p.budget != null ? `${fmtN(p.budget)}원` : '—']),
+            h('td', { class: 'num' }, [
+              p.budget != null ? `${fmtN(p.budget)}원` : '—',
+              p.execType ? h('div', { class: 'y2-exec-sub' }, [p.execType]) : null
+            ]),
             h('td', {}, [p.status === '검토완료' || p.status === '입력반영' ? '🟢 ' + p.status : '🔴 ' + p.status])
           ])))
         ])]) : h('div', { class: 'empty' }, ['접수된 프로그램 실적이 없습니다.'])

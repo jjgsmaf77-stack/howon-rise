@@ -1,6 +1,6 @@
 // 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.
 window.__RISE2__ = {
-  "generatedAt": "2026-07-26T04:47:20.917Z",
+  "generatedAt": "2026-07-26T04:56:59.879Z",
   "year": 2026,
   "yearLabel": "2차년도(2026)",
   "source": "성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)",
@@ -655,28 +655,18 @@ window.__RISE2__ = {
       "budgetPlan": [
         {
           "item": "교육·연구 프로그램 운영·개발",
-          "plannedM": 30.7,
+          "plannedM": 35,
           "flagged": false
         },
         {
           "item": "지역 연계 협업 지원",
-          "plannedM": 6.9,
-          "flagged": false
-        },
-        {
-          "item": "기업지원 협력 활동",
-          "plannedM": 3.4,
+          "plannedM": 3,
           "flagged": false
         },
         {
           "item": "성과 활용 확산",
-          "plannedM": 6,
+          "plannedM": 10.5,
           "flagged": false
-        },
-        {
-          "item": "기타운영",
-          "plannedM": 1.5,
-          "flagged": true
         },
         {
           "item": "간접비",

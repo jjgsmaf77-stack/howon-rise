@@ -2979,3 +2979,4 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .y2-tkh .n { font-size: 9px; font-weight: 600; color: var(--ink-500); letter-spacing: -.02em; }
 .y2-matrix td.num { font-size: 11.5px; }
 .tkb-foot { font-family: var(--font-sans); letter-spacing: .08em; }
+.y2-exec-sub { font-size: 10px; color: var(--g-600); font-weight: 700; margin-top: 1px; }
