@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const VAULT = process.argv[2] || 'G:/홍인기_옵시디언/LLM_Wiki/2_Wiki/성과관리';
+const VAULT = process.argv[2] || 'G:/홍인기_옵시디언/LLM_Wiki/2_Wiki/★★★2차년도 앵커사업단 성과분석★★★';
 const OUT = path.join(__dirname, 'data2.js');
 
 const DIVISIONS = ['본부', '보건', '컬쳐', 'JB집', '성인', '드론', '축제', '맛잡고', '늘봄'];

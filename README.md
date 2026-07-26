@@ -10,12 +10,13 @@
 | `data.js` | 1차년도(2025) 확정 데이터 — `build_data.js`(엑셀→JS, 저장소 외부)로 생성됨 |
 | `data2.js` | **2차년도(2026) 데이터 — `build_data2.js`가 옵시디언 볼트에서 자동 생성. 직접 수정 금지** |
 | `build_data2.js` | 옵시디언 성과관리 볼트(원장·프로그램 카드·지출대장) → `data2.js` 생성기 |
-| `admin/` | 입력관리 리다이렉트 페이지 (→ howon-rise-admin.vercel.app, 재구축 예정) |
+| `admin/` | 입력관리 안내 페이지 (v2 배포 후 ADMIN_URL에 주소 기입 시 자동 리다이렉트) |
+| `admin-app/` | 입력관리 v2 (FastAPI — 상세는 admin-app/README.md) |
 
 ## 2차년도 데이터 갱신 절차
 
-1. 결과보고서·지급요청 PDF를 옵시디언 `1_Raw/★앵커사업_2차년도 결과보고서★/00_인박스/`에 넣고 Claude Code로 "인박스 처리"
-2. `node build_data2.js` (볼트 기본 경로: `G:/홍인기_옵시디언/LLM_Wiki/2_Wiki/성과관리`, 다른 PC에서는 인자로 경로 지정: `node build_data2.js <볼트경로>`)
+1. 결과보고서·지급요청 PDF를 옵시디언 `1_Raw/★★★2차년도 앵커사업단 성과관리★★★/00_분석전(인박스)/`에 넣고 Claude Code로 "인박스 처리"
+2. `node build_data2.js` (볼트 기본 경로: `G:/홍인기_옵시디언/LLM_Wiki/2_Wiki/★★★2차년도 앵커사업단 성과분석★★★`, 다른 PC에서는 인자로 경로 지정: `node build_data2.js <볼트경로>`)
 3. 커밋 + 푸시 → 배포(Netlify/Vercel) 자동 반영. 배포 시 `index.html`의 `?v=` 캐시버스터 갱신
 
 ## 원칙
