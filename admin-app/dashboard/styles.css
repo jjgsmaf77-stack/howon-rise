@@ -2902,6 +2902,18 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
   .tkb-flow { justify-content: center; }
   .tkb-arrow { transform: rotate(90deg); width: 100%; text-align: center; }
 }
+/* 모바일: T·A·N·K 2×2 격자 → 앵커 → ↓ → TANKer ON 세로 정렬 */
+@media (max-width: 640px) {
+  .tkb-top { justify-content: center; text-align: center; }
+  .tkb-headline { font-size: 16px; }
+  .tkb-flow { flex-direction: column; align-items: stretch; gap: 12px; flex-wrap: nowrap; }
+  .tkb-plus { display: none; }
+  .tkb-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .tkb-tile { min-width: 0; padding: 12px 8px 10px; }
+  .tkb-anchor { padding: 12px 8px 10px; }
+  .tkb-arrow { transform: rotate(90deg); width: auto; align-self: center; margin: -4px 0; }
+  .tkb-result { padding: 2px 0 4px; }
+}
 
 /* 로고 · 도넛 · 링 */
 .logo-hu { width: 48px; height: auto; display: block; margin-bottom: 8px; }
