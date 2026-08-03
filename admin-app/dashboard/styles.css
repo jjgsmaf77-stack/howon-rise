@@ -3054,3 +3054,29 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .sa-btn:disabled { background: #b7c6cf; cursor: default; }
 .sa-note { font-size: 10.5px; color: #8a97a3; line-height: 1.4; }
 @media (max-width: 900px) { .side-ai { margin: 10px 0; } .sa-msgs { max-height: 200px; } }
+
+/* ---------- 사이드바 기준 문서 버튼 ---------- */
+.guide-link {
+  margin-top: 12px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border-radius: 12px;
+  background: #fff; color: #0a2540;
+  text-decoration: none;
+  border: 1px solid #d7e3ec;
+  box-shadow: 0 2px 8px rgba(16,42,67,.06);
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.guide-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(16,42,67,.12);
+  border-color: #1c7293;
+}
+.guide-link .gl-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: #e5f1f7;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+.guide-link .gl-text { flex: 1; min-width: 0; }
+.guide-link .gl-title { font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+.guide-link .gl-sub { font-size: 11px; color: #1c7293; margin-top: 2px; font-weight: 700; }
