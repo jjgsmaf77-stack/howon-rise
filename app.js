@@ -536,18 +536,23 @@
               h('div', { class: 'tkb-kr' }, [t.kr])
             ])
           ])),
-          h('span', { class: 'tkb-plus' }, ['+']),
-          h('div', { class: 'tkb-anchor' }, [
-            h('div', { class: 'tkb-anchor-badge' }, ['앵커']),
-            h('div', { class: 'tkb-anchor-name' }, ['Anchor']),
-            h('div', { class: 'tkb-anchor-sub' }, ['지역 성장 인재양성 체계'])
+          // '+앵커', '➜결과'를 묶어 줄바꿈 시에도 짝이 흩어지지 않게 함
+          h('div', { class: 'tkb-join' }, [
+            h('span', { class: 'tkb-plus' }, ['+']),
+            h('div', { class: 'tkb-anchor' }, [
+              h('div', { class: 'tkb-anchor-badge' }, ['앵커']),
+              h('div', { class: 'tkb-anchor-name' }, ['Anchor']),
+              h('div', { class: 'tkb-anchor-sub' }, ['지역 성장 인재양성 체계'])
+            ])
           ]),
-          h('span', { class: 'tkb-arrow' }, ['➜']),
-          h('div', { class: 'tkb-result' }, [
-            h('div', { class: 'tkb-result-kicker' }, ['호원 20·60 취·창업']),
-            h('div', { class: 'tkb-result-name' }, ['TANKer ', h('span', { class: 'on' }, ['ON'])]),
-            h('div', { class: 'tkb-result-sub' }, ['전북지역 내 취·창업 앵커체계 구축']),
-            h('div', { class: 'tkb-result-formula' }, ['[ TANK + Anchor ] ON'])
+          h('div', { class: 'tkb-join' }, [
+            h('span', { class: 'tkb-arrow' }, ['➜']),
+            h('div', { class: 'tkb-result' }, [
+              h('div', { class: 'tkb-result-kicker' }, ['호원 20·60 취·창업']),
+              h('div', { class: 'tkb-result-name' }, ['TANKer ', h('span', { class: 'on' }, ['ON'])]),
+              h('div', { class: 'tkb-result-sub' }, ['전북지역 내 취·창업 앵커체계 구축']),
+              h('div', { class: 'tkb-result-formula' }, ['[ TANK + Anchor ] ON'])
+            ])
           ])
         ]),
         h('div', { class: 'tkb-foot' }, ['호원 20·60 취·창업 TANKer ON 특성화 시스템'])
