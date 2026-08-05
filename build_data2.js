@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const VAULT = process.argv[2] || 'G:/홍인기_옵시디언/LLM_Wiki/2_Wiki/★★★2차년도 앵커사업단 성과분석★★★';
+const VAULT = process.argv[2] || 'C:/Users/홍인기/Desktop/POPULAR/LLM_Wiki/2_Wiki/★★★2차년도 앵커사업단 성과분석★★★';
 const OUT = path.join(__dirname, 'data2.js');
 
 const DIVISIONS = ['본부', '보건', '컬쳐', 'JB집', '성인', '드론', '축제', '맛잡고', '늘봄'];
@@ -278,6 +278,38 @@ const totals = {
 };
 totals.rate = totals.budgetM ? +(totals.spentWon / (totals.budgetM * 1_000_000) * 100).toFixed(2) : 0;
 
+// ---------- 유사중복 점검 대장 · 연계 프로그램 대장 ----------
+const stripMd = s => (s || '').replace(/\*\*/g, '').replace(/\[\[([^\]|]+)(\|[^\]]+)?\]\]/g, '$1').trim();
+const dedup = { updatedAt: null, suspects: [], cleared: [], linked: [] };
+{
+  const dsrc = readIf(path.join(VAULT, '유사중복', '00_유사중복 점검 대장.md'));
+  if (dsrc) {
+    const m = dsrc.match(/갱신일:\s*([0-9-]+)/);
+    if (m) dedup.updatedAt = m[1];
+    const ts = parseTables(dsrc);
+    const st = ts.find(t => t.header.includes('발견일'));
+    if (st) for (const r of st.rows) {
+      if (!r[1] || r[1] === '-') continue; // 빈 자리표시 행
+      dedup.suspects.push({ date: stripMd(r[1]), basis: stripMd(r[2]), content: stripMd(r[3]),
+                            verdict: stripMd(r[4]), action: stripMd(r[5]) });
+    }
+    const ctb = ts.find(t => t.header.includes('점검일'));
+    if (ctb) for (const r of ctb.rows) {
+      if (!r[1] || r[1] === '-') continue;
+      dedup.cleared.push({ date: stripMd(r[1]), content: stripMd(r[2]), reason: stripMd(r[3]) });
+    }
+  } else WARN.push('유사중복 점검 대장 파일 없음');
+  const lsrc = readIf(path.join(VAULT, '02_연계 프로그램 대장.md'));
+  if (lsrc) {
+    const lt = parseTables(lsrc).find(t => t.header.includes('프로그램'));
+    if (lt) for (const r of lt.rows) {
+      if (!r[1] || r[1] === '-') continue;
+      dedup.linked.push({ date: stripMd(r[1]), name: stripMd(r[2]), divisions: stripMd(r[3]),
+                          record: stripMd(r[4]), budget: stripMd(r[5]) });
+    }
+  } else WARN.push('연계 프로그램 대장 파일 없음');
+}
+
 const out = {
   generatedAt: new Date().toISOString(),
   year: 2026,
@@ -285,6 +317,7 @@ const out = {
   source: '성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)',
   divisions,
   totals,
+  dedup,
   warnings: [
     totals.activeDivisions < 8 ? `프로그램 자료 접수: ${totals.activeDivisions}/8 사업단 — 나머지 사업단 결과보고서 투입 필요` : null,
     '집행률은 인박스에 투입된 지출 문서만 반영 (비프로그램성 지출 미반영 시 실제보다 낮음)',

@@ -3078,3 +3078,9 @@ table.tbl td.edit-td .edit-txt { text-align: left; }
 .guide-link .gl-text { flex: 1; min-width: 0; }
 .guide-link .gl-title { font-size: 13px; font-weight: 700; letter-spacing: .02em; }
 .guide-link .gl-sub { font-size: 11px; color: #1c7293; margin-top: 2px; font-weight: 700; }
+
+/* ---------- 유사중복 검토 버튼·모달 ---------- */
+button.guide-link { width: 100%; cursor: pointer; font-family: inherit; text-align: left; }
+.dd-chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 2px 0 14px; }
+.dd-chips .chip.dd-ok { background: #e8f5ec; color: #1e7a3e; border: 1px solid #cfe9d8; }
+.dd-chips .chip.dd-warn { background: #fdecea; color: #c0392b; border: 1px solid #f5c6c0; }
