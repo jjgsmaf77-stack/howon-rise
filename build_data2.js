@@ -308,6 +308,17 @@ const dedup = { updatedAt: null, suspects: [], cleared: [], linked: [] };
                           record: stripMd(r[4]), budget: stripMd(r[5]) });
     }
   } else WARN.push('연계 프로그램 대장 파일 없음');
+  // 대학 전체 재정지원사업 등록부 (4영역 검사 ④의 대조 대상)
+  dedup.projects = [];
+  const psrc = readIf(path.join(VAULT, '유사중복', '03_대학 재정지원사업 등록부.md'));
+  if (psrc) {
+    const pt = parseTables(psrc).find(t => t.header.includes('사업명'));
+    if (pt) for (const r of pt.rows) {
+      if (!r[1] || r[1] === '-') continue;
+      dedup.projects.push({ name: stripMd(r[1]), sponsor: stripMd(r[2]), dept: stripMd(r[3]),
+                            status: stripMd(r[4]), note: stripMd(r[5]) });
+    }
+  } else WARN.push('대학 재정지원사업 등록부 파일 없음');
 }
 
 const out = {

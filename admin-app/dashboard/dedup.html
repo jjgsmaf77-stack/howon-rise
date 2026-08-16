@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <script>/* http 접속 시 계정 인증(CORS)이 차단되므로 https로 강제 전환 */
+    if (location.protocol === 'http:' && location.hostname.indexOf('howonrise') !== -1)
+      location.replace(location.href.replace('http://', 'https://'));</script>
+  <title>유사중복 관리 | 호원 앵커(RISE) 성과관리 플랫폼</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="호원대학교 재정지원사업 유사중복 상시 점검·연계 프로그램 관리 현황" />
+  <meta name="theme-color" content="#0a2540" />
+  <link rel="stylesheet" href="styles.css?v=anchor13" />
+  <style>
+    body { background: #f4f7fb; }
+    .dd-wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 60px; }
+    .dd-topbar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 14px 18px; margin: 16px 0 22px; border-radius: 12px;
+      background: linear-gradient(120deg, #0a2540 0%, #102e55 70%, #16548c 100%); color: #fff;
+    }
+    .dd-back { color: #fff; text-decoration: none; font-size: 13px; font-weight: 700;
+      background: rgba(255,255,255,.14); border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+    .dd-back:hover { background: rgba(255,255,255,.24); }
+    .dd-titles { flex: 1; min-width: 200px; }
+    .dd-title { font-size: 17px; font-weight: 800; }
+    .dd-desc { font-size: 11.5px; opacity: .8; margin-top: 2px; }
+    .dd-pdf { color: #0a2540; background: var(--br-400, #f5b700); text-decoration: none; font-size: 12px;
+      font-weight: 800; border-radius: 8px; padding: 7px 13px; white-space: nowrap; }
+    .dd-sec { margin-bottom: 26px; }
+    .dd-sec h2 { font-size: 16px; color: #0a2540; margin: 0 0 4px; }
+    .dd-sec .sec-sub { font-size: 12px; color: #5d6b78; margin-bottom: 12px; }
+    .dd-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 720px) { .dd-kpis { grid-template-columns: repeat(2, 1fr); } }
+    .dd-kpi { background: #fff; border: 1px solid #e4eef4; border-left: 3px solid #1c7293;
+      border-radius: 10px; padding: 12px 14px; }
+    .dd-kpi.warn { border-left-color: #c0392b; background: #fdf3f2; }
+    .dd-kpi.ok { border-left-color: #1e7a3e; }
+    .dd-kpi .k-label { font-size: 11.5px; color: #5d6b78; font-weight: 700; }
+    .dd-kpi .k-value { font-size: 24px; font-weight: 900; color: #0a2540; margin-top: 2px; }
+    .dd-kpi .k-foot { font-size: 10.5px; color: #8a97a3; margin-top: 2px; }
+    .dd-flow { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: stretch; }
+    @media (max-width: 720px) { .dd-flow { grid-template-columns: 1fr; } }
+    .dd-flow-node { background: #fff; border: 1px solid #e4eef4; border-radius: 10px;
+      padding: 12px 14px; display: flex; flex-direction: column; justify-content: center; }
+    .dd-flow-node.dark { background: #0a2540; color: #fff; border: 0; text-align: center; }
+    .dd-flow-node .f-t { font-size: 13px; font-weight: 800; }
+    .dd-flow-node .f-s { font-size: 11px; opacity: .75; margin-top: 3px; line-height: 1.5; }
+    .dd-axes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    @media (max-width: 720px) { .dd-axes { grid-template-columns: repeat(2, 1fr); } }
+    .dd-axis { background: #f2f7fa; border: 1px solid #e4eef4; border-radius: 9px; padding: 10px 12px; }
+    .dd-axis .a-n { font-size: 11px; font-weight: 800; color: #1c7293; }
+    .dd-axis .a-t { font-size: 12.5px; font-weight: 700; color: #22303c; margin-top: 2px; }
+    .dd-axis .a-s { font-size: 10.5px; color: #5d6b78; margin-top: 2px; line-height: 1.5; }
+    .dd-verdicts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+    @media (max-width: 720px) { .dd-verdicts { grid-template-columns: repeat(2, 1fr); } }
+    .dd-verdict { border-radius: 9px; padding: 9px 12px; font-size: 11.5px; line-height: 1.55;
+      border: 1px solid #e4eef4; background: #fff; }
+    .dd-verdict b { display: block; font-size: 12.5px; margin-bottom: 2px; }
+    .dd-verdict.v-warn { background: #fdecea; border-color: #f5c6c0; }
+    .dd-verdict.v-link { background: #e8f5ec; border-color: #cfe9d8; }
+    .dd-empty-good { background: #e8f5ec; border: 1px solid #cfe9d8; color: #1e7a3e;
+      border-radius: 10px; padding: 14px 16px; font-size: 13px; font-weight: 700; }
+    .dd-flag { color: #c0392b; font-weight: 700; }
+    .dd-foot-note { font-size: 11.5px; color: #8a97a3; line-height: 1.7; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="dd-wrap">
+    <header class="dd-topbar">
+      <a class="dd-back" href="./">← 대시보드</a>
+      <div class="dd-titles">
+        <div class="dd-title">🔍 유사중복 관리</div>
+        <div class="dd-desc">대학 재정지원사업 전체의 유사중복 상시 점검 · 연계 프로그램 관리</div>
+      </div>
+      <a class="dd-pdf" href="guide-linkage.pdf?v=1" target="_blank" rel="noopener">📘 운영 기준 문서</a>
+    </header>
+    <div id="dedup-root"></div>
+  </div>
+  <script src="data2.js?v=anchor13"></script>
+  <script src="dedup.js?v=anchor13"></script>
+</body>
+</html>

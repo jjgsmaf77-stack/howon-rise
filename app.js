@@ -953,54 +953,16 @@
   }
 
   // ---------- init ----------
-  // ---------- 유사중복 검토 결과 (점검 대장 → data2.js) ----------
-  function y2DedupModal(D) {
-    const tbl = (heads, rows) => h('div', { class: 'y2-tblwrap' }, [h('table', { class: 'tbl' }, [
-      h('thead', {}, [h('tr', {}, heads.map(x => h('th', {}, [x])))]),
-      h('tbody', {}, rows.map(r => h('tr', {}, r.map(c => h('td', {}, [c || '—'])))))
-    ])]);
-    const body = [
-      h('div', { class: 'dd-chips' }, [
-        h('span', { class: 'chip ' + (D.suspects.length ? 'dd-warn' : 'dd-ok') },
-          [D.suspects.length ? `⚠️ 유사중복 의심 ${D.suspects.length}건` : '✅ 유사중복 의심 사례 없음']),
-        h('span', { class: 'chip ghost' }, [`점검 완료 ${D.cleared.length}건`]),
-        h('span', { class: 'chip ghost' }, [`연계 프로그램 ${D.linked.length}건`]),
-      ]),
-    ];
-    if (D.suspects.length) {
-      body.push(h('h3', {}, ['⚠️ 유사중복 의심 사례 — 진행 보류·검토 중']));
-      body.push(tbl(['발견일', '기준', '내용', '판정', '조치'],
-        D.suspects.map(x => [x.date, x.basis, x.content, x.verdict, x.action])));
-    }
-    body.push(h('h3', {}, ['점검 완료 — 유사중복 아님으로 판정']));
-    body.push(D.cleared.length
-      ? tbl(['점검일', '내용', '판정 근거'], D.cleared.map(x => [x.date, x.content, x.reason]))
-      : h('div', { class: 'empty' }, ['기록 없음']));
-    body.push(h('h3', {}, ['연계 프로그램 — 장려 실적']));
-    body.push(D.linked.length
-      ? tbl(['일자', '프로그램', '연계 사업단', '실적 계상', '예산 집행'],
-          D.linked.map(x => [x.date, x.name, x.divisions, x.record, x.budget]))
-      : h('div', { class: 'empty' }, ['기록 없음']));
-    body.push(h('div', { class: 'note' }, [
-      '신규 결과보고서 분석 시 4영역(기존 카드 · 지출 기록 · 타 사업단 · 타 재정지원사업)을 전수 검사한 뒤 기록됩니다. 판정 기준: ',
-      h('a', { href: 'guide-linkage.pdf?v=1', target: '_blank', rel: 'noopener' }, ['유사중복·연계 운영 기준 문서 →'])
-    ]));
-    y2OpenModal(body, h('div', {}, [
-      h('h2', {}, ['🔍 유사중복 검토 결과']),
-      h('div', { class: 'muted' }, [`점검 대장 기준 · 갱신 ${D.updatedAt || '—'}`])
-    ]));
-  }
-
+  // ---------- 유사중복 관리 (전용 페이지 dedup.html — 버튼에 현황 요약만 표시) ----------
   function buildDedupButton() {
     const btn = $('#dedup-btn');
     if (!btn) return;
     const D = (window.__RISE2__ && window.__RISE2__.dedup) || null;
-    if (!D) { btn.style.display = 'none'; return; }
+    if (!D) return;
     const sub = $('#dedup-sub');
     if (sub) sub.textContent = D.suspects.length
       ? `⚠️ 의심 ${D.suspects.length}건 · 확인 필요`
       : `의심 0건 · 점검완료 ${D.cleared.length}건 · 연계 ${D.linked.length}건`;
-    btn.addEventListener('click', () => y2DedupModal(D));
   }
 
   function init() {
