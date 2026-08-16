@@ -100,6 +100,8 @@
       if (v.id === _currentView) b.classList.add('active');
       wrap.appendChild(b);
     });
+    // 모바일에서는 사이드바가 접혀 있으므로 유사중복 관리 진입 버튼을 바로가기에 추가
+    wrap.appendChild(h('a', { class: 'q q-page', href: 'dedup.html' }, ['🔍 유사중복 관리']));
   }
 
   // ---------- AI 질의 패널 (입력관리 서버로 서빙될 때만 표시 — 정적 사이트엔 백엔드가 없음) ----------

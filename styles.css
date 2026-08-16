@@ -3084,3 +3084,6 @@ button.guide-link { width: 100%; cursor: pointer; font-family: inherit; text-ali
 .dd-chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 2px 0 14px; }
 .dd-chips .chip.dd-ok { background: #e8f5ec; color: #1e7a3e; border: 1px solid #cfe9d8; }
 .dd-chips .chip.dd-warn { background: #fdecea; color: #c0392b; border: 1px solid #f5c6c0; }
+
+/* 모바일 바로가기의 페이지 이동 링크 (버튼과 동일한 외형) */
+.mobile-quicknav a.q { text-decoration: none; display: inline-block; }
