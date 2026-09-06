@@ -113,3 +113,16 @@ class LoginFail(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     ip: str = Field(index=True)
     ts: float = Field(index=True)                # epoch seconds (타임존 이슈 회피)
+
+
+class Submission(SQLModel, table=True):
+    """결과보고서 제출함 — 파일 본체는 Blob 저장소(경유지), 분석 후 삭제되고 기록만 남음."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    division_key: str = Field(index=True)
+    filename: str                                # 제출 당시 원래 파일명 (한글 가능)
+    pathname: str = Field(index=True)            # Blob 저장 경로 (ascii, submissions/<div>/<uuid>.<ext>)
+    size: int = 0                                # bytes (제출 시 신고값)
+    uploaded_by: str = ""
+    uploaded_at: datetime = Field(default_factory=now_utc)
+    status: str = "대기"                          # 대기 | 분석완료
+    analyzed_at: Optional[datetime] = None

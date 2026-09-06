@@ -12,3 +12,7 @@ admin-app/data/
 admin-app/__pycache__/
 admin-app/**/__pycache__/
 *.pyc
+admin-app/.vercel/
+admin-app/.env.local
+admin-app/.local/
+package-lock.json.bak

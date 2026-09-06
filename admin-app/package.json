@@ -1,0 +1,7 @@
+{
+  "name": "howon-rise-admin-blob",
+  "private": true,
+  "dependencies": {
+    "@vercel/blob": "^2.1.0"
+  }
+}

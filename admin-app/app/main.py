@@ -1,7 +1,11 @@
 # 호원RISE 성과 입력관리 v2 — FastAPI 단일 서비스 (서버렌더링)
 # 실행: uvicorn app.main:app --port 8090   (admin-app/ 디렉터리에서)
+import base64
 import hashlib
+import hmac as hmac_mod
+import json
 import os
+import re
 import secrets
 import time
 from contextlib import asynccontextmanager
@@ -19,7 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from sqlmodel import SQLModel, Session, create_engine, select
 
-from .models import (Division, Indicator, Program, Spending, User, AuditLog, LoginFail,
+from .models import (Division, Indicator, Program, Spending, User, AuditLog, LoginFail, Submission,
                      STATUS_FLOW, PROGRAM_CATEGORIES, BUDGET_ITEMS, TANKER, EXEC_TYPES, now_utc)
 from .auth import hash_password, verify_password
 from . import seed as seed_mod
@@ -283,9 +287,11 @@ def division_page(key: str, request: Request, s: Session = Depends(db)):
     if not d:
         raise HTTPException(404)
     indicators = s.exec(select(Indicator).where(Indicator.division_key == key).order_by(Indicator.id)).all()
+    submissions = s.exec(select(Submission).where(Submission.division_key == key)
+                         .order_by(Submission.id.desc()).limit(30)).all()
     return templates.TemplateResponse(request, "division.html",
                                       {"user": u, "sm": division_summary(s, d), "indicators": indicators,
-                                       "editable": can_edit(u, key)})
+                                       "submissions": submissions, "editable": can_edit(u, key)})
 
 
 # ---------- 사업단 정보 수정 ----------
@@ -694,6 +700,158 @@ def dash_asset(asset: str, request: Request, s: Session = Depends(db)):
     if not p.is_relative_to(DASH_DIR) or not p.is_file():
         raise HTTPException(404, "파일을 찾을 수 없습니다")
     return FileResponse(p)
+
+
+# ---------- 결과보고서 제출함 (Blob 경유지 — 분석 후 파일 삭제, 기록만 보존) ----------
+DIV_ASCII = {'본부': 'hq', '보건': 'health', '컬쳐': 'culture', 'JB집': 'jbzip', '성인': 'adult',
+             '드론': 'drone', '축제': 'festival', '맛잡고': 'matjobgo', '늘봄': 'neulbom'}
+SUBMIT_MAX_BYTES = 500 * 1024 * 1024  # api/blob.js MAX_SIZE와 일치
+
+
+def _blob_ticket(pathname: str, ops: list, username: str, ttl_sec: int = 900) -> str:
+    """api/blob.js(Node)가 검증하는 HMAC 티켓 — 형식·서명 방식은 blob.js와 정확히 일치해야 함."""
+    body = json.dumps({"p": pathname, "o": ops, "e": int((time.time() + ttl_sec) * 1000), "u": username},
+                      separators=(",", ":"))
+    b64 = base64.urlsafe_b64encode(body.encode()).decode().rstrip("=")
+    sig = hmac_mod.new(SESSION_SECRET.encode(), b64.encode(), hashlib.sha256).hexdigest()
+    return f"{b64}.{sig}"
+
+
+def _reg_sig(pathname: str, division: str, username: str) -> str:
+    """complete 등록용 서명 — 티켓 발급 시 만든 pathname만 등록 가능하게 바인딩."""
+    msg = f"reg|{pathname}|{division}|{username}"
+    return hmac_mod.new(SESSION_SECRET.encode(), msg.encode(), hashlib.sha256).hexdigest()
+
+
+def _pull_authorized(request: Request, s: Session, key: str) -> bool:
+    """제출함 회수용 인증: 관리자 세션 또는 EXPORT_TOKEN."""
+    u = current_user(request, s)
+    if u and u.is_admin:
+        return True
+    return bool(EXPORT_TOKEN and key and secrets.compare_digest(key, EXPORT_TOKEN))
+
+
+@app.post("/files/ticket")
+async def files_ticket(request: Request, s: Session = Depends(db)):
+    u = require_user(request, s)
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(422, "잘못된 요청입니다")
+    division = (body.get("division") or "").strip()
+    filename = (body.get("filename") or "").strip()
+    size = int(body.get("size") or 0)
+    require_division(s, division)
+    if not can_edit(u, division):
+        raise HTTPException(403, "본인 사업단에만 제출할 수 있습니다")
+    if not filename:
+        raise HTTPException(422, "파일명이 없습니다")
+    if size <= 0 or size > SUBMIT_MAX_BYTES:
+        raise HTTPException(422, "파일 크기는 500MB 이하여야 합니다")
+    m = re.search(r"(\.[A-Za-z0-9]{1,8})$", filename)
+    ext = m.group(1).lower() if m else ""
+    pathname = f"submissions/{DIV_ASCII.get(division, 'etc')}/{secrets.token_hex(10)}{ext}"
+    return {"ticket": _blob_ticket(pathname, ["put"], u.username), "pathname": pathname,
+            "reg": _reg_sig(pathname, division, u.username)}
+
+
+@app.post("/files/complete")
+async def files_complete(request: Request, s: Session = Depends(db)):
+    u = require_user(request, s)
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(422, "잘못된 요청입니다")
+    division = (body.get("division") or "").strip()
+    filename = ((body.get("filename") or "").strip() or "이름없음")[:300]
+    pathname = (body.get("pathname") or "").strip()
+    reg = (body.get("reg") or "").strip()
+    try:
+        size = int(body.get("size") or 0)
+    except (TypeError, ValueError):
+        raise HTTPException(422, "크기 값이 올바르지 않습니다")
+    require_division(s, division)
+    if not can_edit(u, division):
+        raise HTTPException(403)
+    if size <= 0 or size > SUBMIT_MAX_BYTES:
+        raise HTTPException(422, "파일 크기는 500MB 이하여야 합니다")
+    # 발급된 형식·서명과 일치하는 pathname만 등록 가능 (임의 경로·미발급 경로 차단)
+    prefix = f"submissions/{DIV_ASCII.get(division, 'etc')}/"
+    if not re.fullmatch(re.escape(prefix) + r"[0-9a-f]{20}(\.[a-z0-9]{1,8})?", pathname):
+        raise HTTPException(422, "경로가 올바르지 않습니다")
+    if not (reg and secrets.compare_digest(reg, _reg_sig(pathname, division, u.username))):
+        raise HTTPException(403, "등록 서명이 올바르지 않습니다")
+    if s.exec(select(Submission).where(Submission.pathname == pathname)).first():
+        raise HTTPException(422, "이미 등록된 파일입니다")
+    s.add(Submission(division_key=division, filename=filename, pathname=pathname,
+                     size=size, uploaded_by=u.username))
+    audit(s, u, "upload", "submission", pathname, f"{division}: {filename} ({size:,}B)")
+    s.commit()
+    return {"ok": True}
+
+
+@app.get("/files/pending")
+def files_pending(request: Request, key: str = "", s: Session = Depends(db)):
+    if not _pull_authorized(request, s, key):
+        raise HTTPException(401, "인증이 필요합니다")
+    rows = s.exec(select(Submission).where(Submission.status == "대기").order_by(Submission.id)).all()
+    return {"files": [{
+        "id": r.id, "division": r.division_key, "filename": r.filename,
+        "pathname": r.pathname, "size": r.size, "uploadedBy": r.uploaded_by,
+        "uploadedAt": r.uploaded_at.isoformat(),
+        "ticket": _blob_ticket(r.pathname, ["get", "del"], "puller", ttl_sec=3600),
+    } for r in rows],
+        # 고아 파일 정리용 (complete 실패·업로드 중단으로 남은 blob 대조·삭제)
+        "maintenance": {"prefix": "submissions/",
+                        "ticket": _blob_ticket("submissions/", ["list", "del"], "reconciler", ttl_sec=3600)}}
+
+
+@app.post("/files/mark-analyzed")
+async def files_mark_analyzed(request: Request, key: str = "", s: Session = Depends(db)):
+    if not _pull_authorized(request, s, key):
+        raise HTTPException(401, "인증이 필요합니다")
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(422, "잘못된 요청입니다")
+    updated = 0
+    for i in (body.get("ids") or []):
+        r = s.get(Submission, int(i))
+        if r and r.status == "대기":
+            r.status = "분석완료"
+            r.analyzed_at = now_utc()
+            updated += 1
+    s.commit()
+    return {"ok": True, "updated": updated}
+
+
+@app.post("/files/{fid}/delete")
+def files_delete(fid: int, request: Request, s: Session = Depends(db)):
+    u = require_user(request, s)
+    r = s.get(Submission, fid)
+    if not r:
+        raise HTTPException(404)
+    if not can_edit(u, r.division_key):
+        raise HTTPException(403)
+    if r.status != "대기":
+        raise HTTPException(422, "분석 완료된 기록은 삭제할 수 없습니다")
+    # Blob 파일 삭제 — 같은 배포의 서명 함수 경유. 삭제가 확인되기 전에는 기록을 지우지 않는다.
+    if not IS_SQLITE:  # 운영 환경 (로컬 sqlite 개발 환경에는 서명 함수가 없음)
+        try:
+            import httpx
+            base = str(request.base_url).rstrip("/")
+            resp = httpx.post(base + "/api/blob",
+                              json={"ticket": _blob_ticket(r.pathname, ["del"], u.username),
+                                    "op": "del", "pathname": r.pathname}, timeout=20)
+            if resp.status_code != 200:
+                raise RuntimeError(f"blob del {resp.status_code}")
+        except Exception:
+            raise HTTPException(502, "파일 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.")
+    audit(s, u, "delete", "submission", r.pathname, f"{r.division_key}: {r.filename} (제출 취소)")
+    div = r.division_key
+    s.delete(r)
+    s.commit()
+    return RedirectResponse(f"/division/{div}", status_code=303)
 
 
 # ---------- AI 질의 (옵시디언 지식 번들 기반, app/ai.py) ----------

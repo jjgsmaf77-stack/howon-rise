@@ -8,7 +8,11 @@
       "config": {
         "includeFiles": ["app/**", "templates/**", "static/**", "dashboard/**", "knowledge/**"]
       }
-    }
+    },
+    { "src": "api/blob.js", "use": "@vercel/node" }
   ],
-  "routes": [{ "src": "/(.*)", "dest": "api/index.py" }]
+  "routes": [
+    { "src": "/api/blob", "dest": "api/blob.js" },
+    { "src": "/(.*)", "dest": "api/index.py" }
+  ]
 }

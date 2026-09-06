@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 DEPLOY.md
 railway.json
+node_modules/
+.local/
+.env.local
