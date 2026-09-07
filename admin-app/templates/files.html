@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}제출함 현황 — 입력관리{% endblock %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <div class="section-title">📥 결과보고서 제출함 현황</div>
+    <div class="section-desc">사업단별 제출·분석 현황 — 파일 회수와 분석은 관리자가 클로드에 "분석해줘"로 지시합니다</div>
+  </div>
+</div>
+
+{% if pending %}
+<div class="card" style="border-left: 4px solid #f5b700; margin-bottom: 16px;">
+  <div class="card-head"><h2>분석 대기 <span class="cnt">{{ pending|length }}</span></h2>
+    <div>
+      {% for div, n in by_div.items() %}
+      <span class="cnt" style="margin-left:4px;">{{ div }} {{ n }}건</span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>사업단</th><th>파일명</th><th class="num">크기</th><th>제출자</th><th>제출일</th></tr></thead>
+      <tbody>
+        {% for f in pending %}
+        <tr>
+          <td class="strong"><a href="/division/{{ f.division_key }}">{{ f.division_key }}</a></td>
+          <td>{{ f.filename }}</td>
+          <td class="num">{{ "%.1f"|format(f.size / 1048576) }}MB</td>
+          <td>{{ f.uploaded_by }}</td>
+          <td>{{ f.uploaded_at.strftime("%m-%d %H:%M") }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card" style="border-left: 4px solid #1e7a3e; margin-bottom: 16px;">
+  <div class="card-head"><h2>✅ 분석 대기 파일 없음</h2></div>
+  <div class="note">모든 제출 파일이 처리되었습니다. 새 파일이 올라오면 이 화면과 첫 화면 배너에 표시됩니다.</div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-head"><h2>최근 분석 완료 <span class="cnt">{{ done|length }}</span></h2></div>
+  {% if done %}
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>사업단</th><th>파일명</th><th class="num">크기</th><th>제출자</th><th>제출일</th><th>분석일</th></tr></thead>
+      <tbody>
+        {% for f in done %}
+        <tr>
+          <td class="strong">{{ f.division_key }}</td>
+          <td>{{ f.filename }}</td>
+          <td class="num">{{ "%.1f"|format(f.size / 1048576) }}MB</td>
+          <td>{{ f.uploaded_by }}</td>
+          <td>{{ f.uploaded_at.strftime("%m-%d %H:%M") }}</td>
+          <td>{{ f.analyzed_at.strftime("%m-%d %H:%M") if f.analyzed_at else "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="note">아직 분석 완료된 제출이 없습니다.</div>
+  {% endif %}
+</div>
+{% endblock %}

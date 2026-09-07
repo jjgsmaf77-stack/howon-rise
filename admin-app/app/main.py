@@ -276,8 +276,15 @@ def home(request: Request, s: Session = Depends(db)):
         unverified=sum(x["unverified"] for x in summaries),
         active=sum(1 for x in summaries if x["status"] == "진행"),
     )
+    # 제출함 대기 현황 — 총괄관리자가 어느 사업단이 뭘 올렸는지 첫 화면에서 보게
+    pending_subs = s.exec(select(Submission).where(Submission.status == "대기")
+                          .order_by(Submission.id.desc())).all()
+    pending_by_div: dict = {}
+    for p in pending_subs:
+        pending_by_div[p.division_key] = pending_by_div.get(p.division_key, 0) + 1
     return templates.TemplateResponse(request, "home.html",
-                                      {"user": u, "summaries": summaries, "totals": totals})
+                                      {"user": u, "summaries": summaries, "totals": totals,
+                                       "pending_subs": pending_subs, "pending_by_div": pending_by_div})
 
 
 @app.get("/division/{key}", response_class=HTMLResponse)
@@ -729,6 +736,23 @@ def _pull_authorized(request: Request, s: Session, key: str) -> bool:
     if u and u.is_admin:
         return True
     return bool(EXPORT_TOKEN and key and secrets.compare_digest(key, EXPORT_TOKEN))
+
+
+@app.get("/files", response_class=HTMLResponse)
+def files_page(request: Request, s: Session = Depends(db)):
+    """전체 제출함 현황 — 총괄관리자 전용 (사업단별 대기·처리 이력 한눈에)."""
+    u = require_user(request, s)
+    if not u.is_admin:
+        raise HTTPException(403)
+    pending = s.exec(select(Submission).where(Submission.status == "대기")
+                     .order_by(Submission.id.desc())).all()
+    done = s.exec(select(Submission).where(Submission.status == "분석완료")
+                  .order_by(Submission.id.desc()).limit(30)).all()
+    by_div: dict = {}
+    for p in pending:
+        by_div[p.division_key] = by_div.get(p.division_key, 0) + 1
+    return templates.TemplateResponse(request, "files.html",
+                                      {"user": u, "pending": pending, "done": done, "by_div": by_div})
 
 
 @app.post("/files/ticket")

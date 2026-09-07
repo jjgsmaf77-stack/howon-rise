@@ -17,7 +17,7 @@
       <a href="/dashboard/">📊 대시보드</a>
       <a href="/dashboard/dedup.html">🔍 유사중복</a>
       <a href="/audit">변경이력</a>
-      {% if user.is_admin %}<a href="/users">계정관리</a>{% endif %}
+      {% if user.is_admin %}<a href="/files">📥 제출함</a><a href="/users">계정관리</a>{% endif %}
     </nav>
     <div class="userbox">
       <span>{{ user.display_name or user.username }}{% if user.division_key %} · {{ user.division_key }}{% endif %}</span>

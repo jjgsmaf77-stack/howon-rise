@@ -7,6 +7,19 @@
   </div>
 </div>
 
+{% if user.is_admin and pending_subs %}
+<a href="/files" class="card" style="display:block; border-left: 4px solid #f5b700; margin-bottom: 14px; text-decoration: none;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <span style="font-size:20px;">📥</span>
+    <b style="font-size:14px;">분석 대기 결과보고서 {{ pending_subs|length }}건</b>
+    <span class="muted" style="font-size:12px;">
+      {% for div, n in pending_by_div.items() %}{{ div }} {{ n }}건{% if not loop.last %} · {% endif %}{% endfor %}
+    </span>
+    <span style="margin-left:auto; color:#1c7293; font-weight:700; font-size:12px;">제출함 현황 보기 →</span>
+  </div>
+</a>
+{% endif %}
+
 <div class="kpi-row">
   <div class="kpi"><div class="label">자료 접수</div><div class="value">{{ totals.active }}<span class="unit"> / 8</span></div></div>
   <div class="kpi"><div class="label">프로그램</div><div class="value">{{ totals.programs }}<span class="unit">건</span></div><div class="foot">참여학생 {{ "{:,}".format(totals.students) }}명</div></div>
@@ -20,6 +33,9 @@
   <a class="card divcard {% if sm.status != '진행' %}waiting{% endif %}" href="/division/{{ d.key }}">
     <div class="h">
       <h3>{{ d.key }}</h3>
+      {% if pending_by_div.get(d.key) %}
+      <span class="status" style="background:#fdf3e0; color:#9a6b00;">📥 제출 {{ pending_by_div[d.key] }}건</span>
+      {% endif %}
       <span class="status {{ 'active' if sm.status == '진행' else 'pending' }}">{{ sm.status }}</span>
     </div>
     <div class="full">{{ d.full_name }}</div>
