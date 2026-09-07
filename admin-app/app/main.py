@@ -267,7 +267,19 @@ def logout(request: Request):
 def home(request: Request, s: Session = Depends(db)):
     u = require_user(request, s)
     divisions = s.exec(select(Division).order_by(Division.sort)).all()
-    summaries = [division_summary(s, d) for d in divisions]
+    # 성능: 사업단별 개별 조회(18회) 대신 일괄 조회 후 그룹핑 — DB 왕복 최소화
+    all_progs = s.exec(select(Program)).all()
+    all_spends = s.exec(select(Spending)).all()
+    progs_by, spends_by = {}, {}
+    for p in all_progs:
+        progs_by.setdefault(p.division_key, []).append(p)
+    for x in all_spends:
+        spends_by.setdefault(x.division_key, []).append(x)
+    summaries = []
+    for d in divisions:
+        out = agg.summarize(d, progs_by.get(d.key, []), spends_by.get(d.key, []))
+        out.update(division=d, programs=progs_by.get(d.key, []), spendings=spends_by.get(d.key, []))
+        summaries.append(out)
     totals = dict(
         programs=sum(len(x["programs"]) for x in summaries),
         students=sum(x["students"] for x in summaries),
@@ -597,6 +609,30 @@ def user_create(request: Request, username: str = Form(...), password: str = For
                display_name=display_name.strip(), division_key=division_key or None, is_admin=False))
     audit(s, u, "create", "user", username, f"담당: {division_key or '조회전용'}")
     s.commit()
+    return RedirectResponse("/users", status_code=303)
+
+
+@app.post("/users/{uid}/role")
+def user_role(uid: int, request: Request, role: str = Form(...), s: Session = Depends(db)):
+    """관리자 지정/해제 — 관리자 전용. 본인·마지막 관리자 해제는 차단(잠금 방지)."""
+    u = require_user(request, s)
+    if not u.is_admin:
+        raise HTTPException(403)
+    target = s.get(User, uid)
+    if not target:
+        raise HTTPException(404)
+    make_admin = (role == "admin")
+    if not make_admin and target.is_admin:
+        if target.id == u.id:
+            raise HTTPException(422, "본인의 관리자 권한은 해제할 수 없습니다")
+        admins = s.exec(select(User).where(User.is_admin == True)).all()  # noqa: E712
+        if len(admins) <= 1:
+            raise HTTPException(422, "마지막 관리자는 해제할 수 없습니다")
+    if target.is_admin != make_admin:
+        audit(s, u, "update", "user", target.username,
+              f"권한: {'관리자 지정' if make_admin else '관리자 해제'}")
+        target.is_admin = make_admin
+        s.commit()
     return RedirectResponse("/users", status_code=303)
 
 
