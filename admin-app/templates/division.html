@@ -184,8 +184,8 @@
   <div class="note">’26 목표는 수정 가능(정본 변경 시). ’26 실적(보정)은 프로그램 자동집계 외 수기 확정값 입력란입니다.</div>
 </div>
 
-<div class="card">
-  <div class="card-head"><h2>결과보고서 제출함 <span class="cnt">{{ submissions|length }}</span></h2></div>
+<div class="card" style="border: 2px solid #1c7293; background: #f2f9fc; box-shadow: 0 4px 14px rgba(28,114,147,.12);">
+  <div class="card-head"><h2 style="font-size: 18px;">📤 결과보고서 파일 업로드 <span class="cnt">{{ submissions|length }}</span></h2></div>
   {% if editable %}
   <div class="row-form" style="gap:8px; align-items:center; flex-wrap:wrap;">
     <input type="file" id="sub-file" />

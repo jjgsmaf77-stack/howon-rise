@@ -759,7 +759,17 @@ def dash_asset(asset: str, request: Request, s: Session = Depends(db)):
     p = (DASH_DIR / asset).resolve()
     if not p.is_relative_to(DASH_DIR) or not p.is_file():
         raise HTTPException(404, "파일을 찾을 수 없습니다")
-    return FileResponse(p)
+    # 캐시: 폰트·이미지는 장기, 스크립트·스타일은 1시간(?v= 버스터로 갱신), 데이터는 5분
+    ext = p.suffix.lower()
+    if ext in {".woff2", ".ttf", ".png", ".jpg", ".jpeg", ".pdf", ".ico"}:
+        cc = "private, max-age=604800"
+    elif p.name == "data2.js":
+        cc = "private, max-age=300"
+    elif ext in {".js", ".css"}:
+        cc = "private, max-age=3600"
+    else:
+        cc = "no-cache"
+    return FileResponse(p, headers={"Cache-Control": cc})
 
 
 # ---------- 결과보고서 제출함 (Blob 경유지 — 분석 후 파일 삭제, 기록만 보존) ----------

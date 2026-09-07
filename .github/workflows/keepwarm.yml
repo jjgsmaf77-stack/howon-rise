@@ -1,0 +1,14 @@
+name: keep-warm
+# 입력관리 서버(서버리스) 콜드스타트 방지 — 10분마다 헬스체크로 깨워둠
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ping admin app
+        run: |
+          curl -s -o /dev/null -w "healthz %{http_code} %{time_total}s\n" --max-time 30 https://howon-rise-admin.vercel.app/healthz || true
