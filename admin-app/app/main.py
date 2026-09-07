@@ -600,6 +600,23 @@ def user_create(request: Request, username: str = Form(...), password: str = For
     return RedirectResponse("/users", status_code=303)
 
 
+@app.post("/users/{uid}/rename")
+def user_rename(uid: int, request: Request, display_name: str = Form(""), s: Session = Depends(db)):
+    u = require_user(request, s)
+    target = s.get(User, uid)
+    if not target:
+        raise HTTPException(404)
+    if not (u.is_admin or u.id == uid):
+        raise HTTPException(403)
+    new_name = display_name.strip()[:50]
+    if not new_name:
+        raise HTTPException(422, "이름을 입력하세요")
+    audit(s, u, "update", "user", target.username, f"이름: {target.display_name!r}→{new_name!r}")
+    target.display_name = new_name
+    s.commit()
+    return RedirectResponse("/users" if u.is_admin else "/", status_code=303)
+
+
 @app.post("/users/{uid}/password")
 def user_password(uid: int, request: Request, password: str = Form(...), s: Session = Depends(db)):
     u = require_user(request, s)

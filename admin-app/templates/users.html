@@ -16,7 +16,12 @@
         {% for x in users %}
         <tr>
           <td class="strong">{{ x.username }}</td>
-          <td>{{ x.display_name or "—" }}</td>
+          <td>
+            <form method="post" action="/users/{{ x.id }}/rename" class="inline row-form">
+              <input class="mini-input" name="display_name" value="{{ x.display_name }}" placeholder="이름" required style="width:90px;" />
+              <button class="btn ghost sm">저장</button>
+            </form>
+          </td>
           <td>{{ x.division_key or "전체" }}</td>
           <td>{{ "관리자" if x.is_admin else ("담당자" if x.division_key else "조회전용") }}</td>
           <td>
