@@ -13,7 +13,7 @@ DIVISIONS = [
     ("JB집", "R26-T2-S3-HW-01", "해외 우수인재 원스톱 지원을 위한 JB-Zip사업", "한성관", 152, 94.5, 57.5),
     ("성인", "R26-T3-S1-HW-01", "실사구시 365 성인학습자 친화형 학사체계 구축", "김나형", 959, 597, 362),
     ("드론", "R26-T3-S2-HW-01", "K-드론 안심 방재 퍼포먼스 인력 양성 및 드론 콘텐츠 개발", "김봉곤", 95, 59, 36),
-    ("축제", "R26-T4-S2-HW-01", "지역축제 참여를 통한 청년역량강화 프로젝트; 청년아이디어 재미잇 군산", "최부헌", 100, 50, 0),
+    ("축제", "R26-T4-S2-HW-01", "지역축제 참여를 통한 청년역량강화 프로젝트; 청년아이디어 재미잇 군산", "조인표", 100, 50, 0),
     ("맛잡고", "R-26-T4-S3-HW-02", "전북의 맛을 품은 로컬조리인재 양성", "홍인기(호텔외식조리학과)", 294, 185, 109),
     ("늘봄", "R26-T4-S4-HW-01", "JB 늘봄 키즈 K-POP 스쿨", "서영미", 30, 26, 4),
 ]
@@ -22,13 +22,20 @@ DIVISIONS = [
 SANGSAENG_DIVISIONS = [
     # key, code, full_name, lead, total, main, op
     ("로컬콘텐츠", "G25-A2-S0-HW-02", "지역특화 JB-로컬콘텐츠 창업가 양성사업", "김나형(K-푸드창업학과)", 215, 215, 0),
-    ("인플루언서", "G26-A2-S0-HW-01", "글로벌 K-컬처(아트&라이프 콘텐츠) 인플루언서 양성사업", "조항민(공연미디어학부)", 216, 216, 0),
+    ("인플루언서", "G26-A2-S0-HW-01", "글로벌 K-컬처(아트&라이프 콘텐츠) 인플루언서 양성사업", "윤영삼", 216, 216, 0),
     ("아동뮤지컬", "G26-A3-S0-HW-01", "아동 뮤지컬 상시 공연 관광자원화 및 교육 프로그램 운영", "조인표(공연미디어학부)", 212.56, 212.56, 0),
 ]
 
 
+# 책임자 지정 교정 — (key, 구값): 신값. 구값과 일치할 때만 교체 (화면에서 수정한 값은 보존, 멱등)
+LEAD_FIXES = {
+    ("축제", "최부헌"): "조인표",                       # 2026-09-14 사용자 지시
+    ("인플루언서", "조항민(공연미디어학부)"): "윤영삼",   # 2026-09-14 사용자 지시
+}
+
+
 def sync_divisions(session: Session):
-    """사업단 목록 보충 동기화 — 누락 사업단 추가·그룹 라벨 정정 (기존 데이터는 덮어쓰지 않음, 멱등)."""
+    """사업단 목록 보충 동기화 — 누락 사업단 추가·그룹 라벨·책임자 교정 (멱등)."""
     changed = False
     for grp, rows, base_sort in (("앵커", DIVISIONS, 0), ("상생", SANGSAENG_DIVISIONS, 100)):
         for i, (key, code, full, lead, t, m, op) in enumerate(rows):
@@ -38,8 +45,13 @@ def sync_divisions(session: Session):
                                      budget_total_m=t, budget_main_m=m, budget_op_m=op,
                                      sort=base_sort + i, biz_group=grp))
                 changed = True
-            elif d.biz_group != grp:
+                continue
+            if d.biz_group != grp:
                 d.biz_group = grp
+                changed = True
+            fix = LEAD_FIXES.get((key, d.lead))
+            if fix:
+                d.lead = fix
                 changed = True
     if changed:
         session.commit()

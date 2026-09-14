@@ -86,7 +86,7 @@
             h('div', { class: 'dd-axis' }, [h('div', { class: 'a-n' }, ['영역 ②']), h('div', { class: 'a-t' }, ['지출 기록 대조']),
               h('div', { class: 'a-s' }, ['동일 금액·내부결재번호의 이중 청구 여부'])]),
             h('div', { class: 'dd-axis' }, [h('div', { class: 'a-n' }, ['영역 ③']), h('div', { class: 'a-t' }, ['타 사업단 대조']),
-              h('div', { class: 'a-s' }, ['9개 사업단 간 실질 동일 프로그램 여부'])]),
+              h('div', { class: 'a-s' }, ['앵커 9·상생 3 전 과제 간 실질 동일 프로그램 여부 (책임자 동일 조합 상시 대조)'])]),
             h('div', { class: 'dd-axis' }, [h('div', { class: 'a-n' }, ['영역 ④']), h('div', { class: 'a-t' }, ['타 재정지원사업 대조']),
               h('div', { class: 'a-s' }, ['아래 등록부 전 사업과의 내용·예산 중복 여부'])]),
           ])
