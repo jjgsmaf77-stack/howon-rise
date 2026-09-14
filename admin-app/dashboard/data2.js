@@ -1,6 +1,6 @@
 // 2차년도 성과관리 데이터 — build_data2.js가 옵시디언 볼트에서 자동 생성. 직접 수정 금지.
 window.__RISE2__ = {
-  "generatedAt": "2026-09-06T03:36:39.056Z",
+  "generatedAt": "2026-09-14T08:17:04.326Z",
   "year": 2026,
   "yearLabel": "2차년도(2026)",
   "source": "성과관리 시스템 자동 집계 (프로그램 카드·지출 기록 합산)",
@@ -9,6 +9,7 @@ window.__RISE2__ = {
       "key": "본부",
       "code": "HW-HQ",
       "fullName": "앵커(RISE)사업단 본부",
+      "group": "앵커",
       "lead": "서충길",
       "budget": {
         "totalM": 0,
@@ -49,6 +50,7 @@ window.__RISE2__ = {
       "key": "보건",
       "code": "R26-T1-S1-HW-01",
       "fullName": "JB 산업체 근로자의 Healthcare 융합인재양성",
+      "group": "앵커",
       "lead": "홍지연(간호학과)",
       "budget": {
         "totalM": 1042,
@@ -211,6 +213,7 @@ window.__RISE2__ = {
       "key": "컬쳐",
       "code": "R26-T2-S2-HW-01",
       "fullName": "지산학 K-컬처&아트테크 창업가 양성대학",
+      "group": "앵커",
       "lead": "조항민",
       "budget": {
         "totalM": 303,
@@ -368,6 +371,7 @@ window.__RISE2__ = {
       "key": "JB집",
       "code": "R26-T2-S3-HW-01",
       "fullName": "해외 우수인재 원스톱 지원을 위한 JB-Zip사업",
+      "group": "앵커",
       "lead": "한성관",
       "budget": {
         "totalM": 152,
@@ -498,6 +502,7 @@ window.__RISE2__ = {
       "key": "성인",
       "code": "R26-T3-S1-HW-01",
       "fullName": "실사구시 365 성인학습자 친화형 학사체계 구축",
+      "group": "앵커",
       "lead": "김나형",
       "budget": {
         "totalM": 959,
@@ -688,6 +693,7 @@ window.__RISE2__ = {
       "key": "드론",
       "code": "R26-T3-S2-HW-01",
       "fullName": "K-드론 안심 방재 퍼포먼스 인력 양성 및 드론 콘텐츠 개발",
+      "group": "앵커",
       "lead": "김봉곤",
       "budget": {
         "totalM": 95,
@@ -835,6 +841,7 @@ window.__RISE2__ = {
       "key": "축제",
       "code": "R26-T4-S2-HW-01",
       "fullName": "지역축제 참여를 통한 청년역량강화 프로젝트; 청년아이디어 재미잇 군산",
+      "group": "앵커",
       "lead": "최부헌",
       "budget": {
         "totalM": 100,
@@ -964,6 +971,7 @@ window.__RISE2__ = {
       "key": "맛잡고",
       "code": "R-26-T4-S3-HW-02",
       "fullName": "전북의 맛을 품은 로컬조리인재 양성",
+      "group": "앵커",
       "lead": "홍인기(호텔외식조리학과)",
       "budget": {
         "totalM": 294,
@@ -1220,6 +1228,7 @@ window.__RISE2__ = {
       "key": "늘봄",
       "code": "R26-T4-S4-HW-01",
       "fullName": "JB 늘봄 키즈 K-POP 스쿨",
+      "group": "앵커",
       "lead": "서영미",
       "budget": {
         "totalM": 30,
@@ -1362,16 +1371,427 @@ window.__RISE2__ = {
       ],
       "unverified": 0,
       "status": "자료대기"
+    },
+    {
+      "key": "로컬콘텐츠",
+      "code": "G25-A2-S0-HW-02",
+      "fullName": "지역특화 JB-로컬콘텐츠 창업가 양성사업",
+      "group": "상생",
+      "lead": "김나형(K-푸드창업학과)",
+      "budget": {
+        "totalM": 215,
+        "mainM": 215,
+        "opM": 0,
+        "spentWon": 0,
+        "rate": 0
+      },
+      "budgetPlan": [
+        {
+          "item": "인건비",
+          "plannedM": 56,
+          "flagged": false
+        },
+        {
+          "item": "교육·연구 프로그램 개발·운영비",
+          "plannedM": 35,
+          "flagged": false
+        },
+        {
+          "item": "실험·실습장비 및 기자재 구입·운영비",
+          "plannedM": 45,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계·협업 지원비",
+          "plannedM": 11.2,
+          "flagged": false
+        },
+        {
+          "item": "기업 지원·협력 활동비",
+          "plannedM": 20,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용·확산 지원비",
+          "plannedM": 35,
+          "flagged": false
+        },
+        {
+          "item": "그 밖의 사업운영 경비",
+          "plannedM": 6.4,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 6.4,
+          "flagged": false
+        }
+      ],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 개발·운영비",
+          "plannedM": 1.95
+        },
+        {
+          "item": "실험·실습장비 및 기자재 구입·운영비",
+          "plannedM": 32.25
+        },
+        {
+          "item": "성과 활용·확산 지원비",
+          "plannedM": 0.3
+        },
+        {
+          "item": "교육·연구 환경개선비",
+          "plannedM": 3.5
+        },
+        {
+          "item": "그 밖의 사업운영 경비",
+          "plannedM": 0.609
+        }
+      ],
+      "carry": {
+        "totalM": 38.609,
+        "spentWon": 0,
+        "rate": 0
+      },
+      "programs": [],
+      "spending": [],
+      "students": 0,
+      "satisfaction": {
+        "avg": null,
+        "n": 0,
+        "scale": 5,
+        "excluded": 0
+      },
+      "spread": {
+        "초광역": 0,
+        "사업단연계": 0,
+        "MOU": 0,
+        "언론보도": 0,
+        "행사": 0
+      },
+      "spreadPending": 0,
+      "indicators": [
+        {
+          "group": "자체➊",
+          "name": "교육생 만족도",
+          "unit": "점",
+          "target25": "4.0",
+          "actual25": "4.7",
+          "rate25": "",
+          "target": "4.2"
+        },
+        {
+          "group": "자체➋",
+          "name": "비교과과정 참여학생 수",
+          "unit": "명",
+          "target25": "100",
+          "actual25": "191",
+          "rate25": "",
+          "target": "200"
+        },
+        {
+          "group": "자체➌",
+          "name": "로컬콘텐츠 기반 창업실험팀 수",
+          "unit": "건",
+          "target25": "3",
+          "actual25": "3",
+          "rate25": "",
+          "target": "4"
+        },
+        {
+          "group": "자체➍",
+          "name": "사업 관련 언론 보도 건수",
+          "unit": "건",
+          "target25": "2",
+          "actual25": "2",
+          "rate25": "",
+          "target": "4"
+        }
+      ],
+      "unverified": 0,
+      "status": "자료대기"
+    },
+    {
+      "key": "인플루언서",
+      "code": "G26-A2-S0-HW-01",
+      "fullName": "글로벌 K-컬처(아트&라이프 콘텐츠) 인플루언서 양성사업",
+      "group": "상생",
+      "lead": "조항민(공연미디어학부)",
+      "budget": {
+        "totalM": 216,
+        "mainM": 216,
+        "opM": 0,
+        "spentWon": 0,
+        "rate": 0
+      },
+      "budgetPlan": [
+        {
+          "item": "인건비",
+          "plannedM": 57,
+          "flagged": false
+        },
+        {
+          "item": "교육·연구 프로그램 개발·운영비",
+          "plannedM": 93.6,
+          "flagged": false
+        },
+        {
+          "item": "실험·실습장비 및 기자재 구입·운영비",
+          "plannedM": 31,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계·협업 지원비",
+          "plannedM": 10,
+          "flagged": false
+        },
+        {
+          "item": "기업 지원·협력 활동비",
+          "plannedM": 1.44,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용·확산 지원비",
+          "plannedM": 10,
+          "flagged": false
+        },
+        {
+          "item": "그 밖의 사업운영 경비",
+          "plannedM": 6.48,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 6.48,
+          "flagged": false
+        }
+      ],
+      "carryPlan": [
+        {
+          "item": "교육·연구 프로그램 개발·운영비",
+          "plannedM": 68.624
+        },
+        {
+          "item": "실험·실습장비 및 기자재 구입·운영비",
+          "plannedM": 31.573
+        },
+        {
+          "item": "지역 연계·협업 지원비",
+          "plannedM": 1
+        },
+        {
+          "item": "성과 활용·확산 지원비",
+          "plannedM": 28.9
+        },
+        {
+          "item": "그 밖의 사업운영 경비",
+          "plannedM": 3.863
+        }
+      ],
+      "carry": {
+        "totalM": 133.96,
+        "spentWon": 0,
+        "rate": 0
+      },
+      "programs": [],
+      "spending": [],
+      "students": 0,
+      "satisfaction": {
+        "avg": null,
+        "n": 0,
+        "scale": 5,
+        "excluded": 0
+      },
+      "spread": {
+        "초광역": 0,
+        "사업단연계": 0,
+        "MOU": 0,
+        "언론보도": 0,
+        "행사": 0
+      },
+      "spreadPending": 0,
+      "indicators": [
+        {
+          "group": "자체➊",
+          "name": "교육생 만족도",
+          "unit": "점",
+          "target25": "4.0",
+          "actual25": "4.59",
+          "rate25": "114.75",
+          "target": "4.2"
+        },
+        {
+          "group": "자체➋",
+          "name": "글로벌 프로그램 교류 학생 수",
+          "unit": "명",
+          "target25": "30",
+          "actual25": "36",
+          "rate25": "120.0",
+          "target": "40"
+        },
+        {
+          "group": "자체➌",
+          "name": "지역특화 콘텐츠 제작편수",
+          "unit": "건",
+          "target25": "4",
+          "actual25": "4",
+          "rate25": "100.0",
+          "target": "6"
+        },
+        {
+          "group": "자체➍",
+          "name": "K-컬처 인플루언서 언론보도 건수",
+          "unit": "건",
+          "target25": "2",
+          "actual25": "1",
+          "rate25": "50.0",
+          "target": "4"
+        }
+      ],
+      "unverified": 0,
+      "status": "자료대기"
+    },
+    {
+      "key": "아동뮤지컬",
+      "code": "G26-A3-S0-HW-01",
+      "fullName": "아동 뮤지컬 상시 공연 관광자원화 및 교육 프로그램 운영",
+      "group": "상생",
+      "lead": "조인표(공연미디어학부)",
+      "budget": {
+        "totalM": 212.56,
+        "mainM": 212.56,
+        "opM": 0,
+        "spentWon": 0,
+        "rate": 0
+      },
+      "budgetPlan": [
+        {
+          "item": "인건비",
+          "plannedM": 51,
+          "flagged": false
+        },
+        {
+          "item": "교육·연구 프로그램 개발·운영비",
+          "plannedM": 47,
+          "flagged": false
+        },
+        {
+          "item": "실험·실습장비 및 기자재 구입·운영비",
+          "plannedM": 35,
+          "flagged": false
+        },
+        {
+          "item": "지역 연계·협업 지원비",
+          "plannedM": 25,
+          "flagged": false
+        },
+        {
+          "item": "기업 지원·협력 활동비",
+          "plannedM": 21.808,
+          "flagged": false
+        },
+        {
+          "item": "성과 활용·확산 지원비",
+          "plannedM": 20,
+          "flagged": false
+        },
+        {
+          "item": "그 밖의 사업운영 경비",
+          "plannedM": 6.376,
+          "flagged": false
+        },
+        {
+          "item": "간접비",
+          "plannedM": 6.376,
+          "flagged": false
+        }
+      ],
+      "carryPlan": [
+        {
+          "item": "실험·실습장비 및 기자재 구입·운영비",
+          "plannedM": 30.14
+        },
+        {
+          "item": "기업 지원·협력 활동비",
+          "plannedM": 28
+        },
+        {
+          "item": "성과 활용·확산 지원비",
+          "plannedM": 31.844
+        },
+        {
+          "item": "교육·연구환경 개선비",
+          "plannedM": 6.8
+        },
+        {
+          "item": "그 밖의 사업운영 경비",
+          "plannedM": 2.002
+        }
+      ],
+      "carry": {
+        "totalM": 98.786,
+        "spentWon": 0,
+        "rate": 0
+      },
+      "programs": [],
+      "spending": [],
+      "students": 0,
+      "satisfaction": {
+        "avg": null,
+        "n": 0,
+        "scale": 5,
+        "excluded": 0
+      },
+      "spread": {
+        "초광역": 0,
+        "사업단연계": 0,
+        "MOU": 0,
+        "언론보도": 0,
+        "행사": 0
+      },
+      "spreadPending": 0,
+      "indicators": [
+        {
+          "group": "자체➊",
+          "name": "교육생 만족도",
+          "unit": "점",
+          "target25": "4.0",
+          "actual25": "4.72",
+          "rate25": "",
+          "target": "4.2"
+        },
+        {
+          "group": "자체➋",
+          "name": "비학위프로그램 참여학생 수",
+          "unit": "명",
+          "target25": "100",
+          "actual25": "103",
+          "rate25": "",
+          "target": "200"
+        },
+        {
+          "group": "자체➌",
+          "name": "아동뮤지컬 언론 보도 건수",
+          "unit": "건",
+          "target25": "3",
+          "actual25": "3",
+          "rate25": "",
+          "target": "3"
+        }
+      ],
+      "unverified": 0,
+      "status": "자료대기"
     }
   ],
   "totals": {
-    "budgetM": 2975,
+    "budgetM": 3618.56,
     "spentWon": 15035380,
     "programs": 4,
     "students": 98,
     "unverified": 7,
     "activeDivisions": 2,
-    "rate": 0.51
+    "rate": 0.42
   },
   "dedup": {
     "updatedAt": "2026-07-26",

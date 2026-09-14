@@ -61,8 +61,23 @@ def ensure_db():
     if _db_ready:
         return
     SQLModel.metadata.create_all(engine)
+    # 경량 마이그레이션: 기존 테이블에 신규 열 보충 (create_all은 기존 테이블을 변경하지 않음)
+    from sqlalchemy import text
+    try:
+        with engine.connect() as c:
+            if IS_SQLITE:
+                c.execute(text("ALTER TABLE division ADD COLUMN biz_group VARCHAR DEFAULT '앵커'"))
+            else:
+                c.execute(text("ALTER TABLE division ADD COLUMN IF NOT EXISTS biz_group VARCHAR DEFAULT '앵커'"))
+            c.commit()
+    except Exception:
+        pass  # 열이 이미 존재
     with Session(engine) as s:
         seed_mod.seed(s)
+        try:
+            seed_mod.sync_divisions(s)
+        except Exception:
+            s.rollback()  # 동기화 실패가 앱 전체를 막지 않도록 (앵커 기존 기능 우선)
     _db_ready = True
 
 
@@ -774,7 +789,8 @@ def dash_asset(asset: str, request: Request, s: Session = Depends(db)):
 
 # ---------- 결과보고서 제출함 (Blob 경유지 — 분석 후 파일 삭제, 기록만 보존) ----------
 DIV_ASCII = {'본부': 'hq', '보건': 'health', '컬쳐': 'culture', 'JB집': 'jbzip', '성인': 'adult',
-             '드론': 'drone', '축제': 'festival', '맛잡고': 'matjobgo', '늘봄': 'neulbom'}
+             '드론': 'drone', '축제': 'festival', '맛잡고': 'matjobgo', '늘봄': 'neulbom',
+             '로컬콘텐츠': 'localcontent', '인플루언서': 'influencer', '아동뮤지컬': 'musical'}
 SUBMIT_MAX_BYTES = 500 * 1024 * 1024  # api/blob.js MAX_SIZE와 일치
 
 

@@ -10,6 +10,9 @@ const VAULT = process.argv[2] || 'C:/Users/홍인기/Desktop/POPULAR/LLM_Wiki/2_
 const OUT = path.join(__dirname, 'data2.js');
 
 const DIVISIONS = ['본부', '보건', '컬쳐', 'JB집', '성인', '드론', '축제', '맛잡고', '늘봄'];
+// 상생 개별과제 (앵커와 분리 관리 — 원장 frontmatter 사업구분: 상생)
+const SANGSAENG = ['로컬콘텐츠', '인플루언서', '아동뮤지컬'];
+const ALL_DIVISIONS = [...DIVISIONS, ...SANGSAENG];
 const WARN = []; // 파싱 중 무시/탈락된 항목 — 침묵 탈락 금지
 
 // ---------- 2축 분류 체계 (설계문서 §12, 2026-07-26 확정) ----------
@@ -201,6 +204,7 @@ function loadLedger(div) {
   return {
     code: fm['과제코드'] || '',
     fullName: fm['과제명'] || '',
+    group: String(fm['사업구분'] || '앵커').trim(),
     lead: String(fm['책임자'] || ''),
     budgetTotalM: num(fm['예산_총계']) || 0,
     budgetMainM: num(fm['예산_주관대학']) || 0,
@@ -213,7 +217,7 @@ function loadLedger(div) {
 }
 
 // ---------- 집계 ----------
-const divisions = DIVISIONS.map(key => {
+const divisions = ALL_DIVISIONS.map(key => {
   const ledger = loadLedger(key) || { code: '', fullName: '', lead: '', budgetTotalM: 0, budgetMainM: 0, budgetOpM: 0, indicators: [] };
   const cards = loadCards(key);
   const spending = loadSpending(key);
@@ -247,6 +251,7 @@ const divisions = DIVISIONS.map(key => {
     key,
     code: ledger.code,
     fullName: ledger.fullName,
+    group: ledger.group || '앵커',
     lead: ledger.lead,
     budget: { totalM: ledger.budgetTotalM, mainM: ledger.budgetMainM, opM: ledger.budgetOpM, spentWon, rate: budgetWon ? +(spentWon / budgetWon * 100).toFixed(1) : 0 },
     budgetPlan: ledger.budgetPlan,
@@ -274,7 +279,7 @@ const totals = {
   programs: divisions.reduce((s, d) => s + d.programs.length, 0),
   students: divisions.reduce((s, d) => s + d.students, 0),
   unverified: divisions.reduce((s, d) => s + d.unverified, 0),
-  activeDivisions: divisions.filter(d => d.status === '진행').length,
+  activeDivisions: divisions.filter(d => d.status === '진행' && d.group === '앵커').length,
 };
 totals.rate = totals.budgetM ? +(totals.spentWon / (totals.budgetM * 1_000_000) * 100).toFixed(2) : 0;
 

@@ -31,6 +31,7 @@ class Division(SQLModel, table=True):
     budget_main_m: float = 0
     budget_op_m: float = 0
     sort: int = 0
+    biz_group: str = "앵커"                       # 앵커 | 상생 (사업 구분 — 화면 분리 표시)
 
 
 class Indicator(SQLModel, table=True):

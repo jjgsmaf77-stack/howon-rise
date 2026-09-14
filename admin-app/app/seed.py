@@ -18,6 +18,32 @@ DIVISIONS = [
     ("늘봄", "R26-T4-S4-HW-01", "JB 늘봄 키즈 K-POP 스쿨", "서영미", 30, 26, 4),
 ]
 
+# 상생 개별과제 (앵커와 분리 관리 — biz_group='상생'). 예산은 2차년도 수정사업계획서 추출값 (2026-09-14).
+SANGSAENG_DIVISIONS = [
+    # key, code, full_name, lead, total, main, op
+    ("로컬콘텐츠", "G25-A2-S0-HW-02", "지역특화 JB-로컬콘텐츠 창업가 양성사업", "김나형(K-푸드창업학과)", 215, 215, 0),
+    ("인플루언서", "G26-A2-S0-HW-01", "글로벌 K-컬처(아트&라이프 콘텐츠) 인플루언서 양성사업", "조항민(공연미디어학부)", 216, 216, 0),
+    ("아동뮤지컬", "G26-A3-S0-HW-01", "아동 뮤지컬 상시 공연 관광자원화 및 교육 프로그램 운영", "조인표(공연미디어학부)", 212.56, 212.56, 0),
+]
+
+
+def sync_divisions(session: Session):
+    """사업단 목록 보충 동기화 — 누락 사업단 추가·그룹 라벨 정정 (기존 데이터는 덮어쓰지 않음, 멱등)."""
+    changed = False
+    for grp, rows, base_sort in (("앵커", DIVISIONS, 0), ("상생", SANGSAENG_DIVISIONS, 100)):
+        for i, (key, code, full, lead, t, m, op) in enumerate(rows):
+            d = session.get(Division, key)
+            if not d:
+                session.add(Division(key=key, code=code, full_name=full, lead=lead,
+                                     budget_total_m=t, budget_main_m=m, budget_op_m=op,
+                                     sort=base_sort + i, biz_group=grp))
+                changed = True
+            elif d.biz_group != grp:
+                d.biz_group = grp
+                changed = True
+    if changed:
+        session.commit()
+
 # (구분, 지표명, 단위, '25목표, '25실적, '25달성도, '26목표) — 정본 pp.21-22
 INDICATORS = {
     "보건": [

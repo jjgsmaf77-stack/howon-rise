@@ -27,8 +27,16 @@
   <div class="kpi"><div class="label">미검증</div><div class="value">{{ totals.unverified }}<span class="unit">건</span></div><div class="foot">🔴 확정 전 잠정값</div></div>
 </div>
 
+{% for grp_key, grp_label in [("앵커", "앵커(RISE) 사업단"), ("상생", "상생 개별과제")] %}
+{% set grp_items = summaries | selectattr("division.biz_group", "equalto", grp_key) | list %}
+{% if grp_items %}
+<div class="section-head" {% if not loop.first %}style="margin-top:26px;"{% endif %}>
+  <div>
+    <div class="section-title" style="font-size:16px;">{{ grp_label }} <span class="cnt">{{ grp_items|length }}</span></div>
+  </div>
+</div>
 <div class="div-grid">
-  {% for sm in summaries %}
+  {% for sm in grp_items %}
   {% set d = sm.division %}
   <a class="card divcard {% if sm.status != '진행' %}waiting{% endif %}" href="/division/{{ d.key }}">
     <div class="h">
@@ -53,4 +61,6 @@
   </a>
   {% endfor %}
 </div>
+{% endif %}
+{% endfor %}
 {% endblock %}

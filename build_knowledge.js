@@ -5,7 +5,8 @@ const path = require('path');
 
 const VAULT = process.argv[2] || 'C:/Users/홍인기/Desktop/POPULAR/LLM_Wiki/2_Wiki/★★★2차년도 앵커사업단 성과분석★★★';
 const OUT_DIR = path.join(__dirname, 'admin-app', 'knowledge');
-const DIVISIONS = ['본부', '보건', '컬쳐', 'JB집', '성인', '드론', '축제', '맛잡고', '늘봄'];
+const DIVISIONS = ['본부', '보건', '컬쳐', 'JB집', '성인', '드론', '축제', '맛잡고', '늘봄',
+  '로컬콘텐츠', '인플루언서', '아동뮤지컬'];  // 뒤 3개 = 상생 개별과제
 
 const read = p => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 const exists = p => fs.existsSync(p);

@@ -568,7 +568,7 @@
       h('div', { class: 'grid-4' }, [
         kpiCard('자료 접수 사업단', T.activeDivisions, ' / 8', '결과보고서 접수 기준'),
         kpiCard('프로그램 실적', T.programs, '건', `참여학생 ${fmtN(T.students)}명`),
-        kpiCard('집행액(반영분)', T.spentWon, '원', `편성 ${fmtN(T.budgetM)}백만원 · 집행률 ${T.rate}%`),
+        kpiCard('집행액(반영분)', T.spentWon, '원', `편성 ${fmtN(Math.round(T.budgetM * 100) / 100)}백만원(앵커+상생 합산) · 집행률 ${T.rate}%`),
         kpiCard('미검증 항목', T.unverified, '건', '🔴 확정 전 잠정값')
       ]),
       Y2.warnings && Y2.warnings.length ? h('ul', { class: 'callout-list y2-warn-list' },
@@ -578,12 +578,26 @@
         ]))) : null
     ]));
 
-    // 사업단별 카드
+    // 사업단별 카드 — 앵커(RISE)와 상생 개별과제를 분리 표시
+    const anchorDivs = divs.filter(d => (d.group || '앵커') === '앵커');
+    const ssDivs = divs.filter(d => d.group === '상생');
+    const groupSummary = list => {
+      const p = list.reduce((s, d) => s + d.programs.length, 0);
+      const w = list.reduce((s, d) => s + d.budget.spentWon, 0);
+      const b = list.reduce((s, d) => s + d.budget.totalM, 0);
+      return `과제 ${list.length}개 · 프로그램 ${p}건 · 편성 ${fmtN(Math.round(b))}백만원 · 집행 ${fmtN(w)}원`;
+    };
     el.appendChild(h('section', { class: 'section' }, [
-      sectionHead('사업단별 현황', '2차년도 수정사업계획서 기준 단위과제 — 카드 클릭 시 상세, 수치는 프로그램 카드·지출 기록 합산값',
+      sectionHead('앵커(RISE) 사업단 현황', `2차년도 수정사업계획서 기준 단위과제 — 카드 클릭 시 상세 · ${groupSummary(anchorDivs)}`,
         [h('button', { class: 'chip y2-exec-btn', onclick: () => y2AllModal() }, ['전체 상세보기'])]),
-      h('div', { class: 'y2-divgrid' }, divs.map(y2DivCard))
+      h('div', { class: 'y2-divgrid' }, anchorDivs.map(y2DivCard))
     ]));
+    if (ssDivs.length) {
+      el.appendChild(h('section', { class: 'section' }, [
+        sectionHead('상생 개별과제 현황', `상생 개별과제 수정사업계획서 기준 — 앵커사업과 별도 관리 · ${groupSummary(ssDivs)}`),
+        h('div', { class: 'y2-divgrid' }, ssDivs.map(y2DivCard))
+      ]));
+    }
 
     // 예산 차트 + 집행 현황
     el.appendChild(h('section', { class: 'section' }, [
