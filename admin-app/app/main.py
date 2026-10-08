@@ -33,6 +33,10 @@ BASE = Path(__file__).resolve().parent.parent
 DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{BASE / 'data' / 'admin.db'}")
 if DATABASE_URL.startswith("postgres://"):  # Railway 구형 스킴 보정
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+if DATABASE_URL.startswith("postgresql://"):
+    # 드라이버 명시 고정 — SQLAlchemy 2.1+는 postgresql:// 기본 DBAPI를 psycopg(3)로 해석해
+    # psycopg2-binary만 설치된 빌드에서 기동 실패(ModuleNotFoundError) — 2026-10-08 장애 재발 방지
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 IS_SQLITE = DATABASE_URL.startswith("sqlite")
 if IS_SQLITE:
     (BASE / "data").mkdir(exist_ok=True)
